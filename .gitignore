@@ -39,3 +39,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local design / program notes
+design.md
+design-brief.md
+midnight-buildathon-brief.md

@@ -1,26 +1,126 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --brand: #0ecb81;
+  --brand-fg: #04150e;
+  --success: #0ecb81;
+  --danger: #f6465d;
+  --radius: 1.25rem;
+  --bg: #000;
+  --ink: #f2f2f4;
+  --surface: #0a0a0a;
+  --muted: #111;
+  --muted-fg: #9898a0;
+  --border: #1a1a1a;
+  --sidebar-bg: #111;
+  --sidebar-fg: #e8e8ec;
+  --sidebar-muted: #8b8b96;
+  --sidebar-accent: #2a2a30;
+}
+
+.theme-landing {
+  --bg: #f7f7fb;
+  --ink: #14141c;
+  --surface: #fff;
+  --muted: #ebe8f0;
+  --muted-fg: #6b6b78;
+  --border: #e4e0ea;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+  --color-muted-fg: var(--muted-fg);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-fg: var(--brand-fg);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-sidebar: var(--sidebar-bg);
+  --color-sidebar-fg: var(--sidebar-fg);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --font-sans: var(--font-dm-sans);
+  --font-mono: var(--font-jetbrains);
+  --radius-card: 1.25rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--brand) 38%, transparent) transparent;
+}
+
+.bento {
+  background: var(--surface);
+  border-radius: var(--radius);
+}
+
+.hairline {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.landing-fade {
+  animation: landing-fade 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.hero-sky {
+  background:
+    radial-gradient(
+      ellipse 80% 55% at 50% -8%,
+      color-mix(in srgb, var(--brand) 26%, transparent),
+      transparent 58%
+    ),
+    linear-gradient(180deg, #07070a 0%, #101018 46%, #f7f7fb 100%);
+}
+
+.hero-noise {
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.055) 0.6px,
+    transparent 0.6px
+  );
+  background-size: 3px 3px;
+  mask-image: linear-gradient(180deg, #000 40%, transparent 92%);
+}
+
+@keyframes landing-fade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.pulse-dot {
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-fade,
+  .pulse-dot {
+    animation: none;
+  }
 }
