@@ -4,22 +4,23 @@ import Link from "next/link";
 import { ArrowRight, Lock, ShieldCheck, Sparkles } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
+import { copy } from "@/lib/copy";
 
 const FEATURES = [
   {
     icon: Lock,
-    title: "Local-first desk",
-    body: "Paste the file. Guardrails run in the browser before a model is allowed to see a token.",
+    title: "Local sandbox",
+    body: "Paste the file. Filters run on this machine before a model is allowed to see a token.",
   },
   {
     icon: ShieldCheck,
-    title: "Midnight attestation",
-    body: "A ZK proof records that PII, money, and secrets were stripped — without revealing them.",
+    title: "Invisible shield",
+    body: "Local verification confirms identifiers, balances, and secrets were stripped — without revealing them.",
   },
   {
     icon: Sparkles,
-    title: "Then, and only then, chat",
-    body: "The Secure Chat Arena receives the leftover prompt. Raw values never cross the wire.",
+    title: "Zero-leak pipeline",
+    body: "The secure channel receives only the insulated remainder. Raw values never leave.",
   },
 ];
 
@@ -37,7 +38,7 @@ export function LandingPage() {
               Audiences
             </a>
             <a href="#proof" className="hover:text-white">
-              Proof path
+              How it works
             </a>
           </nav>
           <Link href="/workspace">
@@ -53,7 +54,7 @@ export function LandingPage() {
             className="landing-fade text-[11px] font-semibold text-brand"
             style={{ animationDelay: "0ms" }}
           >
-            Built for the Midnight Buildathon
+            Corporate data shield for AI
           </p>
           <h1
             className="landing-fade mt-5 max-w-4xl font-light tracking-[-0.06em] text-white"
@@ -63,17 +64,16 @@ export function LandingPage() {
               lineHeight: 0.92,
             }}
           >
-            Paste secrets.
+            Shield internally.
             <br />
-            Prove nothing leaked.
+            Verify locally.
           </h1>
           <p
             className="landing-fade mt-8 max-w-xl text-[15px] leading-7 text-white/70"
             style={{ animationDelay: "80ms" }}
           >
-            Kachina AI is a privacy-first ZK guardrail for enterprise and freelance
-            desks. Sensitive context stays on-device. Midnight attests the
-            sanitization. The model only sees what is left.
+            Kachis is a local guardrail for enterprise and freelance teams. Internal
+            data remains in your sandbox. The model only receives what you allow.
           </p>
           <div
             className="landing-fade mt-8 flex flex-wrap gap-3"
@@ -81,13 +81,13 @@ export function LandingPage() {
           >
             <Link href="/workspace">
               <Button>
-                Enter the desk
+                {copy.action.idle}
                 <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
               </Button>
             </Link>
             <a href="#proof">
               <Button variant="outline" className="border-0 bg-white/8 text-white ring-white/15">
-                How the proof works
+                How local verification works
               </Button>
             </a>
           </div>
@@ -96,10 +96,10 @@ export function LandingPage() {
 
       <section id="product" className="mx-auto max-w-6xl px-6 py-20">
         <p className="landing-fade inline-flex rounded-full bg-[color-mix(in_srgb,var(--brand)_14%,white)] px-3 py-1 text-[11px] font-semibold text-brand">
-          Quiet desk, not a CLI
+          Invisible shield
         </p>
         <h2 className="landing-fade mt-4 text-3xl font-light tracking-tight md:text-4xl">
-          A Linear-grade workspace for ZK AI.
+          Enterprise infrastructure for private AI.
         </h2>
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           {FEATURES.map((feature, index) => (
@@ -118,53 +118,56 @@ export function LandingPage() {
 
       <section id="audiences" className="mx-auto max-w-6xl px-6 py-20">
         <p className="inline-flex rounded-full bg-[color-mix(in_srgb,var(--brand)_14%,white)] px-3 py-1 text-[11px] font-semibold text-brand">
-          Two desks, one circuit
+          Two seats, one guardrail
         </p>
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           <article className="rounded-[1.75rem] bg-surface p-8 shadow-[0_20px_50px_rgba(10,10,20,0.06)] ring-1 ring-[rgba(10,10,20,0.08)]">
-            <p className="text-[11px] font-semibold text-brand">Freelancer</p>
-            <h3 className="mt-2 text-2xl font-light tracking-tight">Freemium, try the desk</h3>
+            <p className="text-[11px] font-semibold text-brand">
+              {copy.tiers.sandbox.badge}
+            </p>
+            <h3 className="mt-2 text-2xl font-light tracking-tight">
+              Individual sandbox
+            </h3>
             <p className="mt-3 text-[13px] leading-6 text-muted-fg">
-              Independent consultants paste client files, generate a local proof,
-              and chat without becoming the leak.
+              {copy.tiers.sandbox.description}
             </p>
           </article>
           <article className="rounded-[1.75rem] bg-[#14141c] p-8 text-white">
-            <p className="text-[11px] font-semibold text-brand">Institutional</p>
-            <h3 className="mt-2 text-2xl font-light tracking-tight">The paying core</h3>
+            <p className="text-[11px] font-semibold text-brand">
+              {copy.tiers.institutional.badge}
+            </p>
+            <h3 className="mt-2 text-2xl font-light tracking-tight">
+              Company-wide governance
+            </h3>
             <p className="mt-3 text-[13px] leading-6 text-white/65">
-              RBAC, compliance packs, Midnight Passport, and an audit trail that
-              proves policy without exposing the packet.
+              {copy.tiers.institutional.description}
             </p>
           </article>
         </div>
       </section>
 
       <section id="proof" className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-3xl font-light tracking-tight">Four steps. No neon terminal.</h2>
+        <h2 className="text-3xl font-light tracking-tight">Four steps. Data never leaves.</h2>
         <ol className="mt-8 grid gap-4 md:grid-cols-4">
-          {[
-            "Paste locally",
-            "Toggle guardrails",
-            "Generate the ZK proof",
-            "Chat with leftovers",
-          ].map((step, index) => (
-            <li key={step} className="bento p-5">
-              <p className="text-[11px] font-semibold text-brand">0{index + 1}</p>
-              <p className="mt-3 text-sm font-medium tracking-tight">{step}</p>
-            </li>
-          ))}
+          {["Paste internally", "Apply filters", "Verify locally", "Open the channel"].map(
+            (step, index) => (
+              <li key={step} className="bento p-5">
+                <p className="text-[11px] font-semibold text-brand">0{index + 1}</p>
+                <p className="mt-3 text-sm font-medium tracking-tight">{step}</p>
+              </li>
+            ),
+          )}
         </ol>
         <Link href="/workspace" className="mt-10 inline-flex">
           <Button>
-            Start in the workspace
+            {copy.action.idle}
             <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
           </Button>
         </Link>
       </section>
 
       <footer className="mx-auto max-w-6xl px-6 py-12 text-[11px] text-muted-fg">
-        Kachina AI · Midnight Protocol · Wave 1 frontend shell
+        Kachis · Local data shield for corporate AI
       </footer>
     </div>
   );

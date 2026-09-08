@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kachis
 
-## Getting Started
+A local data shield for corporate AI. Internal records stay on the device. Only a cleaned prompt can reach a model. Midnight attests that the pack ran — without publishing the file.
 
-First, run the development server:
+This answers: **if your AI chat history leaked today, how cooked are you?**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+User or agent  →  Kachis (scan locally + commitment)  →  only then the LLM
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Long-term vision
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Companies buy **control + evidence**, not another chat site: secrets never become the vendor log; packs cannot be skipped; an auditor can verify without opening the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Horizon | Status |
+|---|---|
+| Web console | Shipped (this repo) |
+| Shared scanner + SHA-256 binding | Shipped (`shared/`) |
+| Compact contract `kachis-guardrail` | Source in `compact/` — compile with Compact toolchain |
+| **Kachis Agent v1** (MCP) | Shipped (`agent/`) — sit in Cursor/Claude |
+| Lace dApp connect | Live `window.midnight.mnLace` (no fake address) |
+| Public notary log | `/api/shield` — console + agent post hashes only |
+| Chat gated on commitment | `/api/chat` refuses unknown `proofHash` |
+| Proof server / on-chain submit | Probe-only until `compact compile` |
+| On-device ML scanner | Later |
+| Copilot / Slack connectors | Later |
 
-## Learn More
+**Kachis Agent** is not a second chatbot. It is an MCP tool the host must call before a raw paste leaves the laptop.
 
-To learn more about Next.js, take a look at the following resources:
+## What is real vs not
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**Real**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Local regex scan (same code for console and MCP)
+- SHA-256 of cleaned prompt + **binding** `hash(originalHash || cleanedHash)` — original paste is not posted to `/api/shield`
+- Compact circuit source: private original commitment, public cleaned hash + pack flags
+- MCP tool `kachis_shield` (posts public commitments to the console when it is running)
+- Lace connect when the extension is present
+- Console chat only after a recorded commitment
+- Optional OpenAI chat for the **shielded** prompt only (`OPENAI_API_KEY`)
 
-## Deploy on Vercel
+**Not yet**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `compact compile` + Midnight proof server submitting the circuit
+- Local ML NER
+- Enterprise gateway
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Run the console
+
+```bash
+npm install
+npm run dev
+```
+
+[http://localhost:3000/workspace](http://localhost:3000/workspace) → Load sample → Shield & Proceed → Send.
+
+Lace: install Midnight Lace, activate **Midnight**, Preprod. Connect uses the **unshielded** address (`mn_addr_preprod…`).
+
+```bash
+cp .env.example .env.local
+# optional OPENAI_API_KEY for a real model on shielded text only
+# optional MIDNIGHT_PROOF_SERVER_URL=http://127.0.0.1:6300 to probe Lace's local proof server
+```
+
+## Run Kachis Agent (MCP)
+
+```bash
+cd agent
+npm install
+npm start
+```
+
+Config: copy `mcp.example.json` into your Cursor MCP settings. Tool: `kachis_shield`. Send **only** `shielded_prompt` to the model.
+
+## Compact
+
+See `compact/README.md`. License: Apache 2.0 (`LICENSE`).
+
+## Stack
+
+Next.js 16, React 19, Tailwind v4, TypeScript. Scanner: `shared/`. UI copy: `lib/copy.ts`.

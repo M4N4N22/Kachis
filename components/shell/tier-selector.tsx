@@ -2,11 +2,12 @@
 
 import { useApp } from "@/lib/app-store";
 import { cn } from "@/lib/cn";
+import { copy } from "@/lib/copy";
 import type { Tier } from "@/lib/types";
 
 const TIERS: { id: Tier; label: string }[] = [
-  { id: "freelancer", label: "Freelancer" },
-  { id: "institutional", label: "Institutional" },
+  { id: "freelancer", label: copy.tiers.sandbox.pill },
+  { id: "institutional", label: copy.tiers.institutional.pill },
 ];
 
 export function TierSelector() {

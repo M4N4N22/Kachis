@@ -1,6 +1,6 @@
 export type Tier = "freelancer" | "institutional";
 
-export type WalletProviderId = "lace" | "gero";
+export type WalletProviderId = "lace";
 
 export type WalletStatus = "disconnected" | "connecting" | "connected";
 
@@ -19,6 +19,8 @@ export interface WalletState {
   status: WalletStatus;
   provider?: WalletProviderId;
   address?: string;
+  live?: boolean;
+  error?: string;
 }
 
 export interface GuardrailToggles {
@@ -36,9 +38,15 @@ export interface GuardrailFinding {
 
 export interface ProofRecord {
   hash: string;
+  binding: string;
   circuit: string;
   attestedAt: string;
   findings: GuardrailFinding[];
+  packFlags: number;
+  ledgerId?: number;
+  status?: "committed-local" | "proof-server-reachable";
+  walletAddress?: string;
+  note?: string;
 }
 
 export interface ChatMessage {
@@ -62,6 +70,5 @@ export const WALLET_PROVIDERS: {
   name: string;
   hint: string;
 }[] = [
-  { id: "lace", name: "Lace", hint: "Midnight-ready browser wallet" },
-  { id: "gero", name: "Gero Wallet", hint: "Cardano + Midnight connector" },
+  { id: "lace", name: "Lace", hint: "Midnight Lace — required for live connect" },
 ];

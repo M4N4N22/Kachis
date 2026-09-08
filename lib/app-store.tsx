@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { mockWalletAddress } from "@/lib/midnight";
+import { connectLace, laceAvailable } from "@/lib/lace";
 import type { Profile, Tier, WalletProviderId, WalletState } from "@/lib/types";
 
 interface UsageStats {
@@ -50,7 +50,7 @@ function profileFor(tier: Tier): Profile {
     name: "Alex Rivera",
     initials: "AR",
     title: "Independent consultant",
-    organization: "Freelancer",
+      organization: "Sandbox Workspace",
   };
 }
 
@@ -60,10 +60,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [usage, setUsage] = useState<UsageStats>({
-    proofsGenerated: 18,
-    bytesShielded: 2_480_000,
-    queries: 41,
-    blockedSecrets: 7,
+    proofsGenerated: 0,
+    bytesShielded: 0,
+    queries: 0,
+    blockedSecrets: 0,
   });
 
   const setTier = useCallback((next: Tier) => {
@@ -71,13 +71,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const connectWallet = useCallback(async (provider: WalletProviderId) => {
-    setWallet({ status: "connecting", provider });
-    await new Promise((resolve) => setTimeout(resolve, 700));
-    setWallet({
-      status: "connected",
-      provider,
-      address: mockWalletAddress(provider),
-    });
+    setWallet({ status: "connecting", provider, error: undefined });
+    try {
+      if (!laceAvailable()) {
+        throw new Error("Lace Midnight extension not found. Install Lace and activate Midnight.");
+      }
+      const network =
+        (process.env.NEXT_PUBLIC_MIDNIGHT_NETWORK as "preprod" | "preview" | "undeployed") ??
+        "preprod";
+      const { address } = await connectLace(network);
+      setWallet({
+        status: "connected",
+        provider,
+        address,
+        live: true,
+      });
+    } catch (error) {
+      setWallet({
+        status: "disconnected",
+        provider,
+        live: false,
+        error: error instanceof Error ? error.message : "Wallet connection failed",
+      });
+    }
   }, []);
 
   const disconnectWallet = useCallback(() => {

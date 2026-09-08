@@ -9,11 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useApp } from "@/lib/app-store";
-import {
-  generateLocalProof,
-  mockAssistantReply,
-  sanitizeLocally,
-} from "@/lib/midnight";
+import { runShield } from "@/lib/midnight";
 import type {
   ChatMessage,
   GuardrailToggles,
@@ -43,10 +39,8 @@ function createId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-const STEPS: ProofStatus[] = ["scanning", "guarding", "proving", "attesting"];
-
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const { tier, recordProof, recordQuery } = useApp();
+  const { tier, wallet, recordProof, recordQuery } = useApp();
   const [rawInput, setRawInput] = useState("");
   const [sanitizedPrompt, setSanitizedPrompt] = useState("");
   const [guardrails, setGuardrails] = useState<GuardrailToggles>({
@@ -77,27 +71,63 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setSanitizedPrompt("");
 
     try {
-      for (const step of STEPS) {
-        setProofStatus(step);
-        await new Promise((resolve) => setTimeout(resolve, 380));
+      setProofStatus("scanning");
+      const result = await runShield(rawInput, guardrails);
+
+      setProofStatus("attesting");
+      const response = await fetch("/api/shield", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          cleanedHash: result.cleanedHash,
+          binding: result.binding,
+          packFlags: result.packFlags,
+          findings: result.findings,
+          attestedAt: result.attestedAt,
+          source: "console",
+          walletAddress:
+            wallet.status === "connected" ? wallet.address : undefined,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Notary rejected the public commitment.");
       }
 
-      const { text, findings } = sanitizeLocally(rawInput, guardrails);
-      const record = await generateLocalProof(findings);
-      setSanitizedPrompt(text);
+      const attested = (await response.json()) as {
+        ledgerId?: number;
+        status?: ProofRecord["status"];
+        note?: string;
+        walletAddress?: string;
+      };
+
+      const record: ProofRecord = {
+        hash: result.cleanedHash,
+        binding: result.binding,
+        circuit: result.circuit,
+        attestedAt: result.attestedAt,
+        findings: result.findings,
+        packFlags: result.packFlags,
+        ledgerId: attested.ledgerId,
+        status: attested.status,
+        walletAddress: attested.walletAddress,
+        note: attested.note,
+      };
+
+      setSanitizedPrompt(result.text);
       setProof(record);
       setProofStatus("shielded");
-      setComposer(text);
+      setComposer(result.text);
       recordProof(
         rawInput.length,
-        findings.find((item) => item.kind === "compliance")?.count ?? 0,
+        result.findings.find((item) => item.kind === "compliance")?.count ?? 0,
       );
     } catch {
       setProofStatus("error");
     } finally {
       setBusy(false);
     }
-  }, [busy, guardrails, rawInput, recordProof]);
+  }, [busy, guardrails, rawInput, recordProof, wallet.address, wallet.status]);
 
   const sendChat = useCallback(async () => {
     const content = composer.trim();
@@ -117,18 +147,34 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setBusy(true);
     recordQuery();
 
-    await new Promise((resolve) => setTimeout(resolve, 700));
-
-    const assistantMessage: ChatMessage = {
-      id: createId(),
-      role: "assistant",
-      content: mockAssistantReply(content),
-      createdAt: new Date().toISOString(),
-    };
-
-    setMessages((current) => [...current, assistantMessage]);
-    setBusy(false);
-  }, [busy, composer, proof?.hash, proofStatus, recordQuery]);
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: content, proofHash: proof?.hash }),
+      });
+      const data = (await response.json()) as { content?: string; error?: string };
+      const assistantMessage: ChatMessage = {
+        id: createId(),
+        role: "assistant",
+        content: data.content ?? data.error ?? "No response.",
+        createdAt: new Date().toISOString(),
+      };
+      setMessages((current) => [...current, assistantMessage]);
+    } catch {
+      setMessages((current) => [
+        ...current,
+        {
+          id: createId(),
+          role: "assistant",
+          content: "Channel error. The shielded prompt was not sent.",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+    } finally {
+      setBusy(false);
+    }
+  }, [busy, composer, proof, proofStatus, recordQuery]);
 
   const value = useMemo<WorkspaceContextValue>(
     () => ({

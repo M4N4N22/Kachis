@@ -16,20 +16,20 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   {
     href: "/workspace",
-    label: "AI Workspace",
+    label: "Workspace",
     short: "Workspace",
     icon: Sparkles,
   },
   {
     href: "/guardrails",
-    label: "Enterprise Security Guardrails",
+    label: "Security Guardrails",
     short: "Guardrails",
     icon: ShieldCheck,
   },
   {
     href: "/identity",
     label: "Identity & Credentials",
-    short: "Passport",
+    short: "Credentials",
     icon: Fingerprint,
   },
   {
@@ -45,23 +45,23 @@ export const PAGE_COPY: Record<
   { eyebrow: string; title: string; blurb: string }
 > = {
   "/workspace": {
-    eyebrow: "Local proof desk",
-    title: "AI Workspace",
-    blurb: "Sanitize on-device, then talk to the model.",
+    eyebrow: "Local Guardrail",
+    title: "Workspace",
+    blurb: "Shield internal data locally, then open a secure channel.",
   },
   "/guardrails": {
-    eyebrow: "Policy layer",
-    title: "Enterprise Security Guardrails",
-    blurb: "Role-aware rules that never leave the tenant boundary.",
+    eyebrow: "Institutional Access Controls",
+    title: "Security Guardrails",
+    blurb: "Enterprise-wide rules that never leave the tenant boundary.",
   },
   "/identity": {
-    eyebrow: "Selective disclosure",
-    title: "Midnight Passport",
-    blurb: "Prove who you are without revealing the credential.",
+    eyebrow: "Sovereign credentials",
+    title: "Identity & Credentials",
+    blurb: "Authenticate the seat without revealing the token.",
   },
   "/analytics": {
-    eyebrow: "Quiet telemetry",
+    eyebrow: "Compliance reporting",
     title: "Usage Analytics",
-    blurb: "Proofs, shielded bytes, and compliance posture.",
+    blurb: "Leaks prevented, credentials verified, settlements sealed.",
   },
 };
