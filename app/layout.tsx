@@ -14,11 +14,11 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Kachina AI",
-    template: "%s · Kachina AI",
+    default: "Kachis",
+    template: "%s · Kachis",
   },
   description:
-    "Privacy-first ZK corporate data guardrail for LLMs, built on the Midnight Protocol.",
+    "Enterprise data shield for AI. Internal records stay in your local sandbox.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

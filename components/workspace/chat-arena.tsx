@@ -4,6 +4,7 @@ import { FormEvent } from "react";
 import { ArrowUp, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
+import { copy } from "@/lib/copy";
 import { useWorkspace } from "@/lib/workspace-store";
 
 export function ChatArena() {
@@ -29,8 +30,8 @@ export function ChatArena() {
     <section className="bento flex min-h-0 flex-col overflow-hidden">
       <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3">
         <div>
-          <p className="text-[11px] font-semibold text-brand">Secure Chat Arena</p>
-          <h2 className="text-sm font-semibold tracking-tight">Shielded model</h2>
+          <p className="text-[11px] font-semibold text-brand">{copy.chat.eyebrow}</p>
+          <h2 className="text-sm font-semibold tracking-tight">{copy.chat.title}</h2>
         </div>
         <StatusPill shielded={shielded} />
       </div>
@@ -54,8 +55,8 @@ export function ChatArena() {
               )}
             >
               <p className="mb-1 text-[11px] font-semibold text-muted-fg">
-                {message.role === "user" ? "Sanitized prompt" : "Kachina"}
-                {message.sanitized ? " · attested" : ""}
+                {message.role === "user" ? copy.chat.userLabel : copy.chat.assistantLabel}
+                {message.sanitized ? " · shielded" : ""}
               </p>
               <p className="whitespace-pre-wrap">{message.content}</p>
             </article>
@@ -71,9 +72,7 @@ export function ChatArena() {
             disabled={!shielded}
             rows={3}
             placeholder={
-              shielded
-                ? "Send the shielded prompt to the model…"
-                : "Generate a local proof to unlock chat"
+              shielded ? copy.chat.placeholderOpen : copy.chat.placeholderLocked
             }
             className="min-h-[72px] flex-1 resize-none bg-transparent px-2 py-1.5 text-[13px] leading-6 outline-none placeholder:text-muted-fg disabled:opacity-50"
           />
@@ -84,13 +83,16 @@ export function ChatArena() {
             className="shrink-0"
           >
             <ArrowUp className="h-3.5 w-3.5" strokeWidth={1.75} />
-            Send
+            {copy.chat.send}
           </Button>
         </div>
         {proof ? (
-          <p className="mt-2 font-mono text-[11px] text-muted-fg">
-            Circuit {proof.circuit} · {proof.findings.length} finding
-            {proof.findings.length === 1 ? "" : "s"}
+          <p className="mt-2 text-[11px] text-muted-fg">
+            {copy.status.pipeline}
+            {proof.ledgerId ? ` · #${proof.ledgerId}` : ""}
+            {proof.findings.length
+              ? ` · ${proof.findings.length} filter${proof.findings.length === 1 ? "" : "s"} applied`
+              : ""}
           </p>
         ) : null}
       </form>
@@ -114,12 +116,7 @@ function StatusPill({ shielded }: { shielded: boolean }) {
           shielded ? "bg-success pulse-dot" : "bg-muted-fg",
         )}
       />
-      <span className="sm:hidden">{shielded ? "Shielded locally" : "Awaiting proof"}</span>
-      <span className="hidden sm:inline">
-        {shielded
-          ? "Data Shielded Locally via Midnight Protocol"
-          : "Waiting on local Midnight proof"}
-      </span>
+      {shielded ? copy.status.shielded : copy.status.unverified}
     </span>
   );
 }
@@ -137,16 +134,14 @@ function EmptyChat({
     <div className="flex h-full min-h-[220px] flex-col items-center justify-center rounded-2xl bg-bg px-6 text-center">
       <Lock className="h-3.5 w-3.5 text-brand" strokeWidth={1.75} />
       <p className="mt-3 text-sm font-medium tracking-tight">
-        {shielded ? "Proof cleared. Chat is live." : "The model cannot see raw data."}
+        {shielded ? copy.chat.emptyOpen : copy.chat.emptyLocked}
       </p>
       <p className="mt-1 max-w-xs text-[11px] leading-relaxed text-muted-fg">
-        {shielded
-          ? "Your sanitized prompt is ready. Send it, or edit the shielded version first."
-          : "Process the left pane locally. Midnight attests the guardrails without reading the file."}
+        {shielded ? copy.chat.emptyOpenHint : copy.chat.emptyLockedHint}
       </p>
       {shielded && sanitizedPrompt ? (
         <Button variant="outline" size="sm" className="mt-4" onClick={onUseSanitized}>
-          Use sanitized prompt
+          {copy.chat.useShielded}
         </Button>
       ) : null}
     </div>

@@ -97,7 +97,7 @@ export function Sidebar() {
         <div className="px-3 pb-4">
           {!sidebarCollapsed ? (
             <p className="text-[11px] leading-relaxed text-sidebar-muted">
-              Proofs stay on-device. Midnight only attests the fact.
+              Internal data remains local. Verification never leaves this machine.
             </p>
           ) : null}
         </div>

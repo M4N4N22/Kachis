@@ -39,7 +39,7 @@ export function Logo({
               inverted ? "text-white" : "text-ink",
             )}
           >
-            Kachina
+            Kachis
           </span>
           <span
             className={cn(
@@ -47,7 +47,7 @@ export function Logo({
               inverted ? "text-white/55" : "text-muted-fg",
             )}
           >
-            AI Guardrail
+            Data Shield
           </span>
         </span>
       ) : null}

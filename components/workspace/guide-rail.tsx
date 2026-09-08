@@ -4,35 +4,8 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { Bento } from "@/components/ui/bento";
 import { cn } from "@/lib/cn";
+import { copy } from "@/lib/copy";
 import { useWorkspace } from "@/lib/workspace-store";
-
-const STEPS = [
-  {
-    id: "how-paste",
-    title: "Paste on the desk",
-    body: "Source, sheets, and briefs stay in the browser. Nothing is posted yet.",
-  },
-  {
-    id: "how-guardrails",
-    title: "Choose guardrails",
-    body: "PII, financial fields, and compliance secrets are stripped locally.",
-  },
-  {
-    id: "how-proof",
-    title: "Prove on-device",
-    body: "A Compact circuit placeholder emits a Midnight-ready attestation hash.",
-  },
-  {
-    id: "how-chat",
-    title: "Talk with the leftover",
-    body: "Only the sanitized prompt reaches the model. Raw values never leave.",
-  },
-  {
-    id: "how-midnight",
-    title: "Selective disclosure later",
-    body: "Passport credentials will prove role and policy without revealing them.",
-  },
-] as const;
 
 export function GuideRail() {
   const { proof, proofStatus } = useWorkspace();
@@ -46,8 +19,8 @@ export function GuideRail() {
         onClick={() => setOpen((value) => !value)}
       >
         <span>
-          <p className="text-[11px] font-semibold text-brand">How this works</p>
-          <h2 className="text-sm font-semibold tracking-tight">Local Midnight path</h2>
+          <p className="text-[11px] font-semibold text-brand">{copy.rail.eyebrow}</p>
+          <h2 className="text-sm font-semibold tracking-tight">{copy.rail.title}</h2>
         </span>
         <ChevronDown
           className={cn(
@@ -59,7 +32,7 @@ export function GuideRail() {
       </button>
       {open ? (
         <ol className="space-y-4 px-5 pb-5">
-          {STEPS.map((step, index) => (
+          {copy.rail.steps.map((step, index) => (
             <li key={step.id} id={step.id} className="flex gap-3">
               <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-muted-fg">
                 {index + 1}
@@ -76,14 +49,36 @@ export function GuideRail() {
       ) : null}
       {proof ? (
         <div className="border-t border-border px-5 py-4">
-          <p className="text-[11px] font-semibold text-success">Last attestation</p>
-          <p className="mt-1 break-all font-mono text-[11px] text-muted-fg">
+          <p className="text-[11px] font-semibold text-success">{copy.rail.last}</p>
+          {proof.ledgerId ? (
+            <>
+              <p className="mt-1 text-[11px] text-muted-fg">{copy.rail.ledger}</p>
+              <p className="mt-0.5 font-mono text-[11px] text-muted-fg">#{proof.ledgerId}</p>
+            </>
+          ) : null}
+          <p className="mt-2 text-[11px] text-muted-fg">Cleaned commitment</p>
+          <p className="mt-0.5 break-all font-mono text-[11px] text-muted-fg">
             {proof.hash}
           </p>
+          <p className="mt-2 text-[11px] text-muted-fg">Binding (original stays private)</p>
+          <p className="mt-0.5 break-all font-mono text-[11px] text-muted-fg">
+            {proof.binding}
+          </p>
+          <p className="mt-2 text-[11px] text-muted-fg">
+            {proof.status === "proof-server-reachable"
+              ? copy.rail.notaryServer
+              : copy.rail.notaryLocal}
+          </p>
+          {proof.walletAddress ? (
+            <p className="mt-2 break-all font-mono text-[11px] text-muted-fg">
+              {proof.walletAddress}
+            </p>
+          ) : null}
+          <p className="mt-2 text-[11px] text-muted-fg">{proof.circuit}</p>
         </div>
       ) : (
         <div className="border-t border-border px-5 py-4 text-[11px] text-muted-fg">
-          Status: {proofStatus === "idle" ? "no proof yet" : proofStatus}
+          {proofStatus === "idle" ? copy.rail.idle : copy.action.processing}
         </div>
       )}
     </Bento>
