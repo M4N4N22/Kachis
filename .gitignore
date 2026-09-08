@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# agent
+/agent/node_modules
+
 # production
 /build
 
@@ -32,6 +35,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -40,7 +44,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# local design / program notes
+# local design / program notes (not for public remote)
 design.md
 design-brief.md
 midnight-buildathon-brief.md
+copy.md
+product.md
+
+# Cursor / local agent internals
+.cursor/
+CLAUDE.md
