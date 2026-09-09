@@ -54,3 +54,8 @@ product.md
 # Cursor / local agent internals
 .cursor/
 CLAUDE.md
+
+# Compact proving keys (large). Re-generate with compact/compile.sh
+compact/managed/**/keys/
+compact/managed/**/zkir/
+compact/managed/**/compiler/

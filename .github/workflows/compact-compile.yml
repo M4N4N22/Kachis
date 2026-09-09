@@ -1,0 +1,33 @@
+name: compact-compile
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - compact/**
+      - .github/workflows/compact-compile.yml
+  pull_request:
+    paths:
+      - compact/**
+      - .github/workflows/compact-compile.yml
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Compact CLI
+        run: |
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
+          echo "$HOME/.compact/bin" >> "$GITHUB_PATH"
+      - name: Install compiler 0.31.1
+        run: compact update 0.31.1 || compact update
+      - name: Compile kachis-guardrail
+        run: compact compile compact/kachis-guardrail.compact compact/managed/kachis-guardrail
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kachis-guardrail-managed
+          path: compact/managed/kachis-guardrail

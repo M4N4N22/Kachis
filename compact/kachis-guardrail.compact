@@ -18,6 +18,8 @@ export ledger totalShielded: Counter;
 
 witness originalCommitment(): Bytes<32>;
 
+export constructor() {}
+
 export circuit shield(
   cleanedHash: Bytes<32>,
   packFlags: Uint<8>

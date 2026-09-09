@@ -16,6 +16,9 @@ export type PublicAttestation = {
   source: AttestationSource;
   walletAddress?: string;
   note: string;
+  txId?: string;
+  contractAddress?: string;
+  network?: string;
 };
 
 const attestations: PublicAttestation[] = [];

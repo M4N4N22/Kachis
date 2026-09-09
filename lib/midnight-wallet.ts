@@ -384,6 +384,10 @@ export async function refreshConnectedBalances() {
   return readWalletBalances(activeConnectedApi);
 }
 
+export function getConnectedWalletApi() {
+  return activeConnectedApi;
+}
+
 export function clearConnectedWalletApi() {
   activeConnectedApi = undefined;
 }

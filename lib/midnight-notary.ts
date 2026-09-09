@@ -1,23 +1,30 @@
-export type NotaryStatus = "committed-local" | "proof-server-reachable";
+export type NotaryStatus = "committed-local" | "proof-server-reachable" | "settled";
 
 export type NotaryReceipt = {
   status: NotaryStatus;
   proofServer: string | null;
   note: string;
+  txId?: string;
+  contractAddress?: string;
+  network?: string;
 };
 
 function proofServerUrl() {
-  return process.env.MIDNIGHT_PROOF_SERVER_URL?.replace(/\/$/, "") || null;
+  return (
+    process.env.MIDNIGHT_PROOF_SERVER_URL?.replace(/\/$/, "") ||
+    process.env.NEXT_PUBLIC_MIDNIGHT_PROOF_SERVER_URL?.replace(/\/$/, "") ||
+    null
+  );
 }
 
-/** Probe Lace's local proof server. Does not submit a circuit until compact compile lands. */
+/** Probe Lace's local proof server. Settlement itself runs in the browser via the connected wallet. */
 export async function probeProofServer(): Promise<NotaryReceipt> {
   const url = proofServerUrl();
   if (!url) {
     return {
       status: "committed-local",
       proofServer: null,
-      note: "Public commitment recorded. Compact on-chain submit needs compact compile + MIDNIGHT_PROOF_SERVER_URL.",
+      note: "Public commitment recorded locally. Connect a funded wallet to settle.",
     };
   }
 
@@ -31,7 +38,7 @@ export async function probeProofServer(): Promise<NotaryReceipt> {
       return {
         status: "proof-server-reachable",
         proofServer: url,
-        note: "Proof server is up. Circuit submit is not wired until kachis-guardrail compiles.",
+        note: "Verification service is up. Settlement still needs a funded wallet.",
       };
     }
   } catch {
@@ -41,6 +48,6 @@ export async function probeProofServer(): Promise<NotaryReceipt> {
   return {
     status: "committed-local",
     proofServer: url,
-    note: "Proof server did not respond. Public commitment is still recorded locally.",
+    note: "Verification service did not respond. Public commitment is still recorded locally.",
   };
 }

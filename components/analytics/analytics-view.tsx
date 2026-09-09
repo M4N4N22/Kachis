@@ -12,6 +12,7 @@ type PublicAttestation = {
   attestedAt: string;
   source: string;
   status: string;
+  txId?: string;
   findings: { count: number; kind: string }[];
 };
 
@@ -110,6 +111,7 @@ export function AnalyticsView() {
                   <span className="block font-mono text-[12px]">{shorten(item.cleanedHash)}</span>
                   <span className="mt-1 block text-[11px] text-muted-fg">
                     #{item.ledgerId} · {item.source} · {item.status}
+                    {item.txId ? ` · ${item.txId.slice(0, 10)}…` : ""}
                   </span>
                 </span>
                 <span className="text-[11px] text-muted-fg">

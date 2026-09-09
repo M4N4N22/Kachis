@@ -9,7 +9,9 @@ import {
   type ReactNode,
 } from "react";
 import { useApp } from "@/lib/app-store";
+import { copy } from "@/lib/copy";
 import { runShield } from "@/lib/midnight";
+import { sha256Hex } from "@/shared/commit";
 import type {
   ChatMessage,
   GuardrailToggles,
@@ -74,6 +76,31 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       setProofStatus("scanning");
       const result = await runShield(rawInput, guardrails);
 
+      let settlement: { txId?: string; contractAddress?: string; network?: string; note?: string } =
+        {};
+      if (wallet.status === "connected") {
+        setProofStatus("proving");
+        const { submitGuardrail } = await import("@/lib/midnight-submit");
+        const submitted = await submitGuardrail({
+          originalHash: await sha256Hex(rawInput),
+          cleanedHash: result.cleanedHash,
+          packFlags: result.packFlags,
+          network: wallet.network,
+        });
+        if (submitted.ok) {
+          settlement = {
+            txId: submitted.txId,
+            contractAddress: submitted.contractAddress,
+            network: submitted.network,
+          };
+        } else {
+          settlement = {
+            note: copy.rail.settleFallback,
+            network: wallet.network,
+          };
+        }
+      }
+
       setProofStatus("attesting");
       const response = await fetch("/api/shield", {
         method: "POST",
@@ -87,6 +114,11 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           source: "console",
           walletAddress:
             wallet.status === "connected" ? wallet.address : undefined,
+          txId: settlement.txId,
+          contractAddress: settlement.contractAddress,
+          network: settlement.network,
+          status: settlement.txId ? "settled" : undefined,
+          note: settlement.note,
         }),
       });
 
@@ -99,6 +131,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         status?: ProofRecord["status"];
         note?: string;
         walletAddress?: string;
+        txId?: string;
+        contractAddress?: string;
+        network?: string;
       };
 
       const record: ProofRecord = {
@@ -112,6 +147,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         status: attested.status,
         walletAddress: attested.walletAddress,
         note: attested.note,
+        txId: attested.txId,
+        contractAddress: attested.contractAddress,
+        network: attested.network,
       };
 
       setSanitizedPrompt(result.text);
@@ -127,7 +165,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     } finally {
       setBusy(false);
     }
-  }, [busy, guardrails, rawInput, recordProof, wallet.address, wallet.status]);
+  }, [busy, guardrails, rawInput, recordProof, wallet.address, wallet.network, wallet.status]);
 
   const sendChat = useCallback(async () => {
     const content = composer.trim();

@@ -19,13 +19,23 @@ type ShieldBody = {
   attestedAt?: string;
   source?: AttestationSource;
   walletAddress?: string;
+  txId?: string;
+  contractAddress?: string;
+  network?: string;
+  status?: "committed-local" | "proof-server-reachable" | "settled";
+  note?: string;
   original?: unknown;
   text?: unknown;
   prompt?: unknown;
 };
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as ShieldBody;
+  let body: ShieldBody;
+  try {
+    body = (await request.json()) as ShieldBody;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
+  }
 
   if (body.original != null || body.text != null || body.prompt != null) {
     return NextResponse.json(
@@ -54,6 +64,7 @@ export async function POST(request: Request) {
   }
 
   const notary = await probeProofServer();
+  const settled = body.status === "settled" && typeof body.txId === "string" && body.txId.length > 0;
   const recorded = recordAttestation({
     cleanedHash: body.cleanedHash,
     binding: body.binding,
@@ -61,10 +72,15 @@ export async function POST(request: Request) {
     findings: body.findings ?? [],
     circuit: CIRCUIT_ID,
     attestedAt: body.attestedAt ?? new Date().toISOString(),
-    status: notary.status,
+    status: settled ? "settled" : notary.status,
     source: body.source === "agent" ? "agent" : "console",
     walletAddress: body.walletAddress,
-    note: notary.note,
+    txId: settled ? body.txId : undefined,
+    contractAddress: body.contractAddress,
+    network: body.network,
+    note: settled
+      ? "Settled. The pack ran; the original stays on this machine."
+      : (body.note ?? notary.note),
   });
 
   return NextResponse.json(recorded);

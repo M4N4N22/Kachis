@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { Bento } from "@/components/ui/bento";
 import { cn } from "@/lib/cn";
 import { copy } from "@/lib/copy";
+import { displayNetworkLabel } from "@/lib/midnight-wallet";
 import { useWorkspace } from "@/lib/workspace-store";
 
 export function GuideRail() {
@@ -64,17 +65,34 @@ export function GuideRail() {
           <p className="mt-0.5 break-all font-mono text-[11px] text-muted-fg">
             {proof.binding}
           </p>
+          {proof.txId ? (
+            <>
+              <p className="mt-2 text-[11px] text-muted-fg">{copy.rail.tx}</p>
+              <p className="mt-0.5 break-all font-mono text-[11px] text-muted-fg">{proof.txId}</p>
+            </>
+          ) : null}
+          {proof.network ? (
+            <>
+              <p className="mt-2 text-[11px] text-muted-fg">{copy.rail.network}</p>
+              <p className="mt-0.5 text-[11px] text-muted-fg">
+                {displayNetworkLabel(proof.network)}
+              </p>
+            </>
+          ) : null}
           <p className="mt-2 text-[11px] text-muted-fg">
-            {proof.status === "proof-server-reachable"
-              ? copy.rail.notaryServer
-              : copy.rail.notaryLocal}
+            {proof.status === "settled"
+              ? copy.rail.notarySettled
+              : proof.status === "proof-server-reachable"
+                ? copy.rail.notaryServer
+                : proof.note
+                  ? proof.note
+                  : copy.rail.notaryLocal}
           </p>
           {proof.walletAddress ? (
             <p className="mt-2 break-all font-mono text-[11px] text-muted-fg">
               {proof.walletAddress}
             </p>
           ) : null}
-          <p className="mt-2 text-[11px] text-muted-fg">{proof.circuit}</p>
         </div>
       ) : (
         <div className="border-t border-border px-5 py-4 text-[11px] text-muted-fg">
