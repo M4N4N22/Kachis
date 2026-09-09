@@ -120,7 +120,13 @@ export const copy = {
     identity:
       "Identity authenticated via sovereign credentials. Your private roles and cryptographic clearance tokens remain on-device.",
     disconnect: "Disconnect",
-    choose: "Connect Midnight Lace. The unshielded address is used for dApp connect.",
+    cancel: "Cancel",
+    choose: "Connect a Midnight wallet. The unshielded address is used for dApp connect.",
+    unshielded: "Unshielded",
+    shielded: "Shielded",
+    dust: "Fee reserve",
+    refresh: "Refresh balances",
+    balancesUnavailable: "Balances unavailable",
   },
   analytics: {
     leaks: "Leaks Prevented Locally",

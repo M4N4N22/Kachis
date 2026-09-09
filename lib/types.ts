@@ -1,6 +1,6 @@
 export type Tier = "freelancer" | "institutional";
 
-export type WalletProviderId = "lace";
+export type WalletProviderId = "lace" | "gero" | "1am" | "ctrl";
 
 export type WalletStatus = "disconnected" | "connecting" | "connected";
 
@@ -15,12 +15,22 @@ export type ProofStatus =
 
 export type ChatRole = "user" | "assistant" | "system";
 
+export interface WalletBalances {
+  unshielded: string;
+  shielded: string;
+  dust: string;
+  dustCap: string;
+}
+
 export interface WalletState {
   status: WalletStatus;
   provider?: WalletProviderId;
   address?: string;
+  network?: string;
   live?: boolean;
   error?: string;
+  walletName?: string;
+  balances?: WalletBalances;
 }
 
 export interface GuardrailToggles {
@@ -70,5 +80,8 @@ export const WALLET_PROVIDERS: {
   name: string;
   hint: string;
 }[] = [
-  { id: "lace", name: "Lace", hint: "Midnight Lace — required for live connect" },
+  { id: "lace", name: "Lace", hint: "Chrome — Midnight dApp connector" },
+  { id: "gero", name: "Gero", hint: "Chrome — Midnight if the connector is injected" },
+  { id: "1am", name: "1AM", hint: "Chrome / Firefox — Midnight-native" },
+  { id: "ctrl", name: "Ctrl", hint: "Chrome — partial Midnight connector" },
 ];
