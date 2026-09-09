@@ -40,14 +40,21 @@ export const NAV_ITEMS: NavItem[] = [
   },
 ];
 
+export type PageHref = NavItem["href"] | "/demo";
+
 export const PAGE_COPY: Record<
-  NavItem["href"],
+  PageHref,
   { eyebrow: string; title: string; blurb: string }
 > = {
   "/workspace": {
     eyebrow: "Local Guardrail",
     title: "Workspace",
     blurb: "Shield internal data locally, then open a secure channel.",
+  },
+  "/demo": {
+    eyebrow: "Walkthrough",
+    title: "Sample shield",
+    blurb: "Canned payroll paste. Production workspace is live paste only.",
   },
   "/guardrails": {
     eyebrow: "Institutional Access Controls",

@@ -43,7 +43,7 @@ With Lace connected on Preprod, a funded tNIGHT/DUST balance, and compile artifa
 
 Workspace → Shield & Proceed proves `shield()` and submits via the wallet. `/api/shield` still receives **hashes + tx id only** — never the paste.
 
-If compile artifacts, DUST, or the wallet are missing, the console records the public commitment locally so the demo still runs.
+If compile artifacts, DUST, or the wallet are missing, Shield is blocked or fails openly — the console does not pretend settlement succeeded.
 
 ## License
 

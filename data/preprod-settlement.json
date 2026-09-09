@@ -1,0 +1,26 @@
+{
+  "id": "1",
+  "ledgerId": 1,
+  "cleanedHash": "0x0c04d0a3c1795eb8702f5332f82013283b7d309dea132a16d6a3f8f5e51ff76b",
+  "binding": "0xc92c7bab6055e5add15ba4b66bb15f289a096f8a5d669c723c1c5fc7caa0a21c",
+  "packFlags": 7,
+  "findings": [
+    { "id": "email", "kind": "pii", "label": "Email addresses", "count": 1 },
+    { "id": "ssn", "kind": "pii", "label": "SSN-shaped values", "count": 1 },
+    { "id": "phone", "kind": "pii", "label": "Phone numbers", "count": 1 },
+    { "id": "account", "kind": "financial", "label": "Account numbers", "count": 1 },
+    { "id": "amount", "kind": "financial", "label": "Currency amounts", "count": 1 },
+    { "id": "secret", "kind": "compliance", "label": "Secrets held by compliance audit", "count": 1 }
+  ],
+  "circuit": "kachis_guardrail_v0",
+  "attestedAt": "2026-09-09T17:09:18.000Z",
+  "status": "settled",
+  "source": "console",
+  "walletAddress": "mn_addr_preprod12sxshhkun6zmk5vdt8acw9lp7nylufj20enwg4ss56dr7v9cz5ms5t8rdu",
+  "note": "Settled. The pack ran; the original stays on this machine.",
+  "txId": "0004be65181b38108650c2b392b6bae4e99fff26a163c858b46d7577dda156d1ac",
+  "txHash": "dc7080a02d8a22e4be3d7992174aed9fd9e73b28abdef2c4fe37db8f4f9823db",
+  "contractAddress": "d145333b792908a93fe7abacf5753ba8e63ecc6291bc76a901ebfed8f5f9f24f",
+  "network": "preprod",
+  "onChain": true
+}

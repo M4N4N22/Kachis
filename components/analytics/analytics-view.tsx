@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Bento } from "@/components/ui/bento";
 import { useApp } from "@/lib/app-store";
 import { copy } from "@/lib/copy";
+import { preprodExtrinsicUrl } from "@/lib/midnight-chain-attestations";
 
 type PublicAttestation = {
   ledgerId: number;
@@ -13,6 +14,8 @@ type PublicAttestation = {
   source: string;
   status: string;
   txId?: string;
+  txHash?: string;
+  onChain?: boolean;
   findings: { count: number; kind: string }[];
 };
 
@@ -51,19 +54,19 @@ export function AnalyticsView() {
   const stats = [
     {
       label: copy.analytics.leaks,
-      value: (leaksPrevented || usage.blockedSecrets).toLocaleString(),
+      value: leaksPrevented.toLocaleString(),
       hint: "Held in the local sandbox",
     },
     {
       label: copy.analytics.credentials,
       value: credentialsVerified.toLocaleString(),
-      hint: wallet.status === "connected" ? "Midnight Lace" : copy.status.unverified,
+      hint: wallet.status === "connected" ? "Corporate wallet" : copy.status.unverified,
     },
     {
       label: copy.analytics.settlements,
-      value: (attestations.length || usage.proofsGenerated).toLocaleString(),
+      value: attestations.length.toLocaleString(),
       hint: sandbox
-        ? `${attestations.length || usage.proofsGenerated} / ${SANDBOX_LIMIT} freelance local limit`
+        ? `${attestations.length} / ${SANDBOX_LIMIT} freelance local limit`
         : copy.tiers.institutional.badge,
     },
   ];
@@ -111,7 +114,25 @@ export function AnalyticsView() {
                   <span className="block font-mono text-[12px]">{shorten(item.cleanedHash)}</span>
                   <span className="mt-1 block text-[11px] text-muted-fg">
                     #{item.ledgerId} · {item.source} · {item.status}
-                    {item.txId ? ` · ${item.txId.slice(0, 10)}…` : ""}
+                    {item.onChain ? " · on-chain" : ""}
+                    {(() => {
+                      const url = preprodExtrinsicUrl(item);
+                      if (!url) return null;
+                      const label = (item.txHash ?? item.txId ?? "").slice(0, 10);
+                      return (
+                        <>
+                          {" · "}
+                          <a
+                            className="text-brand underline-offset-2 hover:underline"
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {label}…
+                          </a>
+                        </>
+                      );
+                    })()}
                   </span>
                 </span>
                 <span className="text-[11px] text-muted-fg">

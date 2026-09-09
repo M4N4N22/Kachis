@@ -9,6 +9,11 @@ import { useWorkspace } from "@/lib/workspace-store";
 
 export function ZkInputPanel() {
   const {
+    demo,
+    walletConnected,
+    canShield,
+    shieldGateHint,
+    settleError,
     rawInput,
     setRawInput,
     guardrails,
@@ -25,7 +30,11 @@ export function ZkInputPanel() {
       : proofStatus === "shielded"
         ? copy.action.success
         : proofStatus === "idle"
-          ? copy.action.idle
+          ? !walletConnected
+            ? copy.action.walletRequired
+            : !canShield
+              ? copy.action.fundRequired
+              : copy.action.idle
           : copy.action.processing;
 
   return (
@@ -38,13 +47,15 @@ export function ZkInputPanel() {
             {copy.input.helper}
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setRawInput(SAMPLE_SENSITIVE_PROMPT)}
-        >
-          {copy.input.loadSample}
-        </Button>
+        {demo ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setRawInput(SAMPLE_SENSITIVE_PROMPT)}
+          >
+            {copy.demo.loadSample}
+          </Button>
+        ) : null}
       </div>
 
       <div className="min-h-0 flex-1 px-5">
@@ -87,13 +98,25 @@ export function ZkInputPanel() {
             </span>
           ) : null}
         </div>
+        {shieldGateHint ? (
+          <p className="text-[11px] leading-relaxed text-muted-fg">{shieldGateHint}</p>
+        ) : null}
+        {settleError ? (
+          <p className="text-[11px] leading-relaxed text-danger">{settleError}</p>
+        ) : null}
         <Button
           className="w-full"
-          disabled={!rawInput.trim() || busy}
+          disabled={!canShield || !rawInput.trim() || busy}
           onClick={() => void processLocally()}
         >
           <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} />
-          {busy ? copy.action.processing : copy.action.idle}
+          {busy
+            ? copy.action.processing
+            : !walletConnected
+              ? copy.action.walletRequired
+              : !canShield
+                ? copy.action.fundRequired
+                : copy.action.idle}
         </Button>
       </div>
     </section>

@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PanelLeft } from "lucide-react";
+import { BookOpen, PanelLeft } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useApp } from "@/lib/app-store";
 import { cn } from "@/lib/cn";
+import { copy } from "@/lib/copy";
 import { NAV_ITEMS } from "@/lib/nav";
 
 export function Sidebar() {
@@ -94,7 +95,25 @@ export function Sidebar() {
           })}
         </nav>
 
-        <div className="px-3 pb-4">
+        <div className="space-y-3 px-3 pb-4">
+          <Link
+            href="/demo"
+            title={sidebarCollapsed ? copy.demo.nav : undefined}
+            onClick={() => setMobileNavOpen(false)}
+            className={cn(
+              "flex items-center gap-3 rounded-xl px-2.5 py-2 text-[11px] font-semibold transition-colors",
+              sidebarCollapsed && "justify-center px-0",
+              pathname === "/demo"
+                ? "bg-sidebar-accent text-sidebar-fg"
+                : "text-sidebar-muted hover:bg-sidebar-accent/70 hover:text-sidebar-fg",
+            )}
+          >
+            <BookOpen
+              className={cn("h-3.5 w-3.5", pathname === "/demo" && "text-brand")}
+              strokeWidth={1.75}
+            />
+            {!sidebarCollapsed ? copy.demo.nav : null}
+          </Link>
           {!sidebarCollapsed ? (
             <p className="text-[11px] leading-relaxed text-sidebar-muted">
               Internal data remains local. Verification never leaves this machine.

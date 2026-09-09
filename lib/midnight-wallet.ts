@@ -11,6 +11,14 @@ export type DiscoveredWallet = InitialAPI & {
   knownId?: KnownWalletId;
 };
 
+type WalletProviderId = KnownWalletId;
+
+type ActiveWalletSession = {
+  providerId: WalletProviderId;
+  network: string;
+  api: ConnectedAPI;
+};
+
 const KNOWN: {
   id: KnownWalletId;
   name: string;
@@ -145,19 +153,85 @@ const TEN = BigInt(10);
 const NIGHT_DECIMALS = 6;
 const DUST_DECIMALS = 15;
 
-function asBigInt(value: unknown): bigint | undefined {
+/** Parse wallet-reported token amounts across Lace/Gero/1AM payload shapes. */
+function asBigInt(value: unknown, decimals = 0): bigint | undefined {
   if (typeof value === "bigint") return value;
-  if (typeof value === "number" && Number.isFinite(value)) return BigInt(Math.trunc(value));
-  if (typeof value === "string" && /^-?\d+$/.test(value.trim())) return BigInt(value.trim());
+  if (typeof value === "number" && Number.isFinite(value)) {
+    if (!Number.isInteger(value) && decimals > 0) {
+      return asBigInt(value.toFixed(decimals), decimals);
+    }
+    return BigInt(Math.trunc(value));
+  }
+  if (typeof value !== "string") return undefined;
+
+  const raw = value.trim().replace(/,/g, "");
+  if (!raw) return undefined;
+  if (/^0x[0-9a-f]+$/i.test(raw)) {
+    try {
+      return BigInt(raw);
+    } catch {
+      return undefined;
+    }
+  }
+  if (/^-?\d+$/.test(raw)) return BigInt(raw);
+  if (decimals > 0 && /^-?\d+\.\d+$/.test(raw)) {
+    const negative = raw.startsWith("-");
+    const unsigned = negative ? raw.slice(1) : raw;
+    const [wholePart, fractionPart = ""] = unsigned.split(".");
+    const frac = `${fractionPart}${"0".repeat(decimals)}`.slice(0, decimals);
+    const scaled = BigInt(wholePart) * TEN ** BigInt(decimals) + BigInt(frac || "0");
+    return negative ? -scaled : scaled;
+  }
   return undefined;
 }
 
-function extractAmount(value: unknown): bigint | undefined {
-  const direct = asBigInt(value);
+function extractAmount(value: unknown, decimals = 0, depth = 0): bigint | undefined {
+  if (depth > 4) return undefined;
+  const direct = asBigInt(value, decimals);
   if (direct !== undefined) return direct;
   if (!value || typeof value !== "object") return undefined;
   const record = value as Record<string, unknown>;
-  return asBigInt(record.balance) ?? asBigInt(record.amount) ?? asBigInt(record.value);
+  for (const key of [
+    "balance",
+    "amount",
+    "value",
+    "available",
+    "current",
+    "free",
+    "dust",
+    "dustBalance",
+    "generated",
+  ]) {
+    if (!(key in record)) continue;
+    const nested = extractAmount(record[key], decimals, depth + 1);
+    if (nested !== undefined) return nested;
+  }
+  return undefined;
+}
+
+function extractDustPair(value: unknown): { balance: bigint; cap: bigint } | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+
+  const balance =
+    extractAmount(record.balance, DUST_DECIMALS) ??
+    extractAmount(record.dustBalance, DUST_DECIMALS) ??
+    extractAmount(record.available, DUST_DECIMALS) ??
+    extractAmount(record.current, DUST_DECIMALS) ??
+    extractAmount(record.dust, DUST_DECIMALS);
+
+  const cap =
+    extractAmount(record.cap, DUST_DECIMALS) ??
+    extractAmount(record.dustCap, DUST_DECIMALS) ??
+    extractAmount(record.max, DUST_DECIMALS) ??
+    extractAmount(record.maximum, DUST_DECIMALS) ??
+    extractAmount(record.limit, DUST_DECIMALS);
+
+  if (balance === undefined && cap === undefined) return null;
+  return {
+    balance: balance ?? ZERO,
+    cap: cap ?? ZERO,
+  };
 }
 
 function isNativeTokenType(key: string) {
@@ -191,32 +265,156 @@ export function formatTokenAmount(value: bigint, decimals = NIGHT_DECIMALS) {
   return negative ? `-${text}` : text;
 }
 
-async function readWalletBalances(api: ConnectedAPI): Promise<WalletBalances | undefined> {
+/** JSON-safe dump for wallet payloads (bigint → string). */
+function serializeProbe(value: unknown): unknown {
+  if (typeof value === "bigint") return value.toString();
+  if (value instanceof Error) {
+    return { name: value.name, message: value.message };
+  }
+  if (Array.isArray(value)) return value.map(serializeProbe);
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
+      out[key] = serializeProbe(entry);
+    }
+    return out;
+  }
+  return value;
+}
+
+function probeWalletBalances(payload: Record<string, unknown>) {
+  const body = serializeProbe(payload);
+  console.log("[wallet-probe]", body);
+  if (typeof window === "undefined") return;
+  void fetch("/api/debug/wallet-balances", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }).catch(() => undefined);
+}
+
+async function readWalletBalances(
+  api: ConnectedAPI,
+  meta?: { providerId?: string; network?: string },
+): Promise<WalletBalances | undefined> {
+  const hasGetDust = typeof api.getDustBalance === "function";
+  const apiMethods = Object.keys(api as object).filter(
+    (key) => typeof (api as Record<string, unknown>)[key] === "function",
+  );
+
   const [unshielded, shielded, dust] = await Promise.allSettled([
     typeof api.getUnshieldedBalances === "function"
       ? withTimeout(api.getUnshieldedBalances(), 8_000, "unshielded timeout")
-      : Promise.reject(),
+      : Promise.reject(new Error("getUnshieldedBalances missing")),
     typeof api.getShieldedBalances === "function"
       ? withTimeout(api.getShieldedBalances(), 8_000, "shielded timeout")
-      : Promise.reject(),
-    typeof api.getDustBalance === "function"
+      : Promise.reject(new Error("getShieldedBalances missing")),
+    hasGetDust
       ? withTimeout(api.getDustBalance(), 8_000, "dust timeout")
-      : Promise.reject(),
+      : Promise.reject(new Error("getDustBalance missing")),
   ]);
 
-  const dustValue =
-    dust.status === "fulfilled"
+  const altRaw: Record<string, unknown> = {};
+  const altReaders = ["getDustBalances", "getFeeReserve", "dustBalance", "getDustAddress"] as const;
+  for (const name of altReaders) {
+    const fn = (api as Record<string, unknown>)[name];
+    if (typeof fn !== "function") continue;
+    try {
+      altRaw[name] = await withTimeout(
+        Promise.resolve((fn as () => unknown).call(api)),
+        8_000,
+        `${name} timeout`,
+      );
+    } catch (error) {
+      altRaw[name] = error instanceof Error ? error.message : String(error);
+    }
+  }
+
+  let dustValue =
+    dust.status === "fulfilled" ? extractDustPair(dust.value) : null;
+
+  // Some wallets expose dust under alternate method names or return empty objects.
+  if (!dustValue || (dustValue.balance === ZERO && dustValue.cap === ZERO)) {
+    for (const name of ["getDustBalances", "getFeeReserve", "dustBalance"] as const) {
+      const raw = altRaw[name];
+      if (raw === undefined) continue;
+      const parsed = extractDustPair(raw);
+      if (parsed && (parsed.balance > ZERO || parsed.cap > ZERO)) {
+        dustValue = parsed;
+        break;
+      }
+    }
+  }
+
+  // Last resort: scan unshielded token map for dust-like keys.
+  if (
+    (!dustValue || (dustValue.balance === ZERO && dustValue.cap === ZERO)) &&
+    unshielded.status === "fulfilled" &&
+    unshielded.value &&
+    typeof unshielded.value === "object"
+  ) {
+    for (const [key, value] of Object.entries(unshielded.value as Record<string, unknown>)) {
+      if (!/dust|fee|reserve/i.test(key)) continue;
+      const amount = extractAmount(value, DUST_DECIMALS);
+      if (amount !== undefined && amount > ZERO) {
+        dustValue = { balance: amount, cap: dustValue?.cap ?? ZERO };
+        break;
+      }
+    }
+  }
+
+  probeWalletBalances({
+    providerId: meta?.providerId ?? "unknown",
+    network: meta?.network,
+    apiMethods,
+    hasGetDustBalance: hasGetDust,
+    unshielded:
+      unshielded.status === "fulfilled"
+        ? { ok: true, value: unshielded.value }
+        : { ok: false, reason: String(unshielded.reason) },
+    shielded:
+      shielded.status === "fulfilled"
+        ? { ok: true, value: shielded.value }
+        : { ok: false, reason: String(shielded.reason) },
+    dust:
+      dust.status === "fulfilled"
+        ? { ok: true, value: dust.value, typeof: typeof dust.value }
+        : { ok: false, reason: String(dust.reason) },
+    altRaw,
+    parsedDust: dustValue
       ? {
-          balance: extractAmount((dust.value as { balance?: unknown }).balance) ?? ZERO,
-          cap: extractAmount((dust.value as { cap?: unknown }).cap) ?? ZERO,
+          balance: dustValue.balance.toString(),
+          cap: dustValue.cap.toString(),
+          balanceDisplay: formatTokenAmount(dustValue.balance, DUST_DECIMALS),
+          capDisplay: formatTokenAmount(dustValue.cap, DUST_DECIMALS),
         }
-      : null;
+      : null,
+  });
 
   const hasAny =
     unshielded.status === "fulfilled" ||
     shielded.status === "fulfilled" ||
     dustValue !== null;
   if (!hasAny) return undefined;
+
+  const numericDust =
+    dustValue && (dustValue.balance > ZERO || dustValue.cap > ZERO)
+      ? {
+          dust: formatTokenAmount(dustValue.balance, DUST_DECIMALS),
+          dustCap: formatTokenAmount(dustValue.cap, DUST_DECIMALS),
+          dustExists: true as const,
+        }
+      : null;
+
+  // Gero's connector commonly returns balance/cap 0 while the wallet UI generates tDUST.
+  // A dust address is enough to treat fee reserve as present for gating + honest UI.
+  const dustAddress =
+    asAddress(altRaw.getDustAddress) ??
+    (typeof altRaw.getDustAddress === "object" && altRaw.getDustAddress
+      ? asAddress((altRaw.getDustAddress as { dustAddress?: unknown }).dustAddress)
+      : undefined);
+  const geroDustPresent =
+    meta?.providerId === "gero" && Boolean(dustAddress) && !numericDust;
 
   return {
     unshielded:
@@ -225,8 +423,18 @@ async function readWalletBalances(api: ConnectedAPI): Promise<WalletBalances | u
         : "—",
     shielded:
       shielded.status === "fulfilled" ? formatTokenAmount(sumTokenRecord(shielded.value)) : "—",
-    dust: dustValue ? formatTokenAmount(dustValue.balance, DUST_DECIMALS) : "—",
-    dustCap: dustValue ? formatTokenAmount(dustValue.cap, DUST_DECIMALS) : "—",
+    dust: numericDust
+      ? numericDust.dust
+      : geroDustPresent
+        ? "Exists"
+        : dustValue
+          ? formatTokenAmount(dustValue.balance, DUST_DECIMALS)
+          : "—",
+    dustCap: numericDust ? numericDust.dustCap : "—",
+    dustExists: Boolean(numericDust || geroDustPresent),
+    dustHint: geroDustPresent
+      ? "For exact balance, check your Gero wallet / dashboard."
+      : undefined,
   };
 }
 
@@ -327,6 +535,41 @@ export function dustAsset(networkId: string | undefined): "DUST" | "tDUST" {
   return isMainnetNetwork(networkId) ? "DUST" : "tDUST";
 }
 
+/**
+ * Normalize long token decimals for compact UI display.
+ * Example: 4.563383999999999 -> 4.563384
+ */
+export function formatDisplayAmount(value: string, maxFraction = 6): string {
+  const raw = value.trim();
+  if (!raw || raw === "—") return "—";
+  const numeric = Number.parseFloat(raw.replace(/,/g, ""));
+  if (!Number.isFinite(numeric)) return value;
+  return numeric.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxFraction,
+  });
+}
+
+/** True when fee reserve is usable: numeric dust > 0, or Gero dust-address presence. */
+export function hasFeeReserve(balances: WalletBalances | undefined): boolean {
+  if (!balances) return false;
+  if (balances.dustExists) return true;
+  const raw = balances.dust.trim();
+  if (!raw || raw === "—" || raw.toLowerCase() === "exists") return false;
+  const numeric = Number.parseFloat(raw.replace(/,/g, ""));
+  return Number.isFinite(numeric) && numeric > 0;
+}
+
+export function formatDustLabel(balances: WalletBalances, asset: string): string {
+  if (balances.dustExists && (balances.dust === "Exists" || balances.dustCap === "—")) {
+    return `Exists ${asset}`;
+  }
+  if (balances.dustCap !== "—") {
+    return `${formatDisplayAmount(balances.dust)} / ${formatDisplayAmount(balances.dustCap, 2)} ${asset}`;
+  }
+  return `${formatDisplayAmount(balances.dust)} ${asset}`;
+}
+
 /** Call `connect()` in the click handler — do not await anything first (Lace pop-up). */
 export function startWalletConnect(providerId: string) {
   const initial = findInjectedWallet(providerId);
@@ -335,6 +578,7 @@ export function startWalletConnect(providerId: string) {
   }
   const network = preferredNetwork();
   return {
+    providerId,
     initial,
     network,
     pending: initial.connect(network),
@@ -343,7 +587,29 @@ export function startWalletConnect(providerId: string) {
 
 export type WalletConnectSession = ReturnType<typeof startWalletConnect>;
 
-let activeConnectedApi: ConnectedAPI | undefined;
+let activeSession: ActiveWalletSession | undefined;
+
+async function bestEffortDisconnect(api: ConnectedAPI | undefined) {
+  if (!api) return;
+  const candidateMethods = [
+    "disconnect",
+    "deauthorize",
+    "revoke",
+    "forgetDapp",
+    "forgetCurrentDapp",
+    "logout",
+  ] as const;
+
+  for (const name of candidateMethods) {
+    const fn = (api as Record<string, unknown>)[name];
+    if (typeof fn !== "function") continue;
+    try {
+      await Promise.resolve((fn as () => unknown).call(api));
+    } catch {
+      /* Best effort only: extensions differ in teardown semantics. */
+    }
+  }
+}
 
 export async function finishWalletConnect(session: WalletConnectSession) {
   const connected = await withTimeout(
@@ -351,7 +617,6 @@ export async function finishWalletConnect(session: WalletConnectSession) {
     90_000,
     "Wallet did not respond. Check the Lace pop-up — it is often behind this window.",
   );
-  activeConnectedApi = connected;
   const address = await readUnshieldedAddress(connected);
   let reported: string | undefined;
   try {
@@ -369,7 +634,16 @@ export async function finishWalletConnect(session: WalletConnectSession) {
     /* Address can still name the network. */
   }
   const network = resolveNetworkId(reported, address, session.network);
-  const balances = await readWalletBalances(connected).catch(() => undefined);
+  const balances = await readWalletBalances(connected, {
+    providerId: session.providerId,
+    network,
+  }).catch(() => undefined);
+  const providerId = session.providerId as WalletProviderId;
+  activeSession = {
+    providerId,
+    network,
+    api: connected,
+  };
   return {
     address,
     network,
@@ -380,16 +654,40 @@ export async function finishWalletConnect(session: WalletConnectSession) {
 }
 
 export async function refreshConnectedBalances() {
-  if (!activeConnectedApi) return undefined;
-  return readWalletBalances(activeConnectedApi);
+  if (!activeSession) return undefined;
+
+  const meta = {
+    providerId: activeSession.providerId,
+    network: activeSession.network,
+  };
+  const current = await readWalletBalances(activeSession.api, meta).catch(() => undefined);
+  if (current) return current;
+
+  // Connector can become stale after extension SW restarts (common with Gero).
+  const injected = findInjectedWallet(activeSession.providerId);
+  if (!injected) return undefined;
+  const reconnected = await withTimeout(
+    injected.connect(activeSession.network),
+    30_000,
+    "Wallet reconnect timed out while refreshing balances.",
+  ).catch(() => undefined);
+  if (!reconnected) return undefined;
+  activeSession = { ...activeSession, api: reconnected };
+  return readWalletBalances(reconnected, meta).catch(() => undefined);
 }
 
 export function getConnectedWalletApi() {
-  return activeConnectedApi;
+  return activeSession?.api;
+}
+
+export function getConnectedWalletProviderId(): WalletProviderId | undefined {
+  return activeSession?.providerId;
 }
 
 export function clearConnectedWalletApi() {
-  activeConnectedApi = undefined;
+  const current = activeSession?.api;
+  activeSession = undefined;
+  void bestEffortDisconnect(current);
 }
 
 export function missingWalletMessage(providerId: string) {

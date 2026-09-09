@@ -3,10 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { TierSelector } from "@/components/shell/tier-selector";
 import { useApp } from "@/lib/app-store";
-import { copy } from "@/lib/copy";
 
 export function ProfileMenu() {
-  const { profile, tier } = useApp();
+  const { profile } = useApp();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -38,25 +37,9 @@ export function ProfileMenu() {
       {open ? (
         <div className="absolute top-full right-0 z-40 mt-2 w-64 rounded-2xl bg-surface p-3 shadow-[0_16px_40px_rgba(0,0,0,0.45)] ring-1 ring-border">
           <p className="text-[13px] font-medium">{profile.name}</p>
-          <p className="text-[11px] text-muted-fg">
-            {profile.organization} ·{" "}
-            {tier === "institutional"
-              ? copy.tiers.institutional.badge
-              : copy.tiers.sandbox.badge}
-          </p>
+          <p className="text-[11px] text-muted-fg">{profile.organization}</p>
           <div className="mt-3 sm:hidden">
             <TierSelector />
-          </div>
-          <div className="mt-3 space-y-1 text-[13px] text-muted-fg">
-            <p className="rounded-xl px-2 py-1.5 hover:bg-muted hover:text-ink">
-              Profile settings
-            </p>
-            <p className="rounded-xl px-2 py-1.5 hover:bg-muted hover:text-ink">
-              Billing & seats
-            </p>
-            <p className="rounded-xl px-2 py-1.5 hover:bg-muted hover:text-ink">
-              Sign out
-            </p>
           </div>
         </div>
       ) : null}

@@ -11,7 +11,6 @@ export const copy = {
     helper:
       "Processing runs entirely within your local sandbox environment. Internal data remains local.",
     placeholder: "Paste internal data, source code, or records here...",
-    loadSample: "Load sample",
   },
   filters: {
     pii: {
@@ -39,6 +38,19 @@ export const copy = {
     guarding: "Running Local Verification...",
     proving: "Running Local Verification...",
     attesting: "Running Local Verification...",
+    walletRequired: "Connect Corporate Wallet to Shield",
+    walletRequiredHint:
+      "A verified seat is required before local verification can run.",
+    fundRequired: "Fund fee reserve to Shield",
+    fundRequiredHint:
+      "Settlement needs a positive fee reserve. Faucet tNIGHT, wait for tDUST, then refresh balances. On Gero, exact tDUST may only appear in the wallet dashboard.",
+    geroSettleHint:
+      "Gero can connect and prove, but cannot balance contract settlements yet. Use Lace to Shield & settle.",
+    geroBalanceUnsupported:
+      "Gero cannot balance contract settlements yet (balanceUnsealedTransaction is planned). Connect Lace with a funded fee reserve to settle.",
+    proofServerUnreachable:
+      "Proof server unreachable (Failed to fetch). Start a local proof server on :6300, point Lace Midnight proving to Local, then retry Shield.",
+    settleFailed: "Settlement did not complete. Nothing was recorded.",
   },
   status: {
     shielded: "Data Shielded Locally",
@@ -51,14 +63,47 @@ export const copy = {
     userLabel: "Shielded input",
     assistantLabel: "Kachis",
     placeholderLocked: "Shield data locally to open this channel",
+    placeholderWallet: "Connect a corporate wallet to open this channel",
     placeholderOpen: "Send the shielded prompt…",
     send: "Send",
     emptyLocked: "Raw records never enter this channel.",
     emptyLockedHint:
       "Shield the payload locally. Only the insulated remainder can be sent.",
+    emptyWallet: "Seat unverified.",
+    emptyWalletHint:
+      "Connect a corporate wallet with a funded fee reserve, then shield locally.",
+    emptyFund: "Fee reserve required.",
+    emptyFundHint:
+      "Faucet tNIGHT, wait for tDUST, refresh balances, then shield locally.",
     emptyOpen: "Channel verified. Pipeline is live.",
     emptyOpenHint: "Send the shielded prompt, or edit it before it leaves this machine.",
     useShielded: "Use shielded prompt",
+    noModel: "No model configured. Set OPENAI_API_KEY to send the shielded prompt.",
+    walkthroughLabel: "Walkthrough",
+  },
+  demo: {
+    nav: "Walkthrough",
+    landing: "Walkthrough",
+    banner:
+      "Canned payroll paste for a recorded walkthrough. Workspace is live paste only.",
+    loadSample: "Load sample",
+    reply:
+      "Walkthrough reply — not a model.\n\nThis channel received the shielded remainder only. Identifiers never left the sandbox.\n\nOpen Workspace and configure a model to send a live shielded prompt.",
+  },
+  seat: {
+    unbound: "Unbound seat",
+    notConnected: "Not connected",
+    verified: "Verified seat",
+  },
+  guardrails: {
+    liveEyebrow: "Live filters",
+    liveTitle: "Applied at shield time",
+    liveHint:
+      "These run in Workspace when you shield. Tenant packs that persist across seats are later.",
+    seatEyebrow: "Bound seat",
+    seatTitle: "Workspace governance",
+    seatEmpty: "No seat bound. Connect a wallet.",
+    seatLive: "Wallet connected. Role packs are later.",
   },
   rail: {
     eyebrow: "How this works",
@@ -130,6 +175,8 @@ export const copy = {
     unshielded: "Unshielded",
     shielded: "Shielded",
     dust: "Fee reserve",
+    dustExists: "Exists",
+    dustCheckWallet: "For exact balance, check your Gero wallet / dashboard.",
     refresh: "Refresh balances",
     balancesUnavailable: "Balances unavailable",
   },

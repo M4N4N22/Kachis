@@ -9,7 +9,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { clearConnectedWalletApi, finishWalletConnect, refreshConnectedBalances, startWalletConnect, type WalletConnectSession } from "@/lib/midnight-wallet";
+import { copy } from "@/lib/copy";
+import {
+  clearConnectedWalletApi,
+  displayNetworkLabel,
+  finishWalletConnect,
+  refreshConnectedBalances,
+  startWalletConnect,
+  type WalletConnectSession,
+} from "@/lib/midnight-wallet";
 import type { Profile, Tier, WalletProviderId, WalletState } from "@/lib/types";
 
 interface UsageStats {
@@ -38,21 +46,34 @@ interface AppContextValue {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-function profileFor(tier: Tier): Profile {
-  if (tier === "institutional") {
+function shortenAddress(address: string) {
+  return `${address.slice(0, 8)}…${address.slice(-4)}`;
+}
+
+function initialsFromAddress(address: string) {
+  const alnum = address.replace(/[^a-zA-Z0-9]/g, "");
+  return (alnum.slice(0, 2) || "K").toUpperCase();
+}
+
+function profileFor(tier: Tier, wallet: WalletState): Profile {
+  if (wallet.status === "connected" && wallet.address) {
+    const network = displayNetworkLabel(wallet.network);
     return {
-      name: "Alex Rivera",
-      initials: "AR",
-      title: "Security Admin",
-      organization: "Northwind Capital",
+      name: shortenAddress(wallet.address),
+      initials: initialsFromAddress(wallet.address),
+      title: copy.seat.verified,
+      organization: wallet.walletName ? `${wallet.walletName} · ${network}` : network,
     };
   }
 
   return {
-    name: "Alex Rivera",
-    initials: "AR",
-    title: "Independent consultant",
-      organization: "Sandbox Workspace",
+    name: copy.seat.unbound,
+    initials: "K",
+    title: copy.seat.notConnected,
+    organization:
+      tier === "institutional"
+        ? copy.tiers.institutional.badge
+        : copy.tiers.sandbox.badge,
   };
 }
 
@@ -77,6 +98,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (provider: WalletProviderId, session?: WalletConnectSession) => {
       let started = session;
       try {
+        // Tear down any previous connector instance before switching providers.
+        clearConnectedWalletApi();
         started ??= startWalletConnect(provider);
       } catch (error) {
         setWallet({
@@ -125,10 +148,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const refreshWalletBalances = useCallback(async () => {
     const balances = await refreshConnectedBalances();
-    if (!balances) return;
-    setWallet((current) =>
-      current.status === "connected" ? { ...current, balances } : current,
-    );
+    setWallet((current) => {
+      if (current.status !== "connected") return current;
+      if (!balances) {
+        return {
+          ...current,
+          error:
+            "Could not refresh wallet balances. Reconnect the wallet if this persists.",
+        };
+      }
+      return { ...current, balances, error: undefined };
+    });
   }, []);
 
   const recordProof = useCallback((inputLength: number, blockedSecrets: number) => {
@@ -156,7 +186,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       toggleSidebar: () => setSidebarCollapsed((open) => !open),
       mobileNavOpen,
       setMobileNavOpen,
-      profile: profileFor(tier),
+      profile: profileFor(tier, wallet),
       usage,
       recordProof,
       recordQuery,

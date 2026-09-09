@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const attestation = findAttestationByHash(body.proofHash);
+  const attestation = await findAttestationByHash(body.proofHash);
   if (!attestation) {
     return NextResponse.json(
       { error: "Unknown commitment. Run local shield before this channel." },
@@ -27,19 +27,10 @@ export async function POST(request: Request) {
 
   const key = process.env.OPENAI_API_KEY;
   if (!key) {
-    const placeholder = body.prompt.includes("[")
-      ? "This channel received the shielded prompt only. Identifiers never left the local sandbox."
-      : "Local verification cleared this prompt. No additional redactions were required.";
-
-    return NextResponse.json({
-      source: "local-stub",
-      ledgerId: attestation.ledgerId,
-      content: `${placeholder}
-
-I can draft the CFO briefing from insulated fields only: compensation discussion, leak-risk framing, and a circulation-safe summary. Sensitive values remain placeholders.
-
-Set OPENAI_API_KEY to send this shielded prompt to a real model.`,
-    });
+    return NextResponse.json(
+      { error: "No model configured. Set OPENAI_API_KEY to send the shielded prompt." },
+      { status: 503 },
+    );
   }
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {

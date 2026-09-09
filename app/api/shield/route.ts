@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import {
+  enrichAttestationsFromChain,
   findAttestationByHash,
   listAttestations,
   recordAttestation,
   type AttestationSource,
 } from "@/lib/attestation-log";
+import {
+  fetchAttestationsFromChain,
+  KNOWN_PREPROD_CONTRACT,
+  mergeLocalAndChain,
+  resolveContractAddressFromSettlement,
+} from "@/lib/midnight-chain-attestations";
 import { probeProofServer } from "@/lib/midnight-notary";
 import { CIRCUIT_ID, type GuardrailFinding } from "@/shared/types";
 import { isCommitmentHex } from "@/shared/commit";
@@ -58,14 +65,33 @@ export async function POST(request: Request) {
     );
   }
 
-  const existing = findAttestationByHash(body.cleanedHash);
+  const existing = await findAttestationByHash(body.cleanedHash);
   if (existing && existing.binding === body.binding) {
+    if (body.status === "settled" && body.txId && !existing.txId) {
+      const updated = await recordAttestation({
+        cleanedHash: existing.cleanedHash,
+        binding: existing.binding,
+        packFlags: existing.packFlags,
+        findings: existing.findings,
+        circuit: existing.circuit,
+        attestedAt: existing.attestedAt,
+        source: existing.source,
+        walletAddress: body.walletAddress ?? existing.walletAddress,
+        status: "settled",
+        txId: body.txId,
+        contractAddress: body.contractAddress ?? existing.contractAddress,
+        network: body.network ?? existing.network,
+        note: "Settled. The pack ran; the original stays on this machine.",
+        onChain: true,
+      });
+      return NextResponse.json(updated);
+    }
     return NextResponse.json(existing);
   }
 
   const notary = await probeProofServer();
   const settled = body.status === "settled" && typeof body.txId === "string" && body.txId.length > 0;
-  const recorded = recordAttestation({
+  const recorded = await recordAttestation({
     cleanedHash: body.cleanedHash,
     binding: body.binding,
     packFlags: body.packFlags ?? 0,
@@ -78,6 +104,7 @@ export async function POST(request: Request) {
     txId: settled ? body.txId : undefined,
     contractAddress: body.contractAddress,
     network: body.network,
+    onChain: settled || undefined,
     note: settled
       ? "Settled. The pack ran; the original stays on this machine."
       : (body.note ?? notary.note),
@@ -87,5 +114,29 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  return NextResponse.json({ attestations: listAttestations() });
+  const local = await listAttestations(40);
+  const enrichedLocal = await enrichAttestationsFromChain(local);
+
+  const settlementHint =
+    enrichedLocal.find((row) => row.txId)?.txId ||
+    "0004be65181b38108650c2b392b6bae4e99fff26a163c858b46d7577dda156d1ac";
+  const contractAddress =
+    process.env.NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS?.trim() ||
+    enrichedLocal.find((row) => row.contractAddress)?.contractAddress ||
+    (await resolveContractAddressFromSettlement(settlementHint)) ||
+    KNOWN_PREPROD_CONTRACT;
+
+  let chain: Awaited<ReturnType<typeof fetchAttestationsFromChain>> = [];
+  try {
+    chain = await fetchAttestationsFromChain(contractAddress);
+  } catch {
+    chain = [];
+  }
+
+  const attestations = mergeLocalAndChain(enrichedLocal, chain).slice(0, 20);
+  return NextResponse.json({
+    attestations,
+    contractAddress,
+    source: chain.length ? "chain+local" : "local",
+  });
 }
