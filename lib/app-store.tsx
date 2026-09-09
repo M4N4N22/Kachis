@@ -5,10 +5,11 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-import { connectLace, laceAvailable } from "@/lib/lace";
+import { clearConnectedWalletApi, finishWalletConnect, refreshConnectedBalances, startWalletConnect, type WalletConnectSession } from "@/lib/midnight-wallet";
 import type { Profile, Tier, WalletProviderId, WalletState } from "@/lib/types";
 
 interface UsageStats {
@@ -22,8 +23,9 @@ interface AppContextValue {
   tier: Tier;
   setTier: (tier: Tier) => void;
   wallet: WalletState;
-  connectWallet: (provider: WalletProviderId) => Promise<void>;
+  connectWallet: (provider: WalletProviderId, session?: WalletConnectSession) => Promise<void>;
   disconnectWallet: () => void;
+  refreshWalletBalances: () => Promise<void>;
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
   mobileNavOpen: boolean;
@@ -55,6 +57,7 @@ function profileFor(tier: Tier): Profile {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const connectGeneration = useRef(0);
   const [tier, setTierState] = useState<Tier>("institutional");
   const [wallet, setWallet] = useState<WalletState>({ status: "disconnected" });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -70,34 +73,62 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setTierState(next);
   }, []);
 
-  const connectWallet = useCallback(async (provider: WalletProviderId) => {
-    setWallet({ status: "connecting", provider, error: undefined });
-    try {
-      if (!laceAvailable()) {
-        throw new Error("Lace Midnight extension not found. Install Lace and activate Midnight.");
+  const connectWallet = useCallback(
+    async (provider: WalletProviderId, session?: WalletConnectSession) => {
+      let started = session;
+      try {
+        started ??= startWalletConnect(provider);
+      } catch (error) {
+        setWallet({
+          status: "disconnected",
+          provider,
+          live: false,
+          error: error instanceof Error ? error.message : "Wallet connection failed",
+        });
+        return;
       }
-      const network =
-        (process.env.NEXT_PUBLIC_MIDNIGHT_NETWORK as "preprod" | "preview" | "undeployed") ??
-        "preprod";
-      const { address } = await connectLace(network);
-      setWallet({
-        status: "connected",
-        provider,
-        address,
-        live: true,
-      });
-    } catch (error) {
-      setWallet({
-        status: "disconnected",
-        provider,
-        live: false,
-        error: error instanceof Error ? error.message : "Wallet connection failed",
-      });
-    }
-  }, []);
+
+      if (!started) return;
+
+      const generation = ++connectGeneration.current;
+      setWallet({ status: "connecting", provider, error: undefined });
+      try {
+        const connected = await finishWalletConnect(started);
+        if (generation !== connectGeneration.current) return;
+        setWallet({
+          status: "connected",
+          provider,
+          address: connected.address,
+          network: connected.network,
+          live: true,
+          walletName: connected.name,
+          balances: connected.balances,
+        });
+      } catch (error) {
+        if (generation !== connectGeneration.current) return;
+        setWallet({
+          status: "disconnected",
+          provider,
+          live: false,
+          error: error instanceof Error ? error.message : "Wallet connection failed",
+        });
+      }
+    },
+    [],
+  );
 
   const disconnectWallet = useCallback(() => {
+    connectGeneration.current += 1;
+    clearConnectedWalletApi();
     setWallet({ status: "disconnected" });
+  }, []);
+
+  const refreshWalletBalances = useCallback(async () => {
+    const balances = await refreshConnectedBalances();
+    if (!balances) return;
+    setWallet((current) =>
+      current.status === "connected" ? { ...current, balances } : current,
+    );
   }, []);
 
   const recordProof = useCallback((inputLength: number, blockedSecrets: number) => {
@@ -120,6 +151,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       wallet,
       connectWallet,
       disconnectWallet,
+      refreshWalletBalances,
       sidebarCollapsed,
       toggleSidebar: () => setSidebarCollapsed((open) => !open),
       mobileNavOpen,
@@ -132,6 +164,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [
       connectWallet,
       disconnectWallet,
+      refreshWalletBalances,
       mobileNavOpen,
       recordProof,
       recordQuery,

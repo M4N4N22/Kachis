@@ -4,6 +4,7 @@ import { Fingerprint } from "lucide-react";
 import { Bento } from "@/components/ui/bento";
 import { useApp } from "@/lib/app-store";
 import { copy } from "@/lib/copy";
+import { displayNetworkLabel, dustAsset, nightAsset } from "@/lib/midnight-wallet";
 
 export function IdentityView() {
   const { profile, wallet } = useApp();
@@ -11,7 +12,7 @@ export function IdentityView() {
 
   const credentials = [
     {
-      title: "Midnight Lace",
+      title: connected ? (wallet.walletName ?? "Midnight wallet") : "Midnight wallet",
       issuer: "dApp connector",
       disclosed: connected ? "Unshielded address" : "Not connected",
       live: connected,
@@ -42,11 +43,39 @@ export function IdentityView() {
           </p>
           <div className="mt-8 flex items-center gap-2 text-[11px] text-muted-fg">
             <Fingerprint className="h-3.5 w-3.5 text-brand" strokeWidth={1.75} />
-            {connected ? copy.wallet.verifiedSuffix : copy.status.unverified}
+            {connected
+              ? `${copy.wallet.verifiedSuffix} · ${displayNetworkLabel(wallet.network)}`
+              : copy.status.unverified}
           </div>
           <p className="mt-6 break-all font-mono text-[11px] text-muted-fg">
             {wallet.address ?? "Connect Midnight Lace to bind this seat."}
           </p>
+          {connected && wallet.balances ? (
+            <dl className="mt-6 space-y-2">
+              <div className="flex justify-between gap-3 text-[11px]">
+                <dt className="text-muted-fg">{copy.wallet.unshielded}</dt>
+                <dd className="font-mono">
+                  {wallet.balances.unshielded} {nightAsset(wallet.network)}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3 text-[11px]">
+                <dt className="text-muted-fg">{copy.wallet.shielded}</dt>
+                <dd className="font-mono">
+                  {wallet.balances.shielded} {nightAsset(wallet.network)}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-3 text-[11px]">
+                <dt className="text-muted-fg">{copy.wallet.dust}</dt>
+                <dd className="font-mono">
+                  {wallet.balances.dust}
+                  {wallet.balances.dustCap !== "—" ? ` / ${wallet.balances.dustCap}` : ""}{" "}
+                  {dustAsset(wallet.network)}
+                </dd>
+              </div>
+            </dl>
+          ) : connected ? (
+            <p className="mt-6 text-[11px] text-muted-fg">{copy.wallet.balancesUnavailable}</p>
+          ) : null}
         </div>
       </Bento>
 

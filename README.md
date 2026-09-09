@@ -18,7 +18,7 @@ Companies buy **control + evidence**, not another chat site: secrets never becom
 | Shared scanner + SHA-256 binding | Shipped (`shared/`) |
 | Compact contract `kachis-guardrail` | Source in `compact/` — compile with Compact toolchain |
 | **Kachis Agent v1** (MCP) | Shipped (`agent/`) — sit in Cursor/Claude |
-| Lace dApp connect | Live `window.midnight.mnLace` (no fake address) |
+| Lace / Gero / 1AM / Ctrl | Live DApp Connector (`window.midnight` discovery — not `mnLace` only) |
 | Public notary log | `/api/shield` — console + agent post hashes only |
 | Chat gated on commitment | `/api/chat` refuses unknown `proofHash` |
 | Proof server / on-chain submit | Probe-only until `compact compile` |
@@ -35,7 +35,7 @@ Companies buy **control + evidence**, not another chat site: secrets never becom
 - SHA-256 of cleaned prompt + **binding** `hash(originalHash || cleanedHash)` — original paste is not posted to `/api/shield`
 - Compact circuit source: private original commitment, public cleaned hash + pack flags
 - MCP tool `kachis_shield` (posts public commitments to the console when it is running)
-- Lace connect when the extension is present
+- Midnight wallet connect via `@midnight-ntwrk/dapp-connector-api` (Lace, Gero, 1AM, Ctrl — scan injected wallets; no RainbowKit exists for Midnight)
 - Console chat only after a recorded commitment
 - Optional OpenAI chat for the **shielded** prompt only (`OPENAI_API_KEY`)
 
@@ -54,7 +54,7 @@ npm run dev
 
 [http://localhost:3000/workspace](http://localhost:3000/workspace) → Load sample → Shield & Proceed → Send.
 
-Lace: install Midnight Lace, activate **Midnight**, Preprod. Connect uses the **unshielded** address (`mn_addr_preprod…`).
+Lace, Gero, 1AM, or Ctrl: enable the Midnight account, refresh this page, then connect. The unshielded address (`mn_addr_preprod…`) is what the connector returns.
 
 ```bash
 cp .env.example .env.local
