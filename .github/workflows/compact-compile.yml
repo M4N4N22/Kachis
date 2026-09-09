@@ -24,9 +24,12 @@ jobs:
           curl --proto '=https' --tlsv1.2 -LsSf https://github.com/midnightntwrk/compact/releases/latest/download/compact-installer.sh | sh
           echo "$HOME/.compact/bin" >> "$GITHUB_PATH"
       - name: Install compiler 0.31.1
-        run: compact update 0.31.1 || compact update
+        run: compact update 0.31.1
       - name: Compile kachis-guardrail
-        run: compact compile compact/kachis-guardrail.compact compact/managed/kachis-guardrail
+        run: |
+          compact compile --version
+          compact compile compact/kachis-guardrail.compact compact/managed/kachis-guardrail
+          printf 'compiled\n' > compact/managed/kachis-guardrail/.compiled
       - uses: actions/upload-artifact@v4
         with:
           name: kachis-guardrail-managed
