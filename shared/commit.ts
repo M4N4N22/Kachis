@@ -21,14 +21,12 @@ export function isCommitmentHex(value: string) {
 
 export async function sha256Hex(input: string): Promise<string> {
   const encoded = new TextEncoder().encode(input);
-
-  if (globalThis.crypto?.subtle) {
-    const digest = await globalThis.crypto.subtle.digest("SHA-256", encoded);
-    return toHex(new Uint8Array(digest));
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle) {
+    throw new Error("Web Crypto SHA-256 is required.");
   }
-
-  const { createHash } = await import("node:crypto");
-  return `0x${createHash("sha256").update(input, "utf8").digest("hex")}`;
+  const digest = await subtle.digest("SHA-256", encoded);
+  return toHex(new Uint8Array(digest));
 }
 
 /** Public binding: hash(originalHash || cleanedHash). Original plaintext never included. */

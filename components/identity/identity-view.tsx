@@ -4,7 +4,7 @@ import { Fingerprint } from "lucide-react";
 import { Bento } from "@/components/ui/bento";
 import { useApp } from "@/lib/app-store";
 import { copy } from "@/lib/copy";
-import { displayNetworkLabel, dustAsset, nightAsset } from "@/lib/midnight-wallet";
+import { displayNetworkLabel, dustAsset, formatDisplayAmount, formatDustLabel, nightAsset } from "@/lib/midnight-wallet";
 
 export function IdentityView() {
   const { profile, wallet } = useApp();
@@ -16,18 +16,6 @@ export function IdentityView() {
       issuer: "dApp connector",
       disclosed: connected ? "Unshielded address" : "Not connected",
       live: connected,
-    },
-    {
-      title: "Employment",
-      issuer: "Not issued",
-      disclosed: "Passport later",
-      live: false,
-    },
-    {
-      title: "Org membership",
-      issuer: "Not issued",
-      disclosed: "Passport later",
-      live: false,
     },
   ];
 
@@ -55,23 +43,26 @@ export function IdentityView() {
               <div className="flex justify-between gap-3 text-[11px]">
                 <dt className="text-muted-fg">{copy.wallet.unshielded}</dt>
                 <dd className="font-mono">
-                  {wallet.balances.unshielded} {nightAsset(wallet.network)}
+                  {formatDisplayAmount(wallet.balances.unshielded)} {nightAsset(wallet.network)}
                 </dd>
               </div>
               <div className="flex justify-between gap-3 text-[11px]">
                 <dt className="text-muted-fg">{copy.wallet.shielded}</dt>
                 <dd className="font-mono">
-                  {wallet.balances.shielded} {nightAsset(wallet.network)}
+                  {formatDisplayAmount(wallet.balances.shielded)} {nightAsset(wallet.network)}
                 </dd>
               </div>
               <div className="flex justify-between gap-3 text-[11px]">
                 <dt className="text-muted-fg">{copy.wallet.dust}</dt>
                 <dd className="font-mono">
-                  {wallet.balances.dust}
-                  {wallet.balances.dustCap !== "—" ? ` / ${wallet.balances.dustCap}` : ""}{" "}
-                  {dustAsset(wallet.network)}
+                  {formatDustLabel(wallet.balances, dustAsset(wallet.network))}
                 </dd>
               </div>
+              {wallet.balances.dustHint ? (
+                <p className="text-[11px] leading-relaxed text-muted-fg">
+                  {wallet.balances.dustHint}
+                </p>
+              ) : null}
             </dl>
           ) : connected ? (
             <p className="mt-6 text-[11px] text-muted-fg">{copy.wallet.balancesUnavailable}</p>
@@ -85,7 +76,7 @@ export function IdentityView() {
           <h2 className="mt-1 text-sm font-semibold tracking-tight">
             Verify a fact, keep the rest
           </h2>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          <div className="mt-5 grid gap-3">
             {credentials.map((credential) => (
               <div key={credential.title} className="rounded-2xl bg-bg p-4">
                 <p className="text-[13px] font-medium">{credential.title}</p>
@@ -101,7 +92,7 @@ export function IdentityView() {
         <Bento className="p-5">
           <p className="text-[11px] font-semibold text-brand">On-device clearance</p>
           <p className="mt-2 max-w-xl text-[13px] leading-6 text-muted-fg">
-            {copy.identity.context}
+            {connected ? copy.identity.context : copy.guardrails.seatEmpty}
           </p>
         </Bento>
       </div>

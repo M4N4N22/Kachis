@@ -41,9 +41,20 @@ export function LandingPage() {
               How it works
             </a>
           </nav>
-          <Link href="/workspace">
-            <Button size="sm">Open workspace</Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/demo">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white/70 hover:bg-white/10 hover:text-white"
+              >
+                {copy.demo.landing}
+              </Button>
+            </Link>
+            <Link href="/workspace">
+              <Button size="sm">Open workspace</Button>
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -85,11 +96,11 @@ export function LandingPage() {
                 <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
               </Button>
             </Link>
-            <a href="#proof">
+            <Link href="/demo">
               <Button variant="outline" className="border-0 bg-white/8 text-white ring-white/15">
-                How local verification works
+                {copy.demo.landing}
               </Button>
-            </a>
+            </Link>
           </div>
         </div>
       </section>
@@ -158,16 +169,24 @@ export function LandingPage() {
             ),
           )}
         </ol>
-        <Link href="/workspace" className="mt-10 inline-flex">
-          <Button>
-            {copy.action.idle}
-            <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
-          </Button>
-        </Link>
+        <div className="mt-10 flex flex-wrap gap-3">
+          <Link href="/workspace" className="inline-flex">
+            <Button>
+              {copy.action.idle}
+              <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+            </Button>
+          </Link>
+          <Link href="/demo" className="inline-flex">
+            <Button variant="outline">{copy.demo.landing}</Button>
+          </Link>
+        </div>
       </section>
 
-      <footer className="mx-auto max-w-6xl px-6 py-12 text-[11px] text-muted-fg">
-        Kachis · Local data shield for corporate AI
+      <footer className="mx-auto flex max-w-6xl items-center justify-between px-6 py-12 text-[11px] text-muted-fg">
+        <span>Kachis · Local data shield for corporate AI</span>
+        <Link href="/demo" className="hover:text-ink">
+          {copy.demo.landing}
+        </Link>
       </footer>
     </div>
   );

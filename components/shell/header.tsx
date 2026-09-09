@@ -6,12 +6,12 @@ import { ProfileMenu } from "@/components/shell/profile-menu";
 import { TierSelector } from "@/components/shell/tier-selector";
 import { WalletButton } from "@/components/shell/wallet-button";
 import { useApp } from "@/lib/app-store";
-import { PAGE_COPY, type NavItem } from "@/lib/nav";
+import { PAGE_COPY, type PageHref } from "@/lib/nav";
 
 export function Header() {
   const pathname = usePathname();
   const { setMobileNavOpen } = useApp();
-  const copy = PAGE_COPY[pathname as NavItem["href"]] ?? PAGE_COPY["/workspace"];
+  const copy = PAGE_COPY[pathname as PageHref] ?? PAGE_COPY["/workspace"];
 
   return (
     <header className="flex h-14 shrink-0 items-center justify-between gap-3 px-5">

@@ -44,6 +44,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# runtime attestation store (seed lives in data/)
+.data/
+
 # local design / program notes (not for public remote)
 design.md
 design-brief.md

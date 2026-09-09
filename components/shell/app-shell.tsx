@@ -7,7 +7,7 @@ import { cn } from "@/lib/cn";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const locked = pathname === "/workspace";
+  const locked = pathname === "/workspace" || pathname === "/demo";
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg text-ink">

@@ -1,7 +1,12 @@
 "use client";
 
+// Force ledger WASM side-effect init before CostModel.initialCostModel().
+import "@midnight-ntwrk/ledger-v8";
 import type { ConnectedAPI } from "@midnight-ntwrk/dapp-connector-api";
-import { dappConnectorProofProvider } from "@midnight-ntwrk/midnight-js-dapp-connector-proof-provider";
+import {
+  dappConnectorProofProvider,
+  dappConnectorProvingProvider,
+} from "@midnight-ntwrk/midnight-js-dapp-connector-proof-provider";
 import { CompiledContract } from "@midnight-ntwrk/midnight-js-protocol/compact-js";
 import {
   CostModel,
@@ -13,12 +18,13 @@ import { FetchZkConfigProvider } from "@midnight-ntwrk/midnight-js-fetch-zk-conf
 import { httpClientProofProvider } from "@midnight-ntwrk/midnight-js-http-client-proof-provider";
 import { indexerPublicDataProvider } from "@midnight-ntwrk/midnight-js-indexer-public-data-provider";
 import { setNetworkId } from "@midnight-ntwrk/midnight-js-network-id";
-import type {
-  MidnightProvider,
-  MidnightProviders,
-  ProofProvider,
-  WalletProvider,
-  ZKConfigProvider,
+import {
+  createProofProvider as wrapProvingProvider,
+  type MidnightProvider,
+  type MidnightProviders,
+  type ProofProvider,
+  type WalletProvider,
+  type ZKConfigProvider,
 } from "@midnight-ntwrk/midnight-js-types";
 import { fromHex, toHex } from "@midnight-ntwrk/midnight-js-utils";
 import { Contract } from "@/compact/managed/kachis-guardrail/contract/index.js";
@@ -29,7 +35,12 @@ import {
 } from "@/compact/witnesses";
 import { hexToBytes } from "@/shared/commit";
 import { createGuardrailPrivateStateProvider } from "@/lib/midnight-private-state";
-import { getConnectedWalletApi, preferredNetwork } from "@/lib/midnight-wallet";
+import {
+  getConnectedWalletApi,
+  getConnectedWalletProviderId,
+  preferredNetwork,
+} from "@/lib/midnight-wallet";
+import { copy } from "@/lib/copy";
 
 const PRIVATE_STATE_ID = "kachisGuardrail";
 const STORAGE_KEY = "kachis.contractAddress";
@@ -79,20 +90,82 @@ async function artifactsReady() {
   return prover.ok;
 }
 
-async function createProofProvider(
+function loadCostModel() {
+  try {
+    return CostModel.initialCostModel();
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      `Midnight ledger WASM failed (${detail}). Stop the server and run \`npm run dev\` (webpack). Turbopack cannot initialize ledger CostModel.`,
+    );
+  }
+}
+
+function isBalanceUnimplemented(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /balanceUnsealedTransaction/i.test(message) && /not yet implemented/i.test(message);
+}
+
+function isProofFetchFailure(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    /Failed to fetch/i.test(message) ||
+    (/prove/i.test(message) && /fetch/i.test(message)) ||
+    /ECONNREFUSED/i.test(message) ||
+    /NetworkError/i.test(message)
+  );
+}
+
+/** Contract settle needs wallet balancing. Gero still stubs this (planned). */
+function walletCanBalanceContracts(providerId: string | undefined) {
+  return providerId !== "gero";
+}
+
+async function balanceWithWallet(api: ConnectedAPI, tx: { serialize: () => Uint8Array }) {
+  if (typeof api.balanceUnsealedTransaction !== "function") {
+    throw new Error(copy.action.geroBalanceUnsupported);
+  }
+  try {
+    const { tx: balancedHex } = await api.balanceUnsealedTransaction(toHex(tx.serialize()), {
+      payFees: true,
+    });
+    return Transaction.deserialize(
+      "signature",
+      "proof",
+      "binding",
+      fromHex(balancedHex),
+    ) as FinalizedTransaction;
+  } catch (error) {
+    if (isBalanceUnimplemented(error)) {
+      throw new Error(copy.action.geroBalanceUnsupported);
+    }
+    throw error;
+  }
+}
+
+async function createProofProviderForWallet(
   api: ConnectedAPI,
   zkConfigProvider: ZKConfigProvider<"shield">,
   config: { proverServerUri?: string } | undefined,
 ): Promise<ProofProvider> {
-  const costModel = CostModel.initialCostModel();
+  const remote = proofServerUrl(config);
+
+  // Prefer wallet proving (Lace / Gero Cloud) when available.
   if (typeof api.getProvingProvider === "function") {
     try {
+      const costModel = loadCostModel();
       return await dappConnectorProofProvider<"shield">(api, zkConfigProvider, costModel);
     } catch {
-      /* Lace proving unavailable — fall through to the local proof server. */
+      try {
+        const proving = await dappConnectorProvingProvider<"shield">(api, zkConfigProvider);
+        return wrapProvingProvider(proving, loadCostModel());
+      } catch {
+        /* Fall through to HTTP proof server / Gero cloud URI. */
+      }
     }
   }
-  return httpClientProofProvider<"shield">(proofServerUrl(config), zkConfigProvider);
+
+  return httpClientProofProvider<"shield">(remote, zkConfigProvider);
 }
 
 function compiledGuardrail() {
@@ -124,7 +197,7 @@ async function createProviders(api: ConnectedAPI, network: string) {
   }
 
   const zkConfigProvider = new FetchZkConfigProvider<"shield">(artifactsBase(), fetch.bind(window));
-  const proofProvider = await createProofProvider(api, zkConfigProvider, config);
+  const proofProvider = await createProofProviderForWallet(api, zkConfigProvider, config);
 
   const { shieldedCoinPublicKey, shieldedEncryptionPublicKey } = await api.getShieldedAddresses();
   const unshielded = await api.getUnshieldedAddress().catch(() => undefined);
@@ -136,15 +209,7 @@ async function createProviders(api: ConnectedAPI, network: string) {
   const walletProvider: WalletProvider = {
     getCoinPublicKey: () => shieldedCoinPublicKey,
     getEncryptionPublicKey: () => shieldedEncryptionPublicKey,
-    balanceTx: async (tx) => {
-      const { tx: balancedHex } = await api.balanceUnsealedTransaction(toHex(tx.serialize()), {});
-      return Transaction.deserialize(
-        "signature",
-        "proof",
-        "binding",
-        fromHex(balancedHex),
-      ) as FinalizedTransaction;
-    },
+    balanceTx: async (tx) => balanceWithWallet(api, tx),
   };
 
   const midnightProvider: MidnightProvider = {
@@ -173,6 +238,11 @@ export async function submitGuardrail(input: ShieldSubmitInput): Promise<ShieldS
   const api = getConnectedWalletApi();
   if (!api) {
     return { ok: false, error: "Connect a Midnight wallet to settle." };
+  }
+
+  const providerId = getConnectedWalletProviderId();
+  if (!walletCanBalanceContracts(providerId)) {
+    return { ok: false, error: copy.action.geroBalanceUnsupported };
   }
 
   try {
@@ -207,13 +277,19 @@ export async function submitGuardrail(input: ShieldSubmitInput): Promise<ShieldS
       initialPrivateState,
     } as never);
 
-    const call = await found.callTx.shield(cleaned, input.packFlags);
+    const call = await found.callTx.shield(cleaned, BigInt(input.packFlags));
     const txId = call.public.txId ?? call.public.txHash ?? "";
     if (!txId) {
       return { ok: false, error: "Wallet submitted but did not return a settlement id." };
     }
     return { ok: true, txId, contractAddress: address, network: resolvedNetwork };
   } catch (error) {
+    if (isBalanceUnimplemented(error)) {
+      return { ok: false, error: copy.action.geroBalanceUnsupported };
+    }
+    if (isProofFetchFailure(error)) {
+      return { ok: false, error: copy.action.proofServerUnreachable };
+    }
     const message = error instanceof Error ? error.message : "Settlement failed.";
     return { ok: false, error: message };
   }

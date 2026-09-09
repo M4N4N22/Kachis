@@ -9,6 +9,8 @@ import { copy } from "@/lib/copy";
 import {
   displayNetworkLabel,
   dustAsset,
+  formatDisplayAmount,
+  formatDustLabel,
   listInjectedWallets,
   nightAsset,
   startWalletConnect,
@@ -41,14 +43,11 @@ function BalanceRows({
   const night = nightAsset(network);
   const dust = dustAsset(network);
   const rows = [
-    { label: copy.wallet.unshielded, value: `${balances.unshielded} ${night}` },
-    { label: copy.wallet.shielded, value: `${balances.shielded} ${night}` },
+    { label: copy.wallet.unshielded, value: `${formatDisplayAmount(balances.unshielded)} ${night}` },
+    { label: copy.wallet.shielded, value: `${formatDisplayAmount(balances.shielded)} ${night}` },
     {
       label: copy.wallet.dust,
-      value:
-        balances.dustCap !== "—"
-          ? `${balances.dust} / ${balances.dustCap} ${dust}`
-          : `${balances.dust} ${dust}`,
+      value: formatDustLabel(balances, dust),
     },
   ];
   return (
@@ -59,6 +58,9 @@ function BalanceRows({
           <dd className="font-mono text-[11px] text-ink">{row.value}</dd>
         </div>
       ))}
+      {balances.dustHint ? (
+        <p className="pt-1 text-[11px] leading-relaxed text-muted-fg">{balances.dustHint}</p>
+      ) : null}
     </dl>
   );
 }
@@ -98,7 +100,7 @@ export function WalletButton() {
           <span className="h-1.5 w-1.5 rounded-full bg-success" />
           <span className="truncate text-[12px]">
             {wallet.balances?.unshielded && wallet.balances.unshielded !== "—"
-              ? `${wallet.balances.unshielded} ${nightAsset(wallet.network)} · ${displayNetworkLabel(wallet.network)}`
+              ? `${formatDisplayAmount(wallet.balances.unshielded)} ${nightAsset(wallet.network)} · ${formatDustLabel(wallet.balances, dustAsset(wallet.network))}`
               : `${shorten(wallet.address)} · ${displayNetworkLabel(wallet.network)}`}
           </span>
           <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.75} />

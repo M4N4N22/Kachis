@@ -20,6 +20,9 @@ export interface WalletBalances {
   shielded: string;
   dust: string;
   dustCap: string;
+  /** Gero connector often returns dust 0/0; dust address means fee reserve exists in-wallet. */
+  dustExists?: boolean;
+  dustHint?: string;
 }
 
 export interface WalletState {
@@ -68,6 +71,7 @@ export interface ChatMessage {
   content: string;
   sanitized?: boolean;
   proofHash?: string;
+  walkthrough?: boolean;
   createdAt: string;
 }
 

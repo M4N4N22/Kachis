@@ -2,51 +2,31 @@
 
 import { ShieldCheck } from "lucide-react";
 import { Bento } from "@/components/ui/bento";
-import { Toggle } from "@/components/ui/toggle";
 import { useApp } from "@/lib/app-store";
 import { copy } from "@/lib/copy";
+import { displayNetworkLabel } from "@/lib/midnight-wallet";
+import { preprodExtrinsicUrl } from "@/lib/midnight-chain-attestations";
 import { useEffect, useState } from "react";
 
-const POLICIES = [
-  {
-    id: "gdpr",
-    label: "GDPR personal data",
-    description: "Resident identifiers stay in the local sandbox.",
-  },
-  {
-    id: "soc2",
-    label: "SOC 2 change control",
-    description: "Production secrets cannot enter an unshielded prompt.",
-  },
-  {
-    id: "hipaa",
-    label: "HIPAA ePHI",
-    description: "Clinical fields require a local compliance audit before send.",
-  },
-  {
-    id: "finra",
-    label: "FINRA communications",
-    description: "Client account numbers are masked before the channel opens.",
-  },
-];
-
-const ROLES = [
-  { role: "Security Admin", access: "Full policy + audit" },
-  { role: "Analyst", access: "Run workspace, read verifications" },
-  { role: "Contractor", access: "Sandbox seat, no exports" },
+const LIVE_FILTERS = [
+  copy.filters.pii,
+  copy.filters.financial,
+  copy.filters.compliance,
 ];
 
 export function GuardrailsView() {
-  const { tier, usage } = useApp();
-  const locked = tier === "freelancer";
-  const [enabled, setEnabled] = useState<Record<string, boolean>>({
-    gdpr: true,
-    soc2: true,
-    hipaa: false,
-    finra: true,
-  });
+  const { usage, wallet, profile } = useApp();
+  const connected = wallet.status === "connected";
   const [audits, setAudits] = useState<
-    { ledgerId: number; source: string; findings: { label: string }[]; attestedAt: string }[]
+    {
+      ledgerId: number;
+      source: string;
+      findings: { label: string }[];
+      attestedAt: string;
+      txId?: string;
+      txHash?: string;
+      onChain?: boolean;
+    }[]
   >([]);
 
   useEffect(() => {
@@ -60,6 +40,9 @@ export function GuardrailsView() {
             source: string;
             findings: { label: string }[];
             attestedAt: string;
+            txId?: string;
+            txHash?: string;
+            onChain?: boolean;
           }[];
         }) => {
           if (!cancelled) setAudits(data.attestations ?? []);
@@ -78,28 +61,22 @@ export function GuardrailsView() {
       <div className="space-y-4">
         <Bento className="p-5">
           <p className="text-[11px] font-semibold text-brand">
-            Institutional Access Controls
+            {copy.guardrails.liveEyebrow}
           </p>
           <h2 className="mt-1 text-sm font-semibold tracking-tight">
-            What local verification must settle
+            {copy.guardrails.liveTitle}
           </h2>
           <div className="mt-5 space-y-4">
-            {POLICIES.map((policy) => (
-              <Toggle
-                key={policy.id}
-                checked={enabled[policy.id]}
-                disabled={locked}
-                onChange={(value) =>
-                  setEnabled((current) => ({ ...current, [policy.id]: value }))
-                }
-                label={policy.label}
-                description={policy.description}
-              />
+            {LIVE_FILTERS.map((filter) => (
+              <div key={filter.label}>
+                <p className="text-[13px] font-medium">{filter.label}</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-muted-fg">
+                  {filter.tooltip}
+                </p>
+              </div>
             ))}
           </div>
-          {locked ? (
-            <p className="mt-5 text-[11px] text-muted-fg">{copy.tiers.sandbox.limit}</p>
-          ) : null}
+          <p className="mt-5 text-[11px] text-muted-fg">{copy.guardrails.liveHint}</p>
         </Bento>
 
         <Bento className="p-5">
@@ -115,7 +92,25 @@ export function GuardrailsView() {
                 >
                   <span className="text-[13px]">
                     #{row.ledgerId} · {row.source}
+                    {row.onChain ? " · on-chain" : ""}
                     {row.findings[0] ? ` · ${row.findings[0].label}` : " · no findings"}
+                    {(() => {
+                      const url = preprodExtrinsicUrl(row);
+                      if (!url) return null;
+                      return (
+                        <>
+                          {" · "}
+                          <a
+                            className="text-brand underline-offset-2 hover:underline"
+                            href={url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            settle
+                          </a>
+                        </>
+                      );
+                    })()}
                   </span>
                   <ShieldCheck className="h-3.5 w-3.5 text-success" strokeWidth={1.75} />
                 </div>
@@ -126,18 +121,26 @@ export function GuardrailsView() {
       </div>
 
       <Bento className="h-fit p-5 lg:sticky lg:top-4">
-        <p className="text-[11px] font-semibold text-brand">Role map</p>
+        <p className="text-[11px] font-semibold text-brand">
+          {copy.guardrails.seatEyebrow}
+        </p>
         <h2 className="mt-1 text-sm font-semibold tracking-tight">
-          Workspace governance
+          {copy.guardrails.seatTitle}
         </h2>
-        <ul className="mt-5 space-y-4">
-          {ROLES.map((item) => (
-            <li key={item.role}>
-              <p className="text-[13px] font-medium">{item.role}</p>
-              <p className="text-[11px] text-muted-fg">{item.access}</p>
-            </li>
-          ))}
-        </ul>
+        {connected ? (
+          <div className="mt-5 space-y-2">
+            <p className="text-[13px] font-medium">{profile.name}</p>
+            <p className="text-[11px] text-muted-fg">
+              {wallet.walletName ?? copy.wallet.verifiedSuffix}
+              {wallet.network ? ` · ${displayNetworkLabel(wallet.network)}` : ""}
+            </p>
+            <p className="mt-3 text-[11px] leading-relaxed text-muted-fg">
+              {copy.guardrails.seatLive}
+            </p>
+          </div>
+        ) : (
+          <p className="mt-5 text-[13px] text-muted-fg">{copy.guardrails.seatEmpty}</p>
+        )}
       </Bento>
     </div>
   );

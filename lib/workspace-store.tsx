@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -11,6 +12,7 @@ import {
 import { useApp } from "@/lib/app-store";
 import { copy } from "@/lib/copy";
 import { runShield } from "@/lib/midnight";
+import { hasFeeReserve } from "@/lib/midnight-wallet";
 import { sha256Hex } from "@/shared/commit";
 import type {
   ChatMessage,
@@ -20,6 +22,11 @@ import type {
 } from "@/lib/types";
 
 interface WorkspaceContextValue {
+  demo: boolean;
+  walletConnected: boolean;
+  canShield: boolean;
+  shieldGateHint: string | null;
+  settleError: string | null;
   rawInput: string;
   setRawInput: (value: string) => void;
   sanitizedPrompt: string;
@@ -41,7 +48,13 @@ function createId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-export function WorkspaceProvider({ children }: { children: ReactNode }) {
+export function WorkspaceProvider({
+  children,
+  demo = false,
+}: {
+  children: ReactNode;
+  demo?: boolean;
+}) {
   const { tier, wallet, recordProof, recordQuery } = useApp();
   const [rawInput, setRawInput] = useState("");
   const [sanitizedPrompt, setSanitizedPrompt] = useState("");
@@ -55,50 +68,61 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [composer, setComposer] = useState("");
   const [busy, setBusy] = useState(false);
+  const [settleError, setSettleError] = useState<string | null>(null);
+  const walletConnected = wallet.status === "connected";
+  const funded = hasFeeReserve(wallet.status === "connected" ? wallet.balances : undefined);
+  const canShield = walletConnected && funded;
+  const shieldGateHint = !walletConnected
+    ? copy.action.walletRequiredHint
+    : !funded
+      ? copy.action.fundRequiredHint
+      : wallet.provider === "gero"
+        ? copy.action.geroSettleHint
+        : null;
+
+  useEffect(() => {
+    if (canShield) return;
+    setProof(null);
+    setProofStatus("idle");
+    setSanitizedPrompt("");
+    setComposer("");
+    if (!walletConnected) setSettleError(null);
+  }, [canShield, walletConnected]);
 
   const setGuardrail = useCallback(
     (key: keyof GuardrailToggles, value: boolean) => {
       setGuardrails((current) => ({ ...current, [key]: value }));
       setProofStatus("idle");
       setProof(null);
+      setSettleError(null);
     },
     [],
   );
 
   const processLocally = useCallback(async () => {
-    if (!rawInput.trim() || busy) return;
+    if (!rawInput.trim() || busy || !canShield) return;
 
     setBusy(true);
     setProof(null);
     setSanitizedPrompt("");
+    setSettleError(null);
 
     try {
       setProofStatus("scanning");
       const result = await runShield(rawInput, guardrails);
 
-      let settlement: { txId?: string; contractAddress?: string; network?: string; note?: string } =
-        {};
-      if (wallet.status === "connected") {
-        setProofStatus("proving");
-        const { submitGuardrail } = await import("@/lib/midnight-submit");
-        const submitted = await submitGuardrail({
-          originalHash: await sha256Hex(rawInput),
-          cleanedHash: result.cleanedHash,
-          packFlags: result.packFlags,
-          network: wallet.network,
-        });
-        if (submitted.ok) {
-          settlement = {
-            txId: submitted.txId,
-            contractAddress: submitted.contractAddress,
-            network: submitted.network,
-          };
-        } else {
-          settlement = {
-            note: copy.rail.settleFallback,
-            network: wallet.network,
-          };
-        }
+      setProofStatus("proving");
+      const { submitGuardrail } = await import("@/lib/midnight-submit");
+      const submitted = await submitGuardrail({
+        originalHash: await sha256Hex(rawInput),
+        cleanedHash: result.cleanedHash,
+        packFlags: result.packFlags,
+        network: wallet.network,
+      });
+      if (!submitted.ok) {
+        setSettleError(submitted.error || copy.action.settleFailed);
+        setProofStatus("error");
+        return;
       }
 
       setProofStatus("attesting");
@@ -112,18 +136,18 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           findings: result.findings,
           attestedAt: result.attestedAt,
           source: "console",
-          walletAddress:
-            wallet.status === "connected" ? wallet.address : undefined,
-          txId: settlement.txId,
-          contractAddress: settlement.contractAddress,
-          network: settlement.network,
-          status: settlement.txId ? "settled" : undefined,
-          note: settlement.note,
+          walletAddress: wallet.address,
+          txId: submitted.txId,
+          contractAddress: submitted.contractAddress,
+          network: submitted.network,
+          status: "settled",
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Notary rejected the public commitment.");
+        setSettleError(copy.action.settleFailed);
+        setProofStatus("error");
+        return;
       }
 
       const attested = (await response.json()) as {
@@ -144,12 +168,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         findings: result.findings,
         packFlags: result.packFlags,
         ledgerId: attested.ledgerId,
-        status: attested.status,
+        status: attested.status ?? "settled",
         walletAddress: attested.walletAddress,
         note: attested.note,
-        txId: attested.txId,
-        contractAddress: attested.contractAddress,
-        network: attested.network,
+        txId: attested.txId ?? submitted.txId,
+        contractAddress: attested.contractAddress ?? submitted.contractAddress,
+        network: attested.network ?? submitted.network,
       };
 
       setSanitizedPrompt(result.text);
@@ -160,16 +184,27 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         rawInput.length,
         result.findings.find((item) => item.kind === "compliance")?.count ?? 0,
       );
-    } catch {
+    } catch (error) {
+      setSettleError(
+        error instanceof Error ? error.message : copy.action.settleFailed,
+      );
       setProofStatus("error");
     } finally {
       setBusy(false);
     }
-  }, [busy, guardrails, rawInput, recordProof, wallet.address, wallet.network, wallet.status]);
+  }, [
+    busy,
+    canShield,
+    guardrails,
+    rawInput,
+    recordProof,
+    wallet.address,
+    wallet.network,
+  ]);
 
   const sendChat = useCallback(async () => {
     const content = composer.trim();
-    if (!content || proofStatus !== "shielded" || busy) return;
+    if (!content || proofStatus !== "shielded" || busy || !canShield) return;
 
     const userMessage: ChatMessage = {
       id: createId(),
@@ -192,10 +227,25 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ prompt: content, proofHash: proof?.hash }),
       });
       const data = (await response.json()) as { content?: string; error?: string };
+
+      if (demo && response.status === 503) {
+        setMessages((current) => [
+          ...current,
+          {
+            id: createId(),
+            role: "assistant",
+            content: copy.demo.reply,
+            walkthrough: true,
+            createdAt: new Date().toISOString(),
+          },
+        ]);
+        return;
+      }
+
       const assistantMessage: ChatMessage = {
         id: createId(),
         role: "assistant",
-        content: data.content ?? data.error ?? "No response.",
+        content: data.content ?? data.error ?? copy.chat.noModel,
         createdAt: new Date().toISOString(),
       };
       setMessages((current) => [...current, assistantMessage]);
@@ -205,17 +255,23 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         {
           id: createId(),
           role: "assistant",
-          content: "Channel error. The shielded prompt was not sent.",
+          content: demo ? copy.demo.reply : "Channel error. The shielded prompt was not sent.",
+          walkthrough: demo,
           createdAt: new Date().toISOString(),
         },
       ]);
     } finally {
       setBusy(false);
     }
-  }, [busy, composer, proof, proofStatus, recordQuery]);
+  }, [busy, canShield, composer, demo, proof, proofStatus, recordQuery]);
 
   const value = useMemo<WorkspaceContextValue>(
     () => ({
+      demo,
+      walletConnected,
+      canShield,
+      shieldGateHint,
+      settleError,
       rawInput,
       setRawInput,
       sanitizedPrompt,
@@ -232,7 +288,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }),
     [
       busy,
+      canShield,
       composer,
+      demo,
       guardrails,
       messages,
       processLocally,
@@ -242,6 +300,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       sanitizedPrompt,
       sendChat,
       setGuardrail,
+      settleError,
+      shieldGateHint,
+      walletConnected,
     ],
   );
 
