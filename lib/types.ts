@@ -54,9 +54,12 @@ export interface ProofRecord {
   findings: GuardrailFinding[];
   packFlags: number;
   ledgerId?: number;
-  status?: "committed-local" | "proof-server-reachable";
+  status?: "committed-local" | "proof-server-reachable" | "settled";
   walletAddress?: string;
   note?: string;
+  txId?: string;
+  contractAddress?: string;
+  network?: string;
 }
 
 export interface ChatMessage {

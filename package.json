@@ -7,10 +7,22 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "agent": "npm start --prefix agent"
+    "agent": "npm start --prefix agent",
+    "compact:compile": "node compact/compile.mjs"
   },
   "dependencies": {
+    "@midnight-ntwrk/compact-runtime": "^0.16.0",
     "@midnight-ntwrk/dapp-connector-api": "^4.0.1",
+    "@midnight-ntwrk/ledger-v8": "^8.1.2",
+    "@midnight-ntwrk/midnight-js-contracts": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-dapp-connector-proof-provider": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-fetch-zk-config-provider": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-http-client-proof-provider": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-indexer-public-data-provider": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-level-private-state-provider": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-network-id": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-types": "^4.1.1",
+    "@midnight-ntwrk/midnight-js-utils": "^4.1.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.42.0",
     "next": "16.3.4",

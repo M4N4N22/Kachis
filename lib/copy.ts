@@ -66,8 +66,13 @@ export const copy = {
     last: "Last verification",
     idle: "No local verification yet",
     ledger: "Public commitment id",
-    notaryLocal: "Recorded locally — Compact submit is the next wiring step.",
-    notaryServer: "Proof server reachable — circuit submit not wired yet.",
+    notaryLocal: "Recorded locally. Connect a funded wallet to settle.",
+    notaryServer: "Verification service reachable. Settlement still needs a funded wallet.",
+    notarySettled: "Settled. The pack ran; the original stays on this machine.",
+    settleFallback:
+      "Settlement did not complete. The local commitment is still recorded.",
+    tx: "Settlement id",
+    network: "Network",
     steps: [
       {
         id: "how-paste",
