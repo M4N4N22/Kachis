@@ -1,44 +1,49 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowRight, Lock, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { WorryWall } from "@/components/landing/worry-wall";
+import { SolutionBento } from "@/components/landing/solution-bento";
+import { PipelineProtocol } from "@/components/landing/pipeline-protocol";
+import { PricingMatrix } from "@/components/landing/pricing-matrix";
+import { MidnightPower } from "@/components/landing/midnight-power";
+import { LandingFaq } from "@/components/landing/landing-faq";
+import { FinalCta } from "@/components/landing/final-cta";
 import { Button } from "@/components/ui/button";
 import { copy } from "@/lib/copy";
+import { MidnightWordmark } from "../brand/midnight-mark";
 
-const FEATURES = [
-  {
-    icon: Lock,
-    title: "Local sandbox",
-    body: "Paste the file. Filters run on this machine before a model is allowed to see a token.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Invisible shield",
-    body: "Local verification confirms identifiers, balances, and secrets were stripped — without revealing them.",
-  },
-  {
-    icon: Sparkles,
-    title: "Zero-leak pipeline",
-    body: "The secure channel receives only the insulated remainder. Raw values never leave.",
-  },
-];
+const AeroShards = dynamic(() => import("@/components/react-bits/Aeroshards"), {
+  ssr: false,
+  loading: () => <div className="absolute inset-0 bg-[#120F17]" aria-hidden />,
+});
 
 export function LandingPage() {
   return (
-    <div className="theme-landing min-h-screen bg-bg text-ink">
+    <div className=" min-h-screen text-ink">
       <header className="fixed inset-x-0 top-4 z-30 flex justify-center px-4">
-        <div className="flex w-full max-w-6xl items-center justify-between rounded-full bg-[#111] px-4 py-2 text-white">
+        <div className="flex w-full bg-white/[0.15] dark:bg-black/[0.15] 
+               backdrop-blur-md saturate-150
+               border border-white/20 dark:border-white/10
+               shadow-[0_4px_30px_rgba(0,0,0,0.1)] max-w-6xl items-center justify-between rounded-full  p-4 text-white ">
           <Logo inverted />
           <nav className="hidden items-center gap-6 text-[13px] text-white/70 md:flex">
+            <a href="#signal" className="hover:text-white">
+              Signal
+            </a>
             <a href="#product" className="hover:text-white">
               Product
             </a>
-            <a href="#audiences" className="hover:text-white">
-              Audiences
-            </a>
             <a href="#proof" className="hover:text-white">
               How it works
+            </a>
+            <a href="#midnight" className="hover:text-white">
+              Midnight
+            </a>
+            <a href="#audiences" className="hover:text-white">
+              Audiences
             </a>
           </nav>
           <div className="flex items-center gap-2">
@@ -58,36 +63,68 @@ export function LandingPage() {
         </div>
       </header>
 
-      <section className="hero-sky relative overflow-hidden pt-36 pb-28">
-        <div className="hero-noise pointer-events-none absolute inset-0" />
-        <div className="relative mx-auto max-w-6xl px-6">
-          <p
-            className="landing-fade text-[11px] font-semibold text-brand"
-            style={{ animationDelay: "0ms" }}
-          >
-            Corporate data shield for AI
-          </p>
+      <section className=" relative min-h-[100svh] overflow-hidden  ">
+        <div className="absolute inset-0 z-0">
+          <AeroShards
+            className="h-full w-full"
+            backgroundColor="#000000"
+            shardColor="#1e00ff"
+            accentColor="#d765e6"
+            placement="full"
+            flow="stream"
+            material="pearl"
+            detail="balanced"
+            effect="none"
+            scale={1}
+            spread={1}
+            depth={1}
+            speed={1}
+            spin={1}
+            interaction="repel"
+            density={1.5}
+            shardSize={1.1}
+            stretch={1}
+            turbulence={1}
+            glow={1}
+            edgeSoftness={2}
+            bloom={0.5}
+            grain={0.05}
+            chromaticAberration={0.0075}
+            transitionDuration={1}
+            interactionRadius={1.5}
+            interactionStrength={0.5}
+            rippleIntensity={1}
+            holdToGather={true}
+          />
+        </div>
+
+        <div className="relative text-center z-10 mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-center px-6 pointer-events-none">
+          <div className="landing-fade flex items-center gap-2 text-center mx-auto" >
+            Powered by
+            <MidnightWordmark className="h-5 w-auto text-white" />
+          </div>
           <h1
-            className="landing-fade mt-5 max-w-4xl font-light tracking-[-0.06em] text-white"
+            className="landing-fade font-light tracking-[-0.06em] text-white mt-4"
             style={{
               animationDelay: "40ms",
               fontSize: "clamp(3rem, 12vw, 7.25rem)",
               lineHeight: 0.92,
             }}
           >
-            Shield internally.
+            Zero data leaks.
             <br />
-            Verify locally.
+            Zero compromise.
           </h1>
           <p
-            className="landing-fade mt-8 max-w-xl text-[15px] leading-7 text-white/70"
+            className="landing-fade mt-8 max-w-3xl mx-auto text-[15px] leading-7 text-white/70"
             style={{ animationDelay: "80ms" }}
           >
-            Kachis is a local guardrail for enterprise and freelance teams. Internal
-            data remains in your sandbox. The model only receives what you allow.
+            If your team's AI history leaked today, how cooked is your data? <br/> Kachis builds a
+            sovereign perimeter around institutional workflows. Keep internal records on your
+            device, and let Midnight attest to the security matrix.
           </p>
           <div
-            className="landing-fade mt-8 flex flex-wrap gap-3"
+            className="landing-fade mt-8 flex flex-wrap gap-3 pointer-events-auto items-center justify-center"
             style={{ animationDelay: "120ms" }}
           >
             <Link href="/workspace">
@@ -105,82 +142,19 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section id="product" className="mx-auto max-w-6xl px-6 py-20">
-        <p className="landing-fade inline-flex rounded-full bg-[color-mix(in_srgb,var(--brand)_14%,white)] px-3 py-1 text-[11px] font-semibold text-brand">
-          Invisible shield
-        </p>
-        <h2 className="landing-fade mt-4 text-3xl font-light tracking-tight md:text-4xl">
-          Enterprise infrastructure for private AI.
-        </h2>
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {FEATURES.map((feature, index) => (
-            <article
-              key={feature.title}
-              className="landing-fade bento p-6"
-              style={{ animationDelay: `${index * 40}ms` }}
-            >
-              <feature.icon className="h-3.5 w-3.5 text-brand" strokeWidth={1.75} />
-              <h3 className="mt-4 text-sm font-semibold tracking-tight">{feature.title}</h3>
-              <p className="mt-2 text-[13px] leading-6 text-muted-fg">{feature.body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+      <WorryWall />
 
-      <section id="audiences" className="mx-auto max-w-6xl px-6 py-20">
-        <p className="inline-flex rounded-full bg-[color-mix(in_srgb,var(--brand)_14%,white)] px-3 py-1 text-[11px] font-semibold text-brand">
-          Two seats, one guardrail
-        </p>
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <article className="rounded-[1.75rem] bg-surface p-8 shadow-[0_20px_50px_rgba(10,10,20,0.06)] ring-1 ring-[rgba(10,10,20,0.08)]">
-            <p className="text-[11px] font-semibold text-brand">
-              {copy.tiers.sandbox.badge}
-            </p>
-            <h3 className="mt-2 text-2xl font-light tracking-tight">
-              Individual sandbox
-            </h3>
-            <p className="mt-3 text-[13px] leading-6 text-muted-fg">
-              {copy.tiers.sandbox.description}
-            </p>
-          </article>
-          <article className="rounded-[1.75rem] bg-[#14141c] p-8 text-white">
-            <p className="text-[11px] font-semibold text-brand">
-              {copy.tiers.institutional.badge}
-            </p>
-            <h3 className="mt-2 text-2xl font-light tracking-tight">
-              Company-wide governance
-            </h3>
-            <p className="mt-3 text-[13px] leading-6 text-white/65">
-              {copy.tiers.institutional.description}
-            </p>
-          </article>
-        </div>
-      </section>
+      <SolutionBento />
 
-      <section id="proof" className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="text-3xl font-light tracking-tight">Four steps. Data never leaves.</h2>
-        <ol className="mt-8 grid gap-4 md:grid-cols-4">
-          {["Paste internally", "Apply filters", "Verify locally", "Open the channel"].map(
-            (step, index) => (
-              <li key={step} className="bento p-5">
-                <p className="text-[11px] font-semibold text-brand">0{index + 1}</p>
-                <p className="mt-3 text-sm font-medium tracking-tight">{step}</p>
-              </li>
-            ),
-          )}
-        </ol>
-        <div className="mt-10 flex flex-wrap gap-3">
-          <Link href="/workspace" className="inline-flex">
-            <Button>
-              {copy.action.idle}
-              <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
-            </Button>
-          </Link>
-          <Link href="/demo" className="inline-flex">
-            <Button variant="outline">{copy.demo.landing}</Button>
-          </Link>
-        </div>
-      </section>
+      <PipelineProtocol />
+
+      <PricingMatrix />
+
+      <MidnightPower />
+
+      <LandingFaq />
+
+      <FinalCta />
 
       <footer className="mx-auto flex max-w-6xl items-center justify-between px-6 py-12 text-[11px] text-muted-fg">
         <span>Kachis · Local data shield for corporate AI</span>
