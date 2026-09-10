@@ -28,26 +28,15 @@ export function Logo({
 }) {
   return (
     <span className="flex items-center gap-2.5">
-      <span className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-brand text-brand-fg">
-        <KachinaMark className="h-4 w-4" />
-      </span>
       {!compact ? (
         <span className="flex flex-col leading-none">
           <span
             className={cn(
-              "text-[13px] font-semibold tracking-tight",
+              "text-xl tracking-tight",
               inverted ? "text-white" : "text-ink",
             )}
           >
             Kachis
-          </span>
-          <span
-            className={cn(
-              "mt-0.5 text-[11px]",
-              inverted ? "text-white/55" : "text-muted-fg",
-            )}
-          >
-            Data Shield
           </span>
         </span>
       ) : null}

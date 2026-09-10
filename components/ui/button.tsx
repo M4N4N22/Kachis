@@ -1,4 +1,4 @@
-import { cn } from "@/lib/cn";
+﻿import { cn } from "@/lib/cn";
 import type { ButtonHTMLAttributes } from "react";
 
 type Variant = "brand" | "outline" | "ghost" | "danger" | "success";
@@ -10,12 +10,12 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<Variant, string> = {
-  brand: "bg-brand text-brand-fg hover:opacity-90",
+  brand: "bg-brand-gradient text-brand-fg hover:opacity-90",
   outline:
     "bg-transparent text-ink ring-1 ring-border hover:bg-muted",
   ghost: "rounded-xl bg-transparent text-ink hover:bg-muted",
   danger: "bg-danger text-white hover:opacity-90",
-  success: "bg-success text-brand-fg hover:opacity-90",
+  success: "bg-success text-white hover:opacity-90",
 };
 
 export function Button({
