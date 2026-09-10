@@ -8,7 +8,7 @@ import { copy } from "@/lib/copy";
 
 const GradientBlinds = dynamic(() => import("@/components/react-bits/GradientBlinds"), {
   ssr: false,
-  loading: () => <div className="absolute inset-0 bg-[#120F17]" aria-hidden />,
+  loading: () => <div className="absolute inset-0 bg-[#000022]" aria-hidden />,
 });
 
 export function FinalCta() {
@@ -19,7 +19,7 @@ export function FinalCta() {
           <div className="absolute inset-0">
             <GradientBlinds
               className="h-full w-full"
-              gradientColors={["#FF9FFC", "#5227FF"]}
+              gradientColors={["#f1ffa5", "#469396", "#1f3f6d"]}
               angle={20}
               noise={0.5}
               blindCount={16}

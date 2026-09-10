@@ -20,7 +20,6 @@ export function GuideRail() {
         onClick={() => setOpen((value) => !value)}
       >
         <span>
-          <p className="text-[11px] font-semibold text-brand">{copy.rail.eyebrow}</p>
           <h2 className="text-sm font-semibold tracking-tight">{copy.rail.title}</h2>
         </span>
         <ChevronDown

@@ -7,6 +7,7 @@ import { Logo } from "@/components/logo";
 import { WorryWall } from "@/components/landing/worry-wall";
 import { SolutionBento } from "@/components/landing/solution-bento";
 import { PipelineProtocol } from "@/components/landing/pipeline-protocol";
+import { AgentPipeline } from "@/components/landing/agent-pipeline";
 import { PricingMatrix } from "@/components/landing/pricing-matrix";
 import { MidnightPower } from "@/components/landing/midnight-power";
 import { LandingFaq } from "@/components/landing/landing-faq";
@@ -17,7 +18,7 @@ import { MidnightWordmark } from "../brand/midnight-mark";
 
 const AeroShards = dynamic(() => import("@/components/react-bits/Aeroshards"), {
   ssr: false,
-  loading: () => <div className="absolute inset-0 bg-[#120F17]" aria-hidden />,
+  loading: () => <div className="absolute inset-0 bg-[#000022]" aria-hidden />,
 });
 
 export function LandingPage() {
@@ -38,6 +39,9 @@ export function LandingPage() {
             </a>
             <a href="#proof" className="hover:text-white">
               How it works
+            </a>
+            <a href="#agents" className="hover:text-white">
+              Agents
             </a>
             <a href="#midnight" className="hover:text-white">
               Midnight
@@ -68,8 +72,8 @@ export function LandingPage() {
           <AeroShards
             className="h-full w-full"
             backgroundColor="#000000"
-            shardColor="#1e00ff"
-            accentColor="#d765e6"
+            shardColor="#1f3f6d"
+            accentColor="#469396"
             placement="full"
             flow="stream"
             material="pearl"
@@ -147,6 +151,8 @@ export function LandingPage() {
       <SolutionBento />
 
       <PipelineProtocol />
+
+      <AgentPipeline />
 
       <PricingMatrix />
 

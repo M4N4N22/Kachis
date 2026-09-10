@@ -1,17 +1,47 @@
+"use client";
+
+import { useId } from "react";
 import { cn } from "@/lib/cn";
 
+/** Stylized K mark with brand-a → brand-b → brand-accent gradient. */
 export function KachinaMark({ className }: { className?: string }) {
+  const gradientId = useId().replace(/:/g, "");
+
   return (
     <svg
-      viewBox="0 0 24 24"
+      viewBox="0 0 32 32"
       fill="none"
       className={className}
       aria-hidden
     >
+      <defs>
+        <linearGradient
+          id={gradientId}
+          x1="4"
+          y1="28"
+          x2="28"
+          y2="4"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop offset="0%" stopColor="var(--brand-b)" />
+          <stop offset="48%" stopColor="var(--brand-a)" />
+          <stop offset="100%" stopColor="var(--brand-accent)" />
+        </linearGradient>
+      </defs>
+      <rect
+        x="1.5"
+        y="1.5"
+        width="29"
+        height="29"
+        rx="8"
+        stroke={`url(#${gradientId})`}
+        strokeWidth="1.25"
+        opacity="0.55"
+      />
       <path
-        d="M7 5v14M7 12l10-7M7 12l10 7"
-        stroke="currentColor"
-        strokeWidth="1.75"
+        d="M10 8v16M10 16l11-8M10 16l11 8"
+        stroke={`url(#${gradientId})`}
+        strokeWidth="2.25"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -28,16 +58,15 @@ export function Logo({
 }) {
   return (
     <span className="flex items-center gap-2.5">
+      <KachinaMark className="h-8 w-8 shrink-0" />
       {!compact ? (
-        <span className="flex flex-col leading-none">
-          <span
-            className={cn(
-              "text-xl tracking-tight",
-              inverted ? "text-white" : "text-ink",
-            )}
-          >
-            Kachis
-          </span>
+        <span
+          className={cn(
+            "text-2xl leading-none tracking-tight",
+            inverted ? "text-white" : "text-white",
+          )}
+        >
+          Kachis
         </span>
       ) : null}
     </span>

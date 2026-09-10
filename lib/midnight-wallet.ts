@@ -26,28 +26,28 @@ const KNOWN: {
   aliases: string[];
 }[] = [
   {
+    id: "1am",
+    name: "1AM",
+    hint: "Chrome / Firefox · in-wallet proving",
+    aliases: ["1am", "oneam", "io.1am", "one.am", "com.1am", "1amwallet"],
+  },
+  {
     id: "lace",
     name: "Lace",
-    hint: "Chrome · Midnight dApp connector",
+    hint: "Chrome · needs proof server for settle",
     aliases: ["mnlace", "lace", "io.lace", "io.iog.lace", "iohk.lace"],
   },
   {
     id: "gero",
     name: "Gero",
-    hint: "Chrome · feature-detect Midnight connector",
+    hint: "Chrome · balancing not ready for settle",
     aliases: ["gero", "gerowallet", "mngero", "io.gerowallet"],
-  },
-  {
-    id: "1am",
-    name: "1AM",
-    hint: "Chrome / Firefox · Midnight-native",
-    aliases: ["1am", "oneam", "io.1am"],
   },
   {
     id: "ctrl",
     name: "Ctrl",
-    hint: "Chrome · partial dApp connector",
-    aliases: ["ctrl", "xdefi", "ctrlwallet"],
+    hint: "Chrome · partial connector",
+    aliases: ["ctrl", "xdefi", "ctrlwallet", "io.xdefi", "com.ctrl", "io.ctrl"],
   },
 ];
 

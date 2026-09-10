@@ -86,9 +86,37 @@ export const WALLET_PROVIDERS: {
   id: WalletProviderId;
   name: string;
   hint: string;
+  status: "supported" | "coming_soon";
+  recommended?: boolean;
+  icon: string;
 }[] = [
-  { id: "lace", name: "Lace", hint: "Chrome — Midnight dApp connector" },
-  { id: "gero", name: "Gero", hint: "Chrome — Midnight if the connector is injected" },
-  { id: "1am", name: "1AM", hint: "Chrome / Firefox — Midnight-native" },
-  { id: "ctrl", name: "Ctrl", hint: "Chrome — partial Midnight connector" },
+  {
+    id: "1am",
+    name: "1AM",
+    hint: "In-wallet proving · recommended for Shield & settle",
+    status: "supported",
+    recommended: true,
+    icon: "/wallets/1am.svg",
+  },
+  {
+    id: "lace",
+    name: "Lace",
+    hint: "Needs a local or remote proof server for settle",
+    status: "coming_soon",
+    icon: "/wallets/lace.svg",
+  },
+  {
+    id: "gero",
+    name: "Gero",
+    hint: "Connect works · contract balancing not ready yet",
+    status: "coming_soon",
+    icon: "/wallets/gero.svg",
+  },
+  {
+    id: "ctrl",
+    name: "Ctrl",
+    hint: "Partial Midnight connector · settle support later",
+    status: "coming_soon",
+    icon: "/wallets/ctrl.svg",
+  },
 ];

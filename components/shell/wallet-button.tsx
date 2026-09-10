@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Wallet } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { AnimatePresence, motion } from "motion/react";
+import { ArrowUpRight, ChevronDown, Copy, LogOut, RefreshCw } from "lucide-react";
+import { ConnectWalletModal } from "@/components/shell/connect-wallet-modal";
+import { RadialGlowButton } from "@/components/react-bits/radial-glow-button";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/lib/app-store";
 import { cn } from "@/lib/cn";
@@ -22,15 +26,9 @@ function shorten(address: string) {
   return `${address.slice(0, 8)}…${address.slice(-4)}`;
 }
 
-function safeIcon(icon: string | undefined) {
-  if (!icon) return undefined;
-  if (icon.startsWith("https://") || icon.startsWith("data:image/")) return icon;
-  return undefined;
-}
-
 function displayName(wallet: { walletName?: string; provider?: WalletProviderId }) {
   if (wallet.walletName) return wallet.walletName;
-  return WALLET_PROVIDERS.find((item) => item.id === wallet.provider)?.name ?? "Midnight";
+  return WALLET_PROVIDERS.find((item) => item.id === wallet.provider)?.name ?? "Wallet";
 }
 
 function BalanceRows({
@@ -51,25 +49,42 @@ function BalanceRows({
     },
   ];
   return (
-    <dl className="mt-3 space-y-2">
+    <dl className="space-y-2.5">
       {rows.map((row) => (
         <div key={row.label} className="flex items-baseline justify-between gap-3">
-          <dt className="text-[11px] text-muted-fg">{row.label}</dt>
-          <dd className="font-mono text-[11px] text-ink">{row.value}</dd>
+          <dt className="text-[11px] text-white/45">{row.label}</dt>
+          <dd className="font-mono text-[12px] text-white">{row.value}</dd>
         </div>
       ))}
       {balances.dustHint ? (
-        <p className="pt-1 text-[11px] leading-relaxed text-muted-fg">{balances.dustHint}</p>
+        <p className="pt-1 text-[11px] leading-relaxed text-white/40">{balances.dustHint}</p>
       ) : null}
     </dl>
   );
 }
 
+function connectedSummary(address: string, balances?: WalletBalances, network?: string) {
+  const short = shorten(address);
+  if (!balances) return short;
+  const night = nightAsset(network);
+  const dust = dustAsset(network);
+  const unshielded =
+    balances.unshielded && balances.unshielded !== "—"
+      ? `${formatDisplayAmount(balances.unshielded)} ${night}`
+      : null;
+  const fee = formatDustLabel(balances, dust);
+  return [short, unshielded, fee].filter(Boolean).join(" · ");
+}
+
 export function WalletButton() {
   const { wallet, connectWallet, disconnectWallet, refreshWalletBalances } = useApp();
-  const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [injected, setInjected] = useState<DiscoveredWallet[]>([]);
   const ref = useRef<HTMLDivElement>(null);
+
+  const closeModal = useCallback(() => setModalOpen(false), []);
 
   useEffect(() => {
     function refresh() {
@@ -81,63 +96,151 @@ export function WalletButton() {
   }, []);
 
   useEffect(() => {
+    if (wallet.status === "connecting") {
+      setModalOpen(false);
+      setMenuOpen(false);
+    }
+    if (wallet.status === "connected") {
+      setModalOpen(false);
+    }
+  }, [wallet.status]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
     function onPointerDown(event: PointerEvent) {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+      if (!ref.current?.contains(event.target as Node)) setMenuOpen(false);
     }
     document.addEventListener("pointerdown", onPointerDown);
     return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, []);
+  }, [menuOpen]);
+
+  const handleConnect = useCallback(
+    (provider: WalletProviderId) => {
+      try {
+        const session = startWalletConnect(provider);
+        void connectWallet(provider, session);
+      } catch {
+        void connectWallet(provider);
+      }
+      setModalOpen(false);
+    },
+    [connectWallet],
+  );
+
+  const copyAddress = useCallback(async () => {
+    if (!wallet.address) return;
+    try {
+      await navigator.clipboard.writeText(wallet.address);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1400);
+    } catch {
+      /* ignore */
+    }
+  }, [wallet.address]);
 
   if (wallet.status === "connected" && wallet.address) {
+    const providerIcon = WALLET_PROVIDERS.find((item) => item.id === wallet.provider)?.icon;
+
     return (
       <div className="relative" ref={ref}>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setOpen((value) => !value)}
-          className="max-w-[320px] bg-surface"
+        <button
+          type="button"
+          onClick={() => setMenuOpen((value) => !value)}
+          className={cn(
+            "inline-flex max-w-[min(100vw-8rem,28rem)] items-center gap-2 rounded-full border border-white/10 px-4 py-3 text-left transition-colors hover:border-white/20",
+            menuOpen && "border-brand-a",
+          )}
         >
-          <span className="h-1.5 w-1.5 rounded-full bg-success" />
-          <span className="truncate text-[12px]">
-            {wallet.balances?.unshielded && wallet.balances.unshielded !== "—"
-              ? `${formatDisplayAmount(wallet.balances.unshielded)} ${nightAsset(wallet.network)} · ${formatDustLabel(wallet.balances, dustAsset(wallet.network))}`
-              : `${shorten(wallet.address)} · ${displayNetworkLabel(wallet.network)}`}
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" />
+          {providerIcon ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={providerIcon} alt="" className="h-5 w-5 shrink-0 rounded-md" />
+          ) : null}
+          <span className="min-w-0 truncate font-mono text-[12px] text-ink">
+            {connectedSummary(wallet.address, wallet.balances, wallet.network)}
           </span>
-          <ChevronDown className="h-3.5 w-3.5" strokeWidth={1.75} />
-        </Button>
-        {open ? (
-          <div className="absolute top-full right-0 z-40 mt-2 w-72 rounded-2xl bg-surface p-3 shadow-[0_16px_40px_rgba(0,0,0,0.45)] ring-1 ring-border">
-            <p className="text-[11px] font-semibold text-brand">{displayName(wallet)}</p>
-            <p className="mt-0.5 text-[11px] text-muted-fg">{displayNetworkLabel(wallet.network)}</p>
-            <p className="mt-1 break-all font-mono text-[11px] text-muted-fg">
-              {wallet.address}
-            </p>
-            {wallet.balances ? (
-              <BalanceRows balances={wallet.balances} network={wallet.network} />
-            ) : (
-              <p className="mt-3 text-[11px] text-muted-fg">{copy.wallet.balancesUnavailable}</p>
+          <ChevronDown
+            className={cn(
+              "h-3.5 w-3.5 shrink-0 text-muted-fg transition-transform",
+              menuOpen && "rotate-180",
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mt-2 w-full"
-              onClick={() => void refreshWalletBalances()}
+            strokeWidth={1.75}
+          />
+        </button>
+
+        <AnimatePresence>
+          {menuOpen ? (
+            <motion.div
+              initial={{ opacity: 0, y: 6, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 4, scale: 0.98 }}
+              transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute top-full right-0 z-50 mt-4 w-[20.5rem] overflow-hidden rounded-[1.35rem]  bg-white/5 p-4 shadow-lg backdrop-blur-md"
             >
-              {copy.wallet.refresh}
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="mt-2 w-full"
-              onClick={() => {
-                disconnectWallet();
-                setOpen(false);
-              }}
-            >
-              {copy.wallet.disconnect}
-            </Button>
-          </div>
-        ) : null}
+              <div className="rounded-2xl border border-white/5 bg-black p-3.5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[12px] font-semibold text-white">{displayName(wallet)}</p>
+                    <p className="mt-0.5 text-[11px] text-white/45">
+                      {displayNetworkLabel(wallet.network)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void copyAddress()}
+                    className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-1 text-[10px] font-semibold text-white/60 transition-colors hover:bg-white/8 hover:text-white"
+                  >
+                    <Copy className="h-3 w-3" strokeWidth={1.75} />
+                    {copied ? "Copied" : "Copy"}
+                  </button>
+                </div>
+                <p className="mt-3 break-all font-mono text-[11px] leading-5 text-white/70">
+                  {wallet.address}
+                </p>
+              </div>
+
+              <div className="mt-3 rounded-2xl bg-black px-3.5 py-3">
+                {wallet.balances ? (
+                  <BalanceRows balances={wallet.balances} network={wallet.network} />
+                ) : (
+                  <p className="text-[11px] text-white/45">{copy.wallet.balancesUnavailable}</p>
+                )}
+              </div>
+
+              <div className="mt-3 grid gap-2">
+                <Link
+                  href="/identity"
+                  onClick={() => setMenuOpen(false)}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-brand px-4 text-[13px] font-medium text-brand-fg transition-opacity hover:opacity-90"
+                >
+                  {copy.wallet.viewIdentity}
+                  <ArrowUpRight className="h-3.5 w-3.5" strokeWidth={1.75} />
+                </Link>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => void refreshWalletBalances()}
+                    className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] text-[12px] font-medium text-white/80 transition-colors hover:bg-white/[0.08]"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    {copy.wallet.refresh}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      disconnectWallet();
+                      setMenuOpen(false);
+                    }}
+                    className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] text-[12px] font-medium text-white/80 transition-colors hover:bg-white/[0.08]"
+                  >
+                    <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} />
+                    {copy.wallet.disconnect}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </div>
     );
   }
@@ -146,86 +249,28 @@ export function WalletButton() {
     <div className="relative" ref={ref}>
       {wallet.status === "connecting" ? (
         <div className="flex items-center gap-2">
-          <Button size="sm" disabled>
-            <Wallet className="h-3.5 w-3.5" strokeWidth={1.75} />
+          <RadialGlowButton size="sm" rounded="full" disabled>
             {copy.wallet.verifying}
-          </Button>
+          </RadialGlowButton>
           <Button variant="ghost" size="sm" onClick={disconnectWallet}>
             {copy.wallet.cancel}
           </Button>
         </div>
       ) : (
-        <Button size="sm" onClick={() => setOpen((value) => !value)}>
-          <Wallet className="h-3.5 w-3.5" strokeWidth={1.75} />
+        <RadialGlowButton size="sm" rounded="full" onClick={() => setModalOpen(true)}>
           {copy.wallet.connect}
-        </Button>
+        </RadialGlowButton>
       )}
-      {open && wallet.status !== "connecting" ? (
-        <div className="absolute top-full right-0 z-40 mt-2 w-72 rounded-2xl bg-surface p-2 shadow-[0_16px_40px_rgba(0,0,0,0.45)] ring-1 ring-border">
-          <p className="px-2 pt-1 pb-2 text-[11px] text-muted-fg">{copy.wallet.choose}</p>
-          <p className="px-2 pb-2 text-[11px] text-muted-fg">
-            {injected.length > 0
-              ? `Detected: ${injected.map((item) => item.name).join(", ")}`
-              : "No connector on this page yet. Unlock the extension, then refresh."}
-          </p>
-          <p className="px-2 pb-2 text-[11px] text-muted-fg">
-            Approve in the wallet pop-up. It may open behind this window.
-          </p>
-          {wallet.error ? (
-            <p className="px-2 pb-2 text-[11px] text-danger">{wallet.error}</p>
-          ) : null}
-          {WALLET_PROVIDERS.map((provider) => {
-            const live = injected.some(
-              (item) => item.knownId === provider.id || item.key === provider.id,
-            );
-            const icon = safeIcon(
-              injected.find((item) => item.knownId === provider.id)?.icon,
-            );
-            return (
-              <button
-                key={provider.id}
-                type="button"
-                disabled={!live}
-                onClick={() => {
-                  if (!live) return;
-                  try {
-                    const session = startWalletConnect(provider.id);
-                    void connectWallet(provider.id, session);
-                  } catch {
-                    void connectWallet(provider.id);
-                  }
-                  setOpen(false);
-                }}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left",
-                  live ? "hover:bg-muted" : "cursor-not-allowed opacity-50",
-                )}
-              >
-                {icon ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={icon} alt="" className="h-5 w-5 rounded-md" />
-                ) : (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-md bg-muted text-[10px] font-semibold">
-                    {provider.name.slice(0, 1)}
-                  </span>
-                )}
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2">
-                    <span className="block text-[13px] font-medium">{provider.name}</span>
-                    {live ? (
-                      <span className="text-[10px] font-semibold text-success">Detected</span>
-                    ) : null}
-                  </span>
-                  <span className="block text-[11px] text-muted-fg">
-                    {live ? provider.hint : "Not detected on this page"}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      ) : null}
-      {wallet.error && !open ? (
+
+      <ConnectWalletModal
+        open={modalOpen && wallet.status !== "connecting"}
+        onClose={closeModal}
+        injected={injected}
+        error={wallet.error}
+        onConnect={handleConnect}
+      />
+
+      {wallet.error && !modalOpen ? (
         <p className="absolute top-full right-0 z-30 mt-2 max-w-72 text-right text-[11px] text-danger">
           {wallet.error}
         </p>

@@ -1,6 +1,8 @@
 "use client";
 
-import { Shield, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { ClipboardPaste, FileText } from "lucide-react";
+import { RadialGlowButton } from "@/components/react-bits/radial-glow-button";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { copy } from "@/lib/copy";
@@ -9,7 +11,6 @@ import { useWorkspace } from "@/lib/workspace-store";
 
 export function ZkInputPanel() {
   const {
-    demo,
     walletConnected,
     canShield,
     shieldGateHint,
@@ -19,97 +20,111 @@ export function ZkInputPanel() {
     guardrails,
     setGuardrail,
     processLocally,
-    proofStatus,
     proof,
     busy,
+    sending,
   } = useWorkspace();
+  const [pasteHint, setPasteHint] = useState<string | null>(null);
 
-  const status =
-    proofStatus === "error"
-      ? copy.action.error
-      : proofStatus === "shielded"
-        ? copy.action.success
-        : proofStatus === "idle"
-          ? !walletConnected
-            ? copy.action.walletRequired
-            : !canShield
-              ? copy.action.fundRequired
-              : copy.action.idle
-          : copy.action.processing;
+  async function pasteFromClipboard() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text.trim()) {
+        setRawInput(text);
+        setPasteHint(null);
+      }
+    } catch {
+      setPasteHint(copy.input.pasteFailed);
+    }
+  }
 
   return (
-    <section className="bento flex min-h-0 flex-col overflow-hidden">
-      <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3">
-        <div>
-          <p className="text-[11px] font-semibold text-brand">{copy.input.eyebrow}</p>
-          <h2 className="text-sm font-semibold tracking-tight">{copy.input.title}</h2>
-          <p className="mt-1 max-w-sm text-[11px] leading-relaxed text-muted-fg">
-            {copy.input.helper}
-          </p>
-        </div>
-        {demo ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setRawInput(SAMPLE_SENSITIVE_PROMPT)}
-          >
-            {copy.demo.loadSample}
-          </Button>
-        ) : null}
+    <section className="relative flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="relative px-5 pt-5 pb-3">
+        <h2
+          className="font-light tracking-[-0.03em] text-ink"
+          style={{ fontSize: "clamp(1.2rem, 1.8vw, 1.5rem)", lineHeight: 1.15 }}
+        >
+          {copy.input.title}
+        </h2>
+        <p className="mt-2 text-[13px] leading-6 text-muted-fg">{copy.input.helper}</p>
       </div>
 
-      <div className="min-h-0 flex-1 px-5">
+      <div className="relative flex flex-wrap gap-2 px-5">
+        <Button variant="outline" size="sm" onClick={() => void pasteFromClipboard()}>
+          <ClipboardPaste className="h-3.5 w-3.5" strokeWidth={1.75} />
+          {copy.input.paste}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setRawInput(SAMPLE_SENSITIVE_PROMPT);
+            setPasteHint(null);
+          }}
+        >
+          <FileText className="h-3.5 w-3.5" strokeWidth={1.75} />
+          {copy.input.sample}
+        </Button>
+      </div>
+      {pasteHint ? (
+        <p className="relative px-5 pt-2 text-[11px] text-muted-fg">{pasteHint}</p>
+      ) : null}
+
+      <div className="relative min-h-0 flex-1 px-5 pt-3">
         <textarea
           value={rawInput}
           onChange={(event) => setRawInput(event.target.value)}
           placeholder={copy.input.placeholder}
-          className="h-full min-h-[220px] w-full resize-none rounded-2xl bg-bg px-4 py-3 text-[13px] leading-6 text-ink outline-none ring-1 ring-border placeholder:text-muted-fg focus:ring-brand/50"
+          className="h-full min-h-[180px] w-full resize-none rounded-[1.25rem] border border-white/10 bg-black/25 px-4 py-3 text-[14px] leading-7 text-ink outline-none placeholder:text-muted-fg focus:border-[color-mix(in_srgb,var(--brand-a)_45%,transparent)]"
         />
       </div>
 
-      <div className="space-y-3 px-5 py-4">
-        <Toggle
-          checked={guardrails.piiStripping}
-          onChange={(value) => setGuardrail("piiStripping", value)}
-          label={copy.filters.pii.label}
-          description={copy.filters.pii.tooltip}
-        />
-        <Toggle
-          checked={guardrails.financialMasking}
-          onChange={(value) => setGuardrail("financialMasking", value)}
-          label={copy.filters.financial.label}
-          description={copy.filters.financial.tooltip}
-        />
-        <Toggle
-          checked={guardrails.enterpriseCompliance}
-          onChange={(value) => setGuardrail("enterpriseCompliance", value)}
-          label={copy.filters.compliance.label}
-          description={copy.filters.compliance.tooltip}
-        />
-      </div>
-
-      <div className="flex flex-col gap-3 border-t border-border px-5 py-4">
-        <div className="flex items-center gap-2 text-[11px] text-muted-fg">
-          <Shield className="h-3.5 w-3.5 text-brand" strokeWidth={1.75} />
-          <span>{status}</span>
-          {proof ? (
-            <span className="ml-auto truncate font-mono text-[11px] text-ink/80">
-              {proof.hash}
-            </span>
-          ) : null}
+      <div className="relative space-y-2 px-5 py-3">
+        <p className="text-[11px] font-semibold tracking-[0.08em] text-muted-fg uppercase">
+          {copy.input.security}
+        </p>
+        <div className="space-y-1 rounded-[1.15rem] border border-white/8 bg-black/20 px-3 py-2">
+          <Toggle
+            checked={guardrails.piiStripping}
+            onChange={(value) => setGuardrail("piiStripping", value)}
+            label={copy.filters.pii.label}
+            description={copy.filters.pii.tooltip}
+          />
+          <Toggle
+            checked={guardrails.financialMasking}
+            onChange={(value) => setGuardrail("financialMasking", value)}
+            label={copy.filters.financial.label}
+            description={copy.filters.financial.tooltip}
+          />
+          <Toggle
+            checked={guardrails.enterpriseCompliance}
+            onChange={(value) => setGuardrail("enterpriseCompliance", value)}
+            label={copy.filters.compliance.label}
+            description={copy.filters.compliance.tooltip}
+          />
         </div>
+      </div>
+
+      <div className="relative flex flex-col gap-2 px-5 pb-5 pt-1">
         {shieldGateHint ? (
           <p className="text-[11px] leading-relaxed text-muted-fg">{shieldGateHint}</p>
         ) : null}
         {settleError ? (
           <p className="text-[11px] leading-relaxed text-danger">{settleError}</p>
         ) : null}
-        <Button
+        {proof ? (
+          <p className="truncate font-mono text-[10px] text-muted-fg">
+            {proof.hash}
+            {proof.ledgerId ? ` · #${proof.ledgerId}` : ""}
+          </p>
+        ) : null}
+        <RadialGlowButton
           className="w-full"
-          disabled={!canShield || !rawInput.trim() || busy}
+          rounded="full"
+          disabled={!canShield || !rawInput.trim() || busy || sending}
           onClick={() => void processLocally()}
         >
-          <Sparkles className="h-3.5 w-3.5" strokeWidth={1.75} />
           {busy
             ? copy.action.processing
             : !walletConnected
@@ -117,7 +132,7 @@ export function ZkInputPanel() {
               : !canShield
                 ? copy.action.fundRequired
                 : copy.action.idle}
-        </Button>
+        </RadialGlowButton>
       </div>
     </section>
   );

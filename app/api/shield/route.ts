@@ -91,6 +91,9 @@ export async function POST(request: Request) {
 
   const notary = await probeProofServer();
   const settled = body.status === "settled" && typeof body.txId === "string" && body.txId.length > 0;
+  const walkthrough =
+    body.network === "walkthrough" ||
+    (typeof body.txId === "string" && body.txId.startsWith("walkthrough_"));
   const recorded = await recordAttestation({
     cleanedHash: body.cleanedHash,
     binding: body.binding,
@@ -102,11 +105,11 @@ export async function POST(request: Request) {
     source: body.source === "agent" ? "agent" : "console",
     walletAddress: body.walletAddress,
     txId: settled ? body.txId : undefined,
-    contractAddress: body.contractAddress,
+    contractAddress: walkthrough ? undefined : body.contractAddress,
     network: body.network,
-    onChain: settled || undefined,
+    onChain: settled && !walkthrough ? true : undefined,
     note: settled
-      ? "Settled. The pack ran; the original stays on this machine."
+      ? (body.note ?? "Settled. The pack ran; the original stays on this machine.")
       : (body.note ?? notary.note),
   });
 

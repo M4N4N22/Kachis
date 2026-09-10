@@ -27,11 +27,11 @@ const nextConfig: NextConfig = {
   serverExternalPackages: midnightWasm,
   turbopack: {
     resolveAlias: {
-      "isomorphic-ws": "./lib/isomorphic-ws.ts",
-      "@midnight-ntwrk/ledger-v8": "./node_modules/@midnight-ntwrk/ledger-v8/midnight_ledger_wasm.js",
-      "@midnight-ntwrk/onchain-runtime-v3":
-        "./node_modules/@midnight-ntwrk/onchain-runtime-v3/midnight_onchain_runtime_wasm.js",
-      "@midnight-ntwrk/compact-runtime": "./node_modules/@midnight-ntwrk/compact-runtime",
+      // Keep absolute so Turbopack does not fall back to isomorphic-ws/browser.js
+      "isomorphic-ws": isomorphicWs.replace(/\\/g, "/"),
+      "@midnight-ntwrk/ledger-v8": ledgerBrowser.replace(/\\/g, "/"),
+      "@midnight-ntwrk/onchain-runtime-v3": onchainBrowser.replace(/\\/g, "/"),
+      "@midnight-ntwrk/compact-runtime": compactRuntime.replace(/\\/g, "/"),
     },
   },
   webpack: (config, { isServer, webpack }) => {
