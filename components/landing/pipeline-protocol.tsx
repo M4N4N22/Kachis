@@ -14,7 +14,7 @@ export function PipelineProtocol() {
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
         <div className="overflow-hidden rounded-[2rem]   px-5 py-12 shadow-[0_30px_80px_rgba(20,20,28,0.08)] sm:px-8 md:rounded-[2.5rem] md:px-12 md:py-16">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="landing-fade inline-flex rounded-full  px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-white">
+            <p className="landing-fade inline-flex rounded-full  px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-ink">
               HOW IT WORKS
             </p>
             <h2
@@ -32,7 +32,7 @@ export function PipelineProtocol() {
           </div>
 
           <div className="landing-fade mt-12 grid gap-4 md:grid-cols-2 md:gap-5">
-            <article className="flex flex-col overflow-hidden rounded-[1.75rem] border border-white/10  p-6 md:p-8">
+            <article className="flex flex-col overflow-hidden rounded-[1.75rem] border border-ink/10  p-6 md:p-8">
               <h3 className="text-[1.35rem] tracking-tight text-foreground">
                 Agent in your existing tools
               </h3>
@@ -42,9 +42,9 @@ export function PipelineProtocol() {
               </p>
 
               <div className="mt-8 flex flex-1 items-end justify-center pb-2">
-                <div className="w-full max-w-[22rem] border border-white/5 rounded-2xl p-4 shadow-[0_18px_40px_rgba(20,20,28,0.08)]">
+                <div className="w-full max-w-[22rem] border border-ink/5 rounded-2xl p-4 shadow-[0_18px_40px_rgba(20,20,28,0.08)]">
                   <div className="flex items-center gap-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg  text-white">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg  text-ink">
                       <Lock className="" strokeWidth={1.75} />
                     </span>
                     <div>
@@ -57,9 +57,9 @@ export function PipelineProtocol() {
                     <p className="text-foreground">→ must call kachis_shield</p>
                     <p className="text-[#c45b6a]">raw payroll paste held on-device</p>
                   </div>
-                  <div className="mt-3 flex items-center justify-between rounded-full border border-white/10  p-2">
+                  <div className="mt-3 flex items-center justify-between rounded-full border border-ink/10  p-2">
                     <span className="text-[11px] text-[#8a8a96]">Prompt enters your AI tool…</span>
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#14141c] text-white">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#14141c] text-ink">
                       <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
                     </span>
                   </div>
@@ -67,7 +67,7 @@ export function PipelineProtocol() {
               </div>
             </article>
 
-            <article className="flex flex-col overflow-hidden rounded-[1.75rem] border border-white/10  p-6 md:p-8">
+            <article className="flex flex-col overflow-hidden rounded-[1.75rem] border border-ink/10  p-6 md:p-8">
               <h3 className="text-[1.35rem] tracking-tight text-foreground">
                 Shield before public AI
               </h3>
@@ -77,7 +77,7 @@ export function PipelineProtocol() {
               </p>
 
               <div className="mt-8 flex flex-1 flex-col items-center justify-end gap-3 pb-2">
-                <div className="w-full max-w-[22rem] rounded-2xl border border-white/5 p-4 shadow-[0_18px_40px_rgba(20,20,28,0.08)]">
+                <div className="w-full max-w-[22rem] rounded-2xl border border-ink/5 p-4 shadow-[0_18px_40px_rgba(20,20,28,0.08)]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="flex h-7 w-7 items-center justify-center rounded-lg ">
@@ -102,8 +102,8 @@ export function PipelineProtocol() {
                   </div>
                 </div>
 
-                <div className="flex w-full max-w-[22rem] items-center gap-2 rounded-full border border-white/5 px-3.5 py-3 shadow-[0_12px_28px_rgba(20,20,28,0.06)]">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full  text-white">
+                <div className="flex w-full max-w-[22rem] items-center gap-2 rounded-full border border-ink/5 px-3.5 py-3 shadow-[0_12px_28px_rgba(20,20,28,0.06)]">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full  text-ink">
                     <Check className="" strokeWidth={2} />
                   </span>
                   <div className="min-w-0">
@@ -116,7 +116,7 @@ export function PipelineProtocol() {
               </div>
             </article>
 
-            <article className="overflow-hidden rounded-[1.75rem] border border-white/10 md:col-span-2">
+            <article className="overflow-hidden rounded-[1.75rem] border border-ink/10 md:col-span-2">
               <div className="grid items-stretch gap-6 p-6 md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:gap-8 md:p-8 lg:p-10">
                 <div className="flex flex-col justify-center">
                   <h3 className="text-[1.35rem] tracking-tight text-foreground md:text-[1.6rem]">
@@ -132,13 +132,13 @@ export function PipelineProtocol() {
 
                 <div className="relative min-h-[280px]">
                   <div className="absolute inset-0 rounded-[1.5rem] " />
-                  <div className="relative flex h-full overflow-hidden rounded-[1.5rem] border border-white/5 bg-black shadow-[0_22px_50px_rgba(20,20,28,0.1)]">
-                    <aside className="hidden w-[7.5rem] shrink-0 border-r border-white/5 p-3 sm:block">
+                  <div className="relative flex h-full overflow-hidden rounded-[1.5rem] border border-ink/5 bg-black shadow-[0_22px_50px_rgba(20,20,28,0.1)]">
+                    <aside className="hidden w-[7.5rem] shrink-0 border-r border-ink/5 p-3 sm:block">
                       <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a8a96]">
                         Path
                       </p>
                       <ul className="mt-3 space-y-2 text-[11px] text-[#5c5c6a]">
-                        <li className="rounded-lg  px-2 py-1.5 font-medium text-foreground shadow-sm ring-1 ring-white/5">
+                        <li className="rounded-lg  px-2 py-1.5 font-medium text-foreground shadow-sm ring-1 ring-ink/5">
                           Host AI
                         </li>
                         <li className="px-2 py-1.5">Kachis</li>
@@ -156,7 +156,7 @@ export function PipelineProtocol() {
                       </div>
 
                       <div className="mt-3 grid flex-1 grid-cols-2 gap-2">
-                        <div className="rounded-xl border border-white/5 p-3">
+                        <div className="rounded-xl border border-ink/5 p-3">
                           <p className="text-[10px]  uppercase  text-[#8a8a96]">
                             Held locally
                           </p>
@@ -169,7 +169,7 @@ export function PipelineProtocol() {
                           </p>
                           <p className="mt-3 text-[10px] font-medium text-[#8a8a96]">Never sent</p>
                         </div>
-                        <div className="rounded-xl border border-white/5  p-3 shadow-sm">
+                        <div className="rounded-xl border border-ink/5  p-3 shadow-sm">
                           <p className="text-[10px] font-semibold uppercase text-brand-a">
                             Sent to model
                           </p>
@@ -186,9 +186,9 @@ export function PipelineProtocol() {
                         </div>
                       </div>
 
-                      <div className="mt-3 rounded-xl border border-white/5 px-3 py-2.5 text-[11px] text-white/80">
+                      <div className="mt-3 rounded-xl border border-ink/5 px-3 py-2.5 text-[11px] text-ink/80">
                         <span className="text-brand-b">Evidence</span>
-                        <span className="text-white/40"> · </span>
+                        <span className="text-ink/40"> · </span>
                         Pack verified locally · original stays on-device
                       </div>
                     </div>

@@ -68,7 +68,7 @@ function TierBody({
         </p>
         <h3
           className={`mt-3 font-light tracking-[-0.03em] ${
-            muted ? "text-foreground" : "text-white"
+            muted ? "text-foreground" : "text-ink"
           }`}
           style={{ fontSize: "clamp(1.45rem, 2.4vw, 1.85rem)", lineHeight: 1.15 }}
         >
@@ -76,7 +76,7 @@ function TierBody({
         </h3>
         <p
           className={`mt-3 text-[1.35rem] font-medium tracking-tight ${
-            muted ? "text-foreground" : "text-white"
+            muted ? "text-foreground" : "text-ink"
           }`}
         >
           {tier.price}
@@ -95,7 +95,7 @@ function TierBody({
             </span>
             <span
               className={`text-[14px] leading-6 ${
-                muted ? "text-[#6b6b78]" : "text-white/70"
+                muted ? "text-[#6b6b78]" : "text-ink/70"
               }`}
             >
               {bullet}
@@ -110,7 +110,7 @@ function TierBody({
             className={
               tier.highlighted
                 ? "w-full bg-emerald-400 text-black hover:bg-emerald-300 hover:opacity-100"
-                : "w-full border-0 bg-white/8 text-white ring-white/15 hover:bg-white/12"
+                : "w-full border-0 bg-ink/8 text-ink ring-ink/15 hover:bg-ink/12"
             }
             variant={tier.highlighted ? "brand" : "outline"}
           >
@@ -130,7 +130,7 @@ export function PricingMatrix() {
     <section id="audiences" className="relative overflow-hidden py-16 md:py-24">
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="landing-fade inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-white">
+          <p className="landing-fade inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-ink">
             TWO SEATS
           </p>
           <h2
@@ -147,7 +147,7 @@ export function PricingMatrix() {
         </div>
 
         <div className="landing-fade mt-12 grid items-stretch gap-4 md:grid-cols-2 md:gap-5">
-          <article className="flex min-h-[32rem] flex-col rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-6 md:p-8">
+          <article className="flex min-h-[32rem] flex-col rounded-[1.75rem] border border-ink/10 bg-ink/[0.03] p-6 md:p-8">
             <TierBody tier={sandbox} tone="muted" />
           </article>
 

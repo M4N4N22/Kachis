@@ -11,7 +11,8 @@ export const copy = {
     placeholder: "Type or paste payroll, source, contracts, or internal notes…",
     paste: "Paste",
     pasteFailed: "Clipboard paste blocked — use Ctrl+V.",
-    sample: "Load sample",
+    sample: "Load payroll sample",
+    sampleCode: "Load code & client sample",
     security: "Security filters",
   },
   filters: {
@@ -23,9 +24,28 @@ export const copy = {
       label: "Mask financials",
       tooltip: "Redacts amounts, routing, and account formats.",
     },
-    compliance: {
-      label: "Compliance audit",
-      tooltip: "Checks the pack against your org policy without exposing raw text.",
+    secrets: {
+      label: "Hold secrets",
+      tooltip: "Blocks API keys, JWTs, and private key material locally.",
+    },
+    code: {
+      label: "Insulate source",
+      tooltip: "Redacts env assignments, code secrets, and internal paths.",
+    },
+    client: {
+      label: "Strip client records",
+      tooltip: "Masks labeled customer, account, and opportunity lines.",
+    },
+  },
+  pack: {
+    required:
+      "Institutional seats must run every pack before shield. Enable all filters.",
+    labels: {
+      pii: "Identifiers",
+      financial: "Financials",
+      secrets: "Secrets",
+      code: "Source",
+      client: "Client",
     },
   },
   action: {
@@ -150,7 +170,7 @@ export const copy = {
       {
         id: "how-guardrails",
         title: "Apply filters",
-        body: "Identifiers, financial formats, and policy secrets are stripped locally.",
+        body: "Identifiers, financials, secrets, source markers, and client records are stripped locally.",
       },
       {
         id: "how-proof",
@@ -234,6 +254,12 @@ export const copy = {
     credentials: "Active Corporate Credentials Verified",
     settlements: "Private Settlements Cryptographically Sealed",
     cycles: "Recent shielded jobs",
+    quarterTitle: "This quarter",
+    quarterEmpty: "No shields in this quarter yet.",
+    quarterSettlements: "Settlements",
+    quarterFindings: "Findings held",
+    quarterOnChain: "On-chain",
+    packs: "Packs",
   },
   identity: {
     disclose: "Verify selected claims",

@@ -11,7 +11,9 @@ import { useEffect, useState } from "react";
 const LIVE_FILTERS = [
   copy.filters.pii,
   copy.filters.financial,
-  copy.filters.compliance,
+  copy.filters.secrets,
+  copy.filters.code,
+  copy.filters.client,
 ];
 
 export function GuardrailsView() {

@@ -972,7 +972,7 @@ fn sampleSource(pixel: vec2f) -> vec3f {
   return textureSampleLevel(sourceTexture, sourceSampler, pixel / style.viewport.xy, 0.0).rgb;
 }
 fn inkLevel(color: vec3f) -> f32 {
-  // Measure contrast against the chosen background, not black: white stays empty too.
+  // Measure contrast against the chosen background, not black: ink stays empty too.
   return clamp(dot(abs(color - style.background.rgb), vec3f(0.2126, 0.7152, 0.0722)) * 2.4, 0.0, 1.0);
 }
 `;
@@ -1138,7 +1138,7 @@ fn fs_main(@location(0) uv: vec2f, @builtin(position) pixel: vec4f) -> @location
   var foreground = scene - background;
   if (post.finishing.x > 0.0001) {
     let bloom = textureSampleLevel(bloomTexture, linearSampler, uv, 0.0);
-    // A colored haze remains visible on white; protect the opaque facet colors underneath.
+    // A colored haze remains visible on ink; protect the opaque facet colors underneath.
     let haloMask = 1.0 - smoothstep(0.04, 0.4, length(foreground));
     let haloOpacity = min(bloom.a * post.finishing.x * 1.8, 0.65) * haloMask;
     let haloColor = bloom.rgb / max(bloom.a, 0.00001);

@@ -15,11 +15,11 @@ export function WorkspaceView({ demo = false }: { demo?: boolean }) {
             {copy.demo.banner}
           </p>
         ) : null}
-        <div className="grid min-h-0 flex-1 gap-0 overflow-hidden rounded-3xl border border-white/10 lg:grid-cols-3">
-          <div className="min-h-[480px] border-b border-white/6 lg:min-h-0 lg:border-b-0">
+        <div className="grid min-h-0 flex-1 gap-0 overflow-hidden rounded-3xl border border-ink/10 lg:grid-cols-3">
+          <div className="min-h-[480px] border-b border-ink/6 lg:min-h-0 lg:border-b-0">
             <ZkInputPanel />
           </div>
-          <div className="min-h-[420px] border-b border-white/6 lg:min-h-0 lg:border-b-0">
+          <div className="min-h-[420px] border-b border-ink/6 lg:min-h-0 lg:border-b-0">
             <SanitizedPanel />
           </div>
           <div className="min-h-[420px] lg:min-h-0">

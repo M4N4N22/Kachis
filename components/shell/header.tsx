@@ -12,7 +12,7 @@ export function Header() {
   const copy = PAGE_COPY[pathname as PageHref] ?? PAGE_COPY["/workspace"];
 
   return (
-    <header className="flex shrink-0 items-center justify-between gap-3 p-6 border-b border-white/10">
+    <header className="flex shrink-0 items-center justify-between gap-3 p-6 border-b border-ink/10">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"

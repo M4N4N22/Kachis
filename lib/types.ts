@@ -39,12 +39,14 @@ export interface WalletState {
 export interface GuardrailToggles {
   piiStripping: boolean;
   financialMasking: boolean;
-  enterpriseCompliance: boolean;
+  secretsStripping: boolean;
+  codeInsulation: boolean;
+  clientRecords: boolean;
 }
 
 export interface GuardrailFinding {
   id: string;
-  kind: "pii" | "financial" | "compliance";
+  kind: "pii" | "financial" | "secrets" | "code" | "client";
   label: string;
   count: number;
 }

@@ -27,7 +27,7 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "flex h-full shrink-0 flex-col border-white/5 border-r text-sidebar-fg transition-[width,transform] duration-300",
+          "flex h-full shrink-0 flex-col border-ink/5 border-r text-sidebar-fg transition-[width,transform] duration-300",
           sidebarCollapsed ? "w-[4.25rem]" : "w-[15.5rem]",
           "fixed inset-y-0 left-0 z-50 md:static md:z-auto",
           mobileNavOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
@@ -79,7 +79,7 @@ export function Sidebar() {
                   "flex items-center gap-2 rounded-xl p-3 transition-colors text-sm",
                   sidebarCollapsed && "justify-center px-0",
                   active
-                    ? " text-white bg-black"
+                    ? " text-ink bg-black"
                     : "text-sidebar-muted hover:text-sidebar-fg",
                 )}
               >

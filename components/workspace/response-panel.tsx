@@ -24,18 +24,18 @@ export function ResponsePanel() {
 
       <div className="relative min-h-0 flex-1 overflow-auto px-5 pb-5">
         {sending ? (
-          <div className="flex h-full min-h-[220px] items-center justify-center rounded-[1.25rem] border border-white/8 bg-black/20 px-6 text-center">
+          <div className="flex h-full min-h-[220px] items-center justify-center rounded-[1.25rem] border border-ink/8 bg-black/20 px-6 text-center">
             <p className="text-[14px] text-muted-fg">{copy.response.waiting}</p>
           </div>
         ) : latest ? (
-          <article className="rounded-[1.25rem] border border-white/10 bg-black/25 px-4 py-4">
-            <p className="mb-3 text-[11px] font-semibold tracking-[0.06em] text-white/45 uppercase">
+          <article className="rounded-[1.25rem] border border-ink/10 bg-black/25 px-4 py-4">
+            <p className="mb-3 text-[11px] font-semibold tracking-[0.06em] text-ink/45 uppercase">
               {latest.walkthrough ? copy.response.walkthroughLabel : copy.response.assistantLabel}
             </p>
-            <p className="whitespace-pre-wrap text-[14px] leading-7 text-ink">{latest.content}</p>
+            <p className="inkspace-pre-wrap text-[14px] leading-7 text-ink">{latest.content}</p>
           </article>
         ) : (
-          <div className="flex h-full min-h-[220px] flex-col items-center justify-center rounded-[1.25rem] border border-dashed border-white/10 bg-black/15 px-6 text-center">
+          <div className="flex h-full min-h-[220px] flex-col items-center justify-center rounded-[1.25rem] border border-dashed border-ink/10 bg-black/15 px-6 text-center">
             <p className="mt-4 text-[1.1rem] font-light tracking-tight text-ink/80">
               {copy.response.empty}
             </p>

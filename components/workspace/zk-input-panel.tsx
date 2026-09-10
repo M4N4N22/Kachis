@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardPaste, FileText } from "lucide-react";
+import { ClipboardPaste, Code2, FileText } from "lucide-react";
 import { RadialGlowButton } from "@/components/react-bits/radial-glow-button";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { copy } from "@/lib/copy";
-import { SAMPLE_SENSITIVE_PROMPT } from "@/lib/midnight";
+import {
+  SAMPLE_CODE_CLIENT_PROMPT,
+  SAMPLE_SENSITIVE_PROMPT,
+} from "@/lib/midnight";
 import { useWorkspace } from "@/lib/workspace-store";
 
 export function ZkInputPanel() {
@@ -66,6 +69,17 @@ export function ZkInputPanel() {
           <FileText className="h-3.5 w-3.5" strokeWidth={1.75} />
           {copy.input.sample}
         </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setRawInput(SAMPLE_CODE_CLIENT_PROMPT);
+            setPasteHint(null);
+          }}
+        >
+          <Code2 className="h-3.5 w-3.5" strokeWidth={1.75} />
+          {copy.input.sampleCode}
+        </Button>
       </div>
       {pasteHint ? (
         <p className="relative px-5 pt-2 text-[11px] text-muted-fg">{pasteHint}</p>
@@ -76,7 +90,7 @@ export function ZkInputPanel() {
           value={rawInput}
           onChange={(event) => setRawInput(event.target.value)}
           placeholder={copy.input.placeholder}
-          className="h-full min-h-[180px] w-full resize-none rounded-[1.25rem] border border-white/10 bg-black/25 px-4 py-3 text-[14px] leading-7 text-ink outline-none placeholder:text-muted-fg focus:border-[color-mix(in_srgb,var(--brand-a)_45%,transparent)]"
+          className="h-full min-h-[180px] w-full resize-none rounded-[1.25rem] border border-ink/10 bg-black/25 px-4 py-3 text-[14px] leading-7 text-ink outline-none placeholder:text-muted-fg focus:border-[color-mix(in_srgb,var(--brand-a)_45%,transparent)]"
         />
       </div>
 
@@ -84,7 +98,7 @@ export function ZkInputPanel() {
         <p className="text-[11px] font-semibold tracking-[0.08em] text-muted-fg uppercase">
           {copy.input.security}
         </p>
-        <div className="space-y-1 rounded-[1.15rem] border border-white/8 bg-black/20 px-3 py-2">
+        <div className="space-y-1 rounded-[1.15rem] border border-ink/8 bg-black/20 px-3 py-2">
           <Toggle
             checked={guardrails.piiStripping}
             onChange={(value) => setGuardrail("piiStripping", value)}
@@ -98,10 +112,22 @@ export function ZkInputPanel() {
             description={copy.filters.financial.tooltip}
           />
           <Toggle
-            checked={guardrails.enterpriseCompliance}
-            onChange={(value) => setGuardrail("enterpriseCompliance", value)}
-            label={copy.filters.compliance.label}
-            description={copy.filters.compliance.tooltip}
+            checked={guardrails.secretsStripping}
+            onChange={(value) => setGuardrail("secretsStripping", value)}
+            label={copy.filters.secrets.label}
+            description={copy.filters.secrets.tooltip}
+          />
+          <Toggle
+            checked={guardrails.codeInsulation}
+            onChange={(value) => setGuardrail("codeInsulation", value)}
+            label={copy.filters.code.label}
+            description={copy.filters.code.tooltip}
+          />
+          <Toggle
+            checked={guardrails.clientRecords}
+            onChange={(value) => setGuardrail("clientRecords", value)}
+            label={copy.filters.client.label}
+            description={copy.filters.client.tooltip}
           />
         </div>
       </div>

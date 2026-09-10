@@ -5,6 +5,7 @@ import CompactStandardLibrary;
 // Kachis guardrail: prove a policy pack ran without disclosing the original prompt.
 // Private witness: SHA-256 of the raw paste.
 // Public ledger: cleaned-prompt commitment + pack flags + attestation id.
+// requiredPack: mandatory pack bitmask (0 = no minimum). Deploy institutional with 31.
 
 struct Attestation {
   cleanedHash: Bytes<32>;
@@ -15,10 +16,13 @@ struct Attestation {
 export ledger attestations: Map<Uint<64>, Attestation>;
 export ledger nextId: Counter;
 export ledger totalShielded: Counter;
+export ledger requiredPack: Uint<8>;
 
 witness originalCommitment(): Bytes<32>;
 
-constructor() {}
+constructor(initialRequiredPack: Uint<8>) {
+  requiredPack = disclose(initialRequiredPack);
+}
 
 export circuit shield(
   cleanedHash: Bytes<32>,
@@ -26,6 +30,9 @@ export circuit shield(
 ): [] {
   const original = originalCommitment();
   const binding = persistentHash<Vector<2, Bytes<32>>>([original, cleanedHash]);
+
+  // Exact match when requiredPack != 0 (Compact has no bitwise &). Soft TS uses subset check.
+  assert(requiredPack == 0 || packFlags == requiredPack, "required policy pack not attested");
 
   nextId.increment(1);
   const id = disclose(nextId.read() as Uint<64>);

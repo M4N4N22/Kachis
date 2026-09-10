@@ -14,8 +14,8 @@ const variants: Record<Variant, string> = {
   outline:
     "bg-transparent text-ink ring-1 ring-border hover:bg-muted",
   ghost: "rounded-xl bg-transparent text-ink hover:bg-muted",
-  danger: "bg-danger text-white hover:opacity-90",
-  success: "bg-success text-white hover:opacity-90",
+  danger: "bg-danger text-ink hover:opacity-90",
+  success: "bg-success text-ink hover:opacity-90",
 };
 
 export function Button({

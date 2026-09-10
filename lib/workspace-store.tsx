@@ -14,6 +14,11 @@ import { copy } from "@/lib/copy";
 import { SAMPLE_SENSITIVE_PROMPT, runShield } from "@/lib/midnight";
 import { hasFeeReserve } from "@/lib/midnight-wallet";
 import { sha256Hex } from "@/shared/commit";
+import {
+  defaultTogglesForTier,
+  requiredPackForTier,
+  togglesMeetRequired,
+} from "@/shared/policy";
 import type {
   ChatMessage,
   GuardrailToggles,
@@ -63,11 +68,9 @@ export function WorkspaceProvider({
   const { tier, wallet, recordProof, recordQuery } = useApp();
   const [rawInput, setRawInput] = useState(demo ? SAMPLE_SENSITIVE_PROMPT : "");
   const [sanitizedPrompt, setSanitizedPrompt] = useState("");
-  const [guardrails, setGuardrails] = useState<GuardrailToggles>({
-    piiStripping: true,
-    financialMasking: true,
-    enterpriseCompliance: tier === "institutional",
-  });
+  const [guardrails, setGuardrails] = useState<GuardrailToggles>(() =>
+    defaultTogglesForTier(tier),
+  );
   const [proofStatus, setProofStatus] = useState<ProofStatus>("idle");
   const [proof, setProof] = useState<ProofRecord | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -112,6 +115,13 @@ export function WorkspaceProvider({
 
   const processLocally = useCallback(async () => {
     if (!rawInput.trim() || busy || sending || !canShield) return;
+
+    const required = requiredPackForTier(tier);
+    if (!togglesMeetRequired(guardrails, required)) {
+      setSettleError(copy.pack.required);
+      setProofStatus("error");
+      return;
+    }
 
     setBusy(true);
     setProof(null);
@@ -239,7 +249,7 @@ export function WorkspaceProvider({
       setProofStatus("shielded");
       recordProof(
         rawInput.length,
-        result.findings.find((item) => item.kind === "compliance")?.count ?? 0,
+        result.findings.find((item) => item.kind === "secrets")?.count ?? 0,
       );
     } catch (error) {
       console.error("[kachis] processLocally failed", error);
@@ -267,6 +277,7 @@ export function WorkspaceProvider({
     rawInput,
     recordProof,
     sending,
+    tier,
     wallet.address,
     wallet.network,
   ]);
