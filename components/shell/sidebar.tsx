@@ -27,7 +27,7 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "flex h-full shrink-0 flex-col bg-sidebar text-sidebar-fg transition-[width,transform] duration-300",
+          "flex h-full shrink-0 flex-col border-white/5 border-r text-sidebar-fg transition-[width,transform] duration-300",
           sidebarCollapsed ? "w-[4.25rem]" : "w-[15.5rem]",
           "fixed inset-y-0 left-0 z-50 md:static md:z-auto",
           mobileNavOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
@@ -35,7 +35,7 @@ export function Sidebar() {
       >
         <div
           className={cn(
-            "flex h-14 items-center px-3",
+            "flex h-14 items-center p-4",
             sidebarCollapsed ? "justify-center" : "justify-between",
           )}
         >
@@ -65,7 +65,7 @@ export function Sidebar() {
           </button>
         ) : null}
 
-        <nav className="flex flex-1 flex-col gap-1 px-2 pt-1">
+        <nav className="flex flex-1 flex-col gap-4 px-2 pt-6">
           {NAV_ITEMS.map((item) => {
             const active = pathname === item.href;
             const Icon = item.icon;
@@ -76,16 +76,16 @@ export function Sidebar() {
                 title={sidebarCollapsed ? item.label : undefined}
                 onClick={() => setMobileNavOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl px-2.5 py-2 text-[11px] font-semibold transition-colors",
+                  "flex items-center gap-2 rounded-xl p-3 transition-colors text-sm",
                   sidebarCollapsed && "justify-center px-0",
                   active
-                    ? "bg-sidebar-accent text-sidebar-fg"
-                    : "text-sidebar-muted hover:bg-sidebar-accent/70 hover:text-sidebar-fg",
+                    ? " text-white bg-black"
+                    : "text-sidebar-muted hover:text-sidebar-fg",
                 )}
               >
                 <Icon
-                  className={cn("h-3.5 w-3.5", active && "text-brand")}
-                  strokeWidth={1.75}
+                  className={cn("h-4 w-4", active && "text-brand")}
+                  
                 />
                 {!sidebarCollapsed ? (
                   <span className="leading-tight">{item.label}</span>

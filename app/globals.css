@@ -1,10 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --brand-a: #8400FF;
-  --brand-b: #8400FF;
-  --brand: #8400FF;
-  --brand-fg: #ffffff;
+  /* Matches components/react-bits/radial-glow-button.tsx */
+  --brand-a: #52b5b8;
+  --brand-b: #1f3f6d;
+  --brand: #52b5b8;
+  --brand-fg: #000000;
+  --brand-accent: #f1ffa5;
+  --brand-deep: #000022;
   --success: #34d399;
   --danger: #f6465d;
   --radius: 1.25rem;
@@ -18,16 +21,21 @@
   --sidebar-fg: #e8e8ec;
   --sidebar-muted: #8b8b96;
   --sidebar-accent: #2a2a30;
-  --brand-gradient: linear-gradient(135deg, var(--brand-a) 0%, var(--brand-b) 100%);
+  --brand-gradient: linear-gradient(
+    135deg,
+    var(--brand-b) 0%,
+    var(--brand-a) 55%,
+    color-mix(in srgb, var(--brand-accent) 55%, var(--brand-a)) 100%
+  );
 }
 
 .theme-landing {
-  --bg: #f7f7fb;
-  --ink: #14141c;
+  --bg: #f4f7f8;
+  --ink: #000022;
   --surface: #fff;
-  --muted: #ebe8f0;
-  --muted-fg: #6b6b78;
-  --border: #e4e0ea;
+  --muted: #e4ecec;
+  --muted-fg: #5c6b78;
+  --border: #d5e0e2;
 }
 
 @theme inline {
@@ -41,6 +49,7 @@
   --color-brand-a: var(--brand-a);
   --color-brand-b: var(--brand-b);
   --color-brand-fg: var(--brand-fg);
+  --color-brand-accent: var(--brand-accent);
   --color-success: var(--success);
   --color-danger: var(--danger);
   --color-sidebar: var(--sidebar-bg);
@@ -89,7 +98,7 @@ body {
 }
 
 .hero-sky {
-  background: #120f17;
+  background: #000022;
 }
 
 .hero-fade {

@@ -44,30 +44,25 @@ export type PageHref = NavItem["href"] | "/demo";
 
 export const PAGE_COPY: Record<
   PageHref,
-  { eyebrow: string; title: string; blurb: string }
+  { title: string; blurb: string }
 > = {
   "/workspace": {
-    eyebrow: "Local Guardrail",
     title: "Workspace",
-    blurb: "Shield internal data locally, then open a secure channel.",
+    blurb: "Paste original → review shielded → send once. The model only sees the insulated prompt.",
   },
   "/demo": {
-    eyebrow: "Walkthrough",
     title: "Sample shield",
-    blurb: "Canned payroll paste. Production workspace is live paste only.",
+    blurb: "Canned payroll paste — no wallet. Local shield, simulated prove, canned reply.",
   },
   "/guardrails": {
-    eyebrow: "Institutional Access Controls",
     title: "Security Guardrails",
     blurb: "Enterprise-wide rules that never leave the tenant boundary.",
   },
   "/identity": {
-    eyebrow: "Sovereign credentials",
     title: "Identity & Credentials",
     blurb: "Authenticate the seat without revealing the token.",
   },
   "/analytics": {
-    eyebrow: "Compliance reporting",
     title: "Usage Analytics",
     blurb: "Leaks prevented, credentials verified, settlements sealed.",
   },

@@ -95,8 +95,7 @@ export function AnalyticsView() {
       </div>
 
       <Bento className="p-5">
-        <p className="text-[11px] font-semibold text-brand">{copy.analytics.volume}</p>
-        <h2 className="mt-1 text-sm font-semibold tracking-tight">
+        <h2 className="text-sm font-semibold tracking-tight">
           {copy.analytics.cycles}
         </h2>
         {attestations.length === 0 ? (

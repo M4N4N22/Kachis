@@ -1205,17 +1205,17 @@ const createRenderGraph = (
     material: [0.46, MATERIALS.pearl, 0.92, 0.54],
     light: [-0.321, 0.49, 0.845, 0],
     environment: [0, 0, 0, 0],
-    baseColor: [137 / 255, 106 / 255, 189 / 255, 1],
-    highlightColor: mixColor([168 / 255, 85 / 255, 247 / 255, 1], [1, 1, 1, 1], MATERIAL_PRESETS.pearl.highlightMix),
-    accentColor: [168 / 255, 85 / 255, 247 / 255, 1]
+    baseColor: [31 / 255, 63 / 255, 109 / 255, 1],
+    highlightColor: mixColor([241 / 255, 255 / 255, 165 / 255, 1], [1, 1, 1, 1], MATERIAL_PRESETS.pearl.highlightMix),
+    accentColor: [70 / 255, 147 / 255, 150 / 255, 1]
   });
   const postParams = uniforms(gpu, {
     viewport: [outputSize[0], outputSize[1], 1 / outputSize[0], 1 / outputSize[1]],
     bloomInfo: [1 / bloomSize[0], 1 / bloomSize[1], 0.2, 0.12],
     finishing: [0.5, 0.05, 0.0075, 0],
-    background: [0.071, 0.059, 0.09, 1],
+    background: [0, 0, 34 / 255, 1],
     temporal: [0, 0, 0, 0],
-    tint: [137 / 255, 106 / 255, 189 / 255, 1]
+    tint: [70 / 255, 147 / 255, 150 / 255, 1]
   });
   const shardDraw = draw(gpu, {
     shader: SHARD_SHADER,
@@ -1354,9 +1354,9 @@ const prepareRenderGraph = async (graph: ReturnType<typeof createRenderGraph>, o
 };
 
 export default function AeroShards({
-  backgroundColor = '#120F17',
-  shardColor = '#896ABD',
-  accentColor = '#A855F7',
+  backgroundColor = '#000022',
+  shardColor = '#1f3f6d',
+  accentColor = '#469396',
   placement = 'full',
   flow = 'stream',
   material = 'pearl',
@@ -1411,9 +1411,9 @@ export default function AeroShards({
   const effectDetail = resolvedEffect === EFFECTS.none ? 1 : 0.4;
   const effectSize = resolvedEffect === EFFECTS.none ? 1 : 1.75;
   const resolvedScale = clamp(scale, 0.5, 2.5);
-  const resolvedBackground = parseColor(backgroundColor, '#120F17');
-  const resolvedShardColor = parseColor(shardColor, '#896ABD');
-  const resolvedAccentColor = parseColor(accentColor, '#A855F7');
+  const resolvedBackground = parseColor(backgroundColor, '#000022');
+  const resolvedShardColor = parseColor(shardColor, '#1f3f6d');
+  const resolvedAccentColor = parseColor(accentColor, '#469396');
   const resolvedSpread = clamp(spread, 0.15, 1.1);
   const resolvedDepth = clamp(depth, 0, 1.25);
   const resolvedSpeed = clamp(speed, 0, 2);

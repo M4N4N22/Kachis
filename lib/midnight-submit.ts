@@ -34,7 +34,11 @@ import {
   type GuardrailPrivateState,
 } from "@/compact/witnesses";
 import { hexToBytes } from "@/shared/commit";
-import { createGuardrailPrivateStateProvider } from "@/lib/midnight-private-state";
+import {
+  createGuardrailPrivateStateProvider,
+  isPrivateStateDecryptError,
+  resetGuardrailPrivateStorage,
+} from "@/lib/midnight-private-state";
 import {
   getConnectedWalletApi,
   getConnectedWalletProviderId,
@@ -101,18 +105,70 @@ function loadCostModel() {
   }
 }
 
+function describeErrorPart(value: unknown): string | null {
+  if (value instanceof Error) {
+    const name = value.name && value.name !== "Error" ? value.name : "";
+    const message = value.message?.trim() ?? "";
+    if (name && message) return `${name}: ${message}`;
+    if (message) return message;
+    if (name) return name;
+    return null;
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || null;
+  }
+  if (value && typeof value === "object") {
+    const record = value as { name?: unknown; message?: unknown; cause?: unknown };
+    const name = typeof record.name === "string" ? record.name : "";
+    const message = typeof record.message === "string" ? record.message.trim() : "";
+    if (name || message) return [name, message].filter(Boolean).join(": ");
+  }
+  return null;
+}
+
+function formatSettleError(error: unknown): string {
+  const parts: string[] = [];
+  let current: unknown = error;
+  let depth = 0;
+  while (current != null && depth < 5) {
+    const part = describeErrorPart(current);
+    if (part) parts.push(part);
+
+    if (current instanceof Error) {
+      current = current.cause;
+    } else if (current && typeof current === "object" && "cause" in current) {
+      current = (current as { cause: unknown }).cause;
+    } else if (!part) {
+      try {
+        const json = JSON.stringify(current);
+        if (json && json !== "{}") parts.push(json);
+        else parts.push(Object.prototype.toString.call(current));
+      } catch {
+        parts.push(String(current));
+      }
+      break;
+    } else {
+      break;
+    }
+    depth += 1;
+  }
+  return parts.filter(Boolean).join(" · ") || "Settlement failed (empty wallet error).";
+}
+
 function isBalanceUnimplemented(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = formatSettleError(error);
   return /balanceUnsealedTransaction/i.test(message) && /not yet implemented/i.test(message);
 }
 
 function isProofFetchFailure(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error);
+  const message = formatSettleError(error);
   return (
     /Failed to fetch/i.test(message) ||
     (/prove/i.test(message) && /fetch/i.test(message)) ||
     /ECONNREFUSED/i.test(message) ||
-    /NetworkError/i.test(message)
+    /NetworkError/i.test(message) ||
+    /Load failed/i.test(message)
   );
 }
 
@@ -254,10 +310,13 @@ export async function submitGuardrail(input: ShieldSubmitInput): Promise<ShieldS
     }
 
     const network = input.network?.trim() || preferredNetwork();
-    const { providers, network: resolvedNetwork } = await createProviders(api, network);
-    const compiledContract = compiledGuardrail();
-    const initialPrivateState = createGuardrailPrivateState(hexToBytes(input.originalHash));
     const cleaned = hexToBytes(input.cleanedHash);
+    const compiledContract = compiledGuardrail();
+    // Drop legacy IndexedDB ciphertext from older builds (best-effort).
+    await resetGuardrailPrivateStorage().catch(() => undefined);
+
+    const { providers, network: resolvedNetwork } = await createProviders(api, network);
+    const initialPrivateState = createGuardrailPrivateState(hexToBytes(input.originalHash));
 
     let address = storedContractAddress();
     if (!address) {
@@ -284,13 +343,17 @@ export async function submitGuardrail(input: ShieldSubmitInput): Promise<ShieldS
     }
     return { ok: true, txId, contractAddress: address, network: resolvedNetwork };
   } catch (error) {
+    console.error("[kachis] submitGuardrail failed", error);
     if (isBalanceUnimplemented(error)) {
       return { ok: false, error: copy.action.geroBalanceUnsupported };
     }
     if (isProofFetchFailure(error)) {
       return { ok: false, error: copy.action.proofServerUnreachable };
     }
-    const message = error instanceof Error ? error.message : "Settlement failed.";
-    return { ok: false, error: message };
+    if (isPrivateStateDecryptError(error)) {
+      await resetGuardrailPrivateStorage().catch(() => undefined);
+      return { ok: false, error: copy.action.privateStateCorrupt };
+    }
+    return { ok: false, error: formatSettleError(error) };
   }
 }

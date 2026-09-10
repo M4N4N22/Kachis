@@ -1,6 +1,4 @@
-import { levelPrivateStateProvider } from "@midnight-ntwrk/midnight-js-level-private-state-provider";
 import type { PrivateStateProvider } from "@midnight-ntwrk/midnight-js-types";
-import { validatePassword } from "@midnight-ntwrk/midnight-js-utils";
 import type { ContractAddress, SigningKey } from "@midnight-ntwrk/midnight-js-protocol/compact-runtime";
 import type {
   PrivateStateExport,
@@ -12,41 +10,18 @@ function unsupported(method: string): never {
 }
 
 const PASSWORD_KEY = "kachis.privateStatePassword";
+const MIDNIGHT_DB_NAME = "kachis";
 
-function randomSessionPassword() {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@$%*?";
-  for (let attempt = 0; attempt < 24; attempt += 1) {
-    const bytes = new Uint8Array(24);
-    crypto.getRandomValues(bytes);
-    const password = `Ks!${Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("")}`;
-    try {
-      validatePassword(password);
-      return password;
-    } catch {
-      /* retry until the policy passes */
-    }
-  }
-  return "Kachis.Guardrail.9x!q";
-}
-
-function sessionPassword(accountId: string) {
-  if (typeof window === "undefined") return randomSessionPassword();
-  const key = `${PASSWORD_KEY}.${accountId}`;
-  const existing = window.sessionStorage.getItem(key);
-  if (existing) {
-    try {
-      validatePassword(existing);
-      return existing;
-    } catch {
-      window.sessionStorage.removeItem(key);
-    }
-  }
-  const password = randomSessionPassword();
-  window.sessionStorage.setItem(key, password);
-  return password;
-}
-
-/** In-memory fallback. Stores contract keys and the SHA-256 witness, never the paste. */
+/**
+ * In-memory private state for the browser console.
+ * Holds contract keys and the SHA-256 witness — never the paste.
+ *
+ * Level/IndexedDB encryption was abandoned here: a lost session password left
+ * ciphertext that threw OperationError / aes-gcm invalid tag, and open Level
+ * handles blocked indexedDB.deleteDatabase so recovery could not complete.
+ * findDeployedContract regenerates a signing key when none is stored, and we
+ * always pass initialPrivateState for the shield witness.
+ */
 function inMemoryPrivateStateProvider<PSI extends string, PS>(): PrivateStateProvider<PSI, PS> {
   const states = new Map<string, PS>();
   const signingKeys = new Map<string, SigningKey>();
@@ -88,23 +63,54 @@ function inMemoryPrivateStateProvider<PSI extends string, PS>(): PrivateStatePro
   };
 }
 
-/**
- * Encrypted private state scoped to the unshielded address.
- * Holds contract keys and the original SHA-256 witness — never the paste.
- * Password is derived in-session (16+ chars) and kept in sessionStorage.
- */
 export function createGuardrailPrivateStateProvider<PSI extends string, PS>(
-  accountId: string,
+  _accountId: string,
 ): PrivateStateProvider<PSI, PS> {
-  try {
-    return levelPrivateStateProvider<PSI, PS>({
-      midnightDbName: "kachis",
-      privateStateStoreName: "guardrail-private",
-      signingKeyStoreName: "guardrail-keys",
-      accountId,
-      privateStoragePasswordProvider: () => sessionPassword(accountId),
-    });
-  } catch {
-    return inMemoryPrivateStateProvider<PSI, PS>();
+  return inMemoryPrivateStateProvider<PSI, PS>();
+}
+
+/** Best-effort wipe of legacy encrypted LevelDB left from earlier builds. */
+export async function resetGuardrailPrivateStorage() {
+  if (typeof window === "undefined") return;
+
+  for (const store of [window.localStorage, window.sessionStorage]) {
+    for (const key of Object.keys(store)) {
+      if (key.startsWith(PASSWORD_KEY)) store.removeItem(key);
+    }
   }
+
+  await new Promise<void>((resolve) => {
+    const req = indexedDB.deleteDatabase(MIDNIGHT_DB_NAME);
+    req.onsuccess = () => resolve();
+    req.onerror = () => resolve();
+    req.onblocked = () => resolve();
+  });
+}
+
+export function isPrivateStateDecryptError(error: unknown): boolean {
+  const name =
+    error instanceof Error
+      ? error.name
+      : error && typeof error === "object" && "name" in error
+        ? String((error as { name: unknown }).name)
+        : "";
+  if (name === "OperationError") return true;
+
+  const message = (() => {
+    if (error instanceof Error) return error.message;
+    if (typeof error === "string") return error;
+    if (error && typeof error === "object" && "message" in error) {
+      return String((error as { message: unknown }).message);
+    }
+    return "";
+  })().toLowerCase();
+
+  return (
+    message.includes("aes-gcm") ||
+    message.includes("invalid tag") ||
+    message.includes("salt mismatch") ||
+    message.includes("invalid encrypted data") ||
+    message.includes("bad decrypt") ||
+    message.includes("unable to authenticate")
+  );
 }

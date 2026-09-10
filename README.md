@@ -8,6 +8,7 @@ This answers: **if your AI chat history leaked today, how cooked are you?**
 User or agent  →  Kachis (scan locally + commitment)  →  only then the LLM
 ```
 
+Autonomous agents (bots, analysts, background scripts) enter the same loop as humans via **Kachis Agent** (MCP / SDK gateway). The host must call `kachis_shield` before any public model sees a token.
 ## Long-term vision
 
 Companies buy **control + evidence**, not another chat site: secrets never become the vendor log; packs cannot be skipped; an auditor can verify without opening the file.
@@ -62,9 +63,9 @@ npm run dev
 
 `npm run dev` uses **Webpack** (`next dev --webpack`). Midnight ledger WASM (`CostModel`) does not initialize under Turbopack — that surfaces as `costmodel_initialCostModel` / “Cannot read properties of undefined”. Use `npm run dev:turbo` only for UI-only work.
 
-[http://localhost:3000/workspace](http://localhost:3000/workspace) — connect a corporate wallet, paste your own records, then Shield & Proceed.
+[http://localhost:3000/workspace](http://localhost:3000/workspace) — connect a corporate wallet, paste your own records, Shield, Confirm & Send.
 
-Walkthrough (canned payroll paste): [http://localhost:3000/demo](http://localhost:3000/demo) → Connect Corporate Wallet → Load sample → Shield & Proceed → Send.
+Walkthrough (canned payroll paste, **no wallet**): [http://localhost:3000/demo](http://localhost:3000/demo) → Shield → Confirm & Send (simulated prove + canned reply).
 
 ### Compact compile (judges)
 
@@ -82,7 +83,7 @@ That writes `compact/managed/kachis-guardrail` including proving keys. The conso
 1. Install **1AM** (recommended), Lace, or Gero; enable Midnight; faucet **tNIGHT**; wait for **DUST**.
 2. Proofs: **1AM in-wallet proving** (no Docker), **or** Lace with a local/remote proof server (`docker run -p 6300:6300 midnightntwrk/proof-server:8.1.0 midnight-proof-server -v`) / `NEXT_PUBLIC_MIDNIGHT_PROOF_SERVER_URL`. Gero Cloud can prove but cannot balance contract txs yet.
 3. Compile the contract (above).
-4. Restart with `npm run dev` (webpack). Open Walkthrough (`/demo`), connect the wallet, confirm fee reserve, Load sample, Shield & Proceed. If settlement fails, nothing is recorded and the channel stays locked.
+4. Restart with `npm run dev` (webpack). Open Workspace (`/workspace`), connect the wallet, confirm fee reserve, paste, Shield. If settlement fails, nothing is recorded and Confirm & Send stays locked. For a wallet-free path, use Walkthrough (`/demo`).
 5. Guide rail shows a **settlement id** on success.
 
 Optional: after the first deploy, set `NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS` so later sessions skip deploy.
@@ -138,7 +139,7 @@ Tag the public GitHub repo with **`midnightntwrk`** (Settings → Topics) so the
 
 ## Demo (Wave 1)
 
-Screen path for the video: landing → Walkthrough (`/demo`) → Connect Corporate Wallet (**1AM** preferred) → Load sample → Shield & Proceed → settlement id on the rail → Send on the shielded channel. Workspace (`/workspace`) is live paste only — no sample fill, no canned model reply. Optional: Identity balances (tNIGHT on Preprod).
+Screen path for the video: landing → Walkthrough (`/demo`) → Shield (no wallet) → Confirm & Send → canned reply. Live settle path: Workspace (`/workspace`) → Connect Wallet (**1AM** preferred) → paste → Shield → Confirm & Send → model response. Optional: Identity balances (tNIGHT on Preprod).
 
 Live Preprod settlement for judges: see **Live Preprod proof** above ([tx on Midnight Explorer](https://preprod.midnightexplorer.com/transactions/dc7080a02d8a22e4be3d7992174aed9fd9e73b28abdef2c4fe37db8f4f9823db)).
 

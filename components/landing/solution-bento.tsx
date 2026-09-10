@@ -1,18 +1,15 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowRight } from "lucide-react";
+import { Bot } from "lucide-react";
 import { ClipboardCheck } from "@/components/animate-ui/icons/clipboard-check";
 import { Fingerprint } from "@/components/animate-ui/icons/fingerprint";
 import { AnimateIcon } from "@/components/animate-ui/icons/icon";
 import { Lock } from "@/components/animate-ui/icons/lock";
 import { RadioTower } from "@/components/animate-ui/icons/radio-tower";
 import { Sparkles } from "@/components/animate-ui/icons/sparkles";
-import { UsersRound } from "@/components/animate-ui/icons/users-round";
 import type { BentoCardProps } from "@/components/react-bits/MagicBento";
-import { Button } from "@/components/ui/button";
 import { copy } from "@/lib/copy";
 
 const MagicBento = dynamic(() => import("@/components/react-bits/MagicBento"), {
@@ -92,14 +89,13 @@ const SOLUTION_CARDS: BentoCardProps[] = [
   },
   {
     color: "transparent",
-    title: "Institutional seat",
-    description:
-      "Company-wide governance with a verified seat — one guardrail across the org.",
-    label: "Govern",
+    title: copy.agent.title,
+    description: copy.agent.description,
+    label: copy.agent.label,
     icon: (
-      <BgIcon>
-        <UsersRound strokeWidth={0.3} size={152} className="text-white" />
-      </BgIcon>
+      <div className="block text-white" aria-hidden>
+        <Bot strokeWidth={0.3} size={152} className="text-white" />
+      </div>
     ),
   },
 ];
@@ -138,7 +134,7 @@ export function SolutionBento() {
           clickEffect
           spotlightRadius={400}
           particleCount={12}
-          glowColor="132, 0, 255"
+          glowColor="70, 147, 150"
           disableAnimations={false}
         />
       </div>

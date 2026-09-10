@@ -60,10 +60,7 @@ export function GuardrailsView() {
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_18.5rem]">
       <div className="space-y-4">
         <Bento className="p-5">
-          <p className="text-[11px] font-semibold text-brand">
-            {copy.guardrails.liveEyebrow}
-          </p>
-          <h2 className="mt-1 text-sm font-semibold tracking-tight">
+          <h2 className="text-sm font-semibold tracking-tight">
             {copy.guardrails.liveTitle}
           </h2>
           <div className="mt-5 space-y-4">
@@ -121,10 +118,7 @@ export function GuardrailsView() {
       </div>
 
       <Bento className="h-fit p-5 lg:sticky lg:top-4">
-        <p className="text-[11px] font-semibold text-brand">
-          {copy.guardrails.seatEyebrow}
-        </p>
-        <h2 className="mt-1 text-sm font-semibold tracking-tight">
+        <h2 className="text-sm font-semibold tracking-tight">
           {copy.guardrails.seatTitle}
         </h2>
         {connected ? (

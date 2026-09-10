@@ -24,8 +24,7 @@ export function IdentityView() {
       <Bento className="relative overflow-hidden p-6">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,color-mix(in_srgb,var(--brand)_22%,transparent),transparent_46%)]" />
         <div className="relative">
-          <p className="text-[11px] font-semibold text-brand">{copy.identity.eyebrow}</p>
-          <h2 className="mt-6 text-2xl font-light tracking-tight">{profile.name}</h2>
+          <h2 className="text-2xl font-light tracking-tight">{profile.name}</h2>
           <p className="mt-1 text-[13px] text-muted-fg">
             {profile.organization} · {profile.title}
           </p>
