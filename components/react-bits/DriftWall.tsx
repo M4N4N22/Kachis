@@ -295,10 +295,10 @@ const DriftWall = ({
   const innerClass = cx(
     'pointer-events-none absolute inset-[calc(var(--dw-gap)/2)] block overflow-hidden bg-[#16161f]',
     'rounded-[var(--dw-radius)] opacity-[var(--dw-dim)] [transform:translateZ(0)]',
-    'ring-1 ring-white/12',
+    'ring-1 ring-ink/12',
     'transition-[transform,opacity,box-shadow] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)]',
     'group-[.is-active]/tile:opacity-100 group-[.is-active]/tile:[transform:translateZ(var(--dw-lift))]',
-    'group-[.is-active]/tile:shadow-[0_24px_60px_-18px_rgba(0,0,0,0.7)] group-[.is-active]/tile:ring-white/25',
+    'group-[.is-active]/tile:shadow-[0_24px_60px_-18px_rgba(0,0,0,0.7)] group-[.is-active]/tile:ring-ink/25',
     'group-focus-visible/tile:opacity-100 group-focus-visible/tile:[transform:translateZ(var(--dw-lift))]',
     'group-focus-visible/tile:shadow-[0_24px_60px_-18px_rgba(0,0,0,0.7),0_0_0_2px_rgba(255,255,255,0.9)]'
   );
@@ -314,19 +314,19 @@ const DriftWall = ({
       const platformLabel =
         item.platform === 'reddit' ? 'Reddit' : item.platform === 'news' ? 'News' : 'X';
       return (
-        <span className="flex h-full w-full flex-col gap-2 bg-black p-3.5 text-left text-white">
+        <span className="flex h-full w-full flex-col gap-2 bg-black p-3.5 text-left text-ink">
           <span className="flex items-center justify-between gap-2">
-            <span className="truncate text-[10px] font-semibold tracking-wide text-white/75">
+            <span className="truncate text-[10px] font-semibold tracking-wide text-ink/75">
               {platformLabel}
               {item.handle ? ` · ${item.handle}` : ''}
             </span>
             {item.meta ? (
-              <span className="shrink-0 text-[9px] text-white/50">{item.meta}</span>
+              <span className="shrink-0 text-[9px] text-ink/50">{item.meta}</span>
             ) : null}
           </span>
-          <span className="line-clamp-5 text-[12px] leading-[1.35] text-white">{item.body}</span>
+          <span className="line-clamp-5 text-[12px] leading-[1.35] text-ink">{item.body}</span>
           {item.title ? (
-            <span className="mt-auto truncate text-[10px] text-white/55">{item.title}</span>
+            <span className="mt-auto truncate text-[10px] text-ink/55">{item.title}</span>
           ) : null}
         </span>
       );

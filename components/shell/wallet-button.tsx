@@ -52,12 +52,12 @@ function BalanceRows({
     <dl className="space-y-2.5">
       {rows.map((row) => (
         <div key={row.label} className="flex items-baseline justify-between gap-3">
-          <dt className="text-[11px] text-white/45">{row.label}</dt>
-          <dd className="font-mono text-[12px] text-white">{row.value}</dd>
+          <dt className="text-[11px] text-ink/45">{row.label}</dt>
+          <dd className="font-mono text-[12px] text-ink">{row.value}</dd>
         </div>
       ))}
       {balances.dustHint ? (
-        <p className="pt-1 text-[11px] leading-relaxed text-white/40">{balances.dustHint}</p>
+        <p className="pt-1 text-[11px] leading-relaxed text-ink/40">{balances.dustHint}</p>
       ) : null}
     </dl>
   );
@@ -147,7 +147,7 @@ export function WalletButton() {
           type="button"
           onClick={() => setMenuOpen((value) => !value)}
           className={cn(
-            "inline-flex max-w-[min(100vw-8rem,28rem)] items-center gap-2 rounded-full border border-white/10 px-4 py-3 text-left transition-colors hover:border-white/20",
+            "inline-flex max-w-[min(100vw-8rem,28rem)] items-center gap-2 rounded-full border border-ink/10 px-4 py-3 text-left transition-colors hover:border-ink/20",
             menuOpen && "border-brand-a",
           )}
         >
@@ -175,26 +175,26 @@ export function WalletButton() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 4, scale: 0.98 }}
               transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute top-full right-0 z-50 mt-4 w-[20.5rem] overflow-hidden rounded-[1.35rem]  bg-white/5 p-4 shadow-lg backdrop-blur-md"
+              className="absolute top-full right-0 z-50 mt-4 w-[20.5rem] overflow-hidden rounded-[1.35rem]  bg-ink/5 p-4 shadow-lg backdrop-blur-md"
             >
-              <div className="rounded-2xl border border-white/5 bg-black p-3.5">
+              <div className="rounded-2xl border border-ink/5 bg-black p-3.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[12px] font-semibold text-white">{displayName(wallet)}</p>
-                    <p className="mt-0.5 text-[11px] text-white/45">
+                    <p className="text-[12px] font-semibold text-ink">{displayName(wallet)}</p>
+                    <p className="mt-0.5 text-[11px] text-ink/45">
                       {displayNetworkLabel(wallet.network)}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => void copyAddress()}
-                    className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2 py-1 text-[10px] font-semibold text-white/60 transition-colors hover:bg-white/8 hover:text-white"
+                    className="inline-flex items-center gap-1 rounded-full border border-ink/10 px-2 py-1 text-[10px] font-semibold text-ink/60 transition-colors hover:bg-ink/8 hover:text-ink"
                   >
                     <Copy className="h-3 w-3" strokeWidth={1.75} />
                     {copied ? "Copied" : "Copy"}
                   </button>
                 </div>
-                <p className="mt-3 break-all font-mono text-[11px] leading-5 text-white/70">
+                <p className="mt-3 break-all font-mono text-[11px] leading-5 text-ink/70">
                   {wallet.address}
                 </p>
               </div>
@@ -203,7 +203,7 @@ export function WalletButton() {
                 {wallet.balances ? (
                   <BalanceRows balances={wallet.balances} network={wallet.network} />
                 ) : (
-                  <p className="text-[11px] text-white/45">{copy.wallet.balancesUnavailable}</p>
+                  <p className="text-[11px] text-ink/45">{copy.wallet.balancesUnavailable}</p>
                 )}
               </div>
 
@@ -220,7 +220,7 @@ export function WalletButton() {
                   <button
                     type="button"
                     onClick={() => void refreshWalletBalances()}
-                    className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] text-[12px] font-medium text-white/80 transition-colors hover:bg-white/[0.08]"
+                    className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-ink/10 bg-ink/[0.04] text-[12px] font-medium text-ink/80 transition-colors hover:bg-ink/[0.08]"
                   >
                     <RefreshCw className="h-3.5 w-3.5" strokeWidth={1.75} />
                     {copy.wallet.refresh}
@@ -231,7 +231,7 @@ export function WalletButton() {
                       disconnectWallet();
                       setMenuOpen(false);
                     }}
-                    className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] text-[12px] font-medium text-white/80 transition-colors hover:bg-white/[0.08]"
+                    className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-ink/10 bg-ink/[0.04] text-[12px] font-medium text-ink/80 transition-colors hover:bg-ink/[0.08]"
                   >
                     <LogOut className="h-3.5 w-3.5" strokeWidth={1.75} />
                     {copy.wallet.disconnect}

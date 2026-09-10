@@ -22,7 +22,10 @@ Companies buy **control + evidence**, not another chat site: secrets never becom
 | **Kachis Agent v1** (MCP) | Shipped (`agent/`) — sit in Cursor/Claude. Public hashes only (no Compact submit yet) |
 | Lace / Gero / 1AM / Ctrl | Live DApp Connector (`window.midnight` discovery). **1AM** recommended for settle (prove + balance). Lace needs a local/remote proof server. Gero cannot balance contracts yet. |
 | Public notary log | `/api/shield` — hashes + optional settlement id. Never the paste |
-| Chat gated on commitment | `/api/chat` refuses unknown `proofHash` |
+| Chat gated on commitment | `/api/chat` refuses unknown `proofHash`; prompt must match `cleanedHash`; optional required pack |
+| Rule-pack scanner (PII / financial / secrets / code / client) | Shipped (`shared/scanner.ts`) |
+| Analytics quarter audit view | Shipped (`/analytics`) |
+| Compact `requiredPack` | In Compact source — live after recompile/redeploy; soft TS gate via env/tier now |
 | On-device ML scanner | Later |
 | Copilot / Slack connectors | Later |
 
@@ -32,9 +35,11 @@ Companies buy **control + evidence**, not another chat site: secrets never becom
 
 **Real**
 
-- Local regex scan (same code for console and MCP)
+- Local rule-pack scan (PII, financial, secrets, code, client — same code for console and MCP)
 - SHA-256 of cleaned prompt + **binding** `hash(originalHash || cleanedHash)` — original paste is not posted to `/api/shield`
-- Compact circuit source: private original commitment, public cleaned hash + pack flags
+- Compact circuit source: private original commitment, public cleaned hash + pack flags + `requiredPack` ledger
+- Soft required-pack enforcement in console (institutional seat) and optional `KACHIS_REQUIRED_PACK` on `/api/shield` + `/api/chat`
+- `/api/chat` refuses unknown commitments **and** prompts that do not hash to the recorded `cleanedHash`
 - MCP tool `kachis_shield` (posts public commitments to the console when it is running)
 - Midnight wallet connect via `@midnight-ntwrk/dapp-connector-api` (Lace, Gero, 1AM, Ctrl)
 - Console chat only after a recorded commitment
@@ -42,14 +47,16 @@ Companies buy **control + evidence**, not another chat site: secrets never becom
 - Compact compile script + GitHub Action (`.github/workflows/compact-compile.yml`)
 - Console `shield()` submit when compile artifacts are present, a settle-capable wallet is connected (**1AM** preferred; Lace + proof server also works), and the seat has tNIGHT/DUST
 - Public notary log: `GET /api/shield` merges **Preprod contract ledger** (on-chain cleanedHash / binding / packFlags) with local findings; persists under `.data/`
+- Analytics quarter view: pack flags, findings held, explorer links
 - **Live Preprod settlement** recorded below for judges
 
 **Not yet**
 
 - Matching SHA-256 local binding to in-circuit `persistentHash` (different functions — do not claim they are equal)
 - MCP Compact submit (agent still posts hashes only)
+- On-chain `requiredPack` assert on the current Preprod address (source updated; redeploy after recompile)
 - Local ML NER
-- Enterprise gateway
+- Enterprise gateway / Copilot / Slack connectors
 - Gero contract balancing (`balanceUnsealedTransaction` still planned)
 
 ## Run the console

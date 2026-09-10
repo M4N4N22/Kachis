@@ -38,9 +38,10 @@ On Windows, set `cwd` to your full path, e.g. `C:\\dev\\buildathons\\midnight-bu
 
 `kachis_shield`
 
-- Input: raw `text` + optional pack flags
+- Input: raw `text` + optional pack toggles (identifiers, financials, secrets, code, client records)
+- Defaults: all five packs on (institutional)
 - Output: `shielded_prompt`, `cleaned_commitment`, `binding`, findings, circuit id, optional `ledger_id`
-- Host must send **only** `shielded_prompt` to the model
+- Host must send **only** `shielded_prompt` to the model — never the original paste
 
 Resource: `kachis://circuit` describes Compact public vs private fields.
 

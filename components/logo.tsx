@@ -63,7 +63,7 @@ export function Logo({
         <span
           className={cn(
             "text-2xl leading-none tracking-tight",
-            inverted ? "text-white" : "text-white",
+            inverted ? "text-ink" : "text-ink",
           )}
         >
           Kachis

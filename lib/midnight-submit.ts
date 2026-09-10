@@ -320,11 +320,18 @@ export async function submitGuardrail(input: ShieldSubmitInput): Promise<ShieldS
 
     let address = storedContractAddress();
     if (!address) {
-      const deployed = await deployContract(providers as never, {
+      // After recompile with requiredPack constructor, set NEXT_PUBLIC_KACHIS_REQUIRED_PACK=31.
+      // Omit args for the current empty-constructor managed artifacts.
+      const requiredRaw = process.env.NEXT_PUBLIC_KACHIS_REQUIRED_PACK?.trim();
+      const deployOpts: Record<string, unknown> = {
         compiledContract,
         privateStateId: PRIVATE_STATE_ID,
         initialPrivateState,
-      } as never);
+      };
+      if (requiredRaw != null && requiredRaw !== "") {
+        deployOpts.args = [BigInt(requiredRaw)];
+      }
+      const deployed = await deployContract(providers as never, deployOpts as never);
       address = deployed.deployTxData.public.contractAddress;
       persistContractAddress(address);
     }

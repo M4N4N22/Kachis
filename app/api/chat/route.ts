@@ -1,5 +1,11 @@
 import { NextResponse } from "next/server";
 import { findAttestationByHash } from "@/lib/attestation-log";
+import { sha256Hex } from "@/shared/commit";
+import {
+  enforceRequiredPackEnabled,
+  meetsRequiredPack,
+  requiredPackFromEnv,
+} from "@/shared/policy";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +29,30 @@ export async function POST(request: Request) {
       { error: "Unknown commitment. Run local shield before this channel." },
       { status: 403 },
     );
+  }
+
+  const promptHash = await sha256Hex(body.prompt);
+  if (promptHash.toLowerCase() !== attestation.cleanedHash.toLowerCase()) {
+    return NextResponse.json(
+      {
+        error:
+          "Prompt does not match the recorded commitment. Send only the shielded text from this job.",
+      },
+      { status: 403 },
+    );
+  }
+
+  if (enforceRequiredPackEnabled()) {
+    const required = requiredPackFromEnv();
+    if (required > 0 && !meetsRequiredPack(attestation.packFlags, required)) {
+      return NextResponse.json(
+        {
+          error:
+            "Required policy pack not attested on this commitment. Re-shield with the mandatory filters.",
+        },
+        { status: 403 },
+      );
+    }
   }
 
   const key = process.env.OPENAI_API_KEY;

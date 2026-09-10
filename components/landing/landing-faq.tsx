@@ -30,7 +30,7 @@ export function LandingFaq() {
     <section id="faq" className="relative overflow-hidden py-16 md:py-24">
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="landing-fade inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-white">
+          <p className="landing-fade inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-ink">
             FAQ
           </p>
           <h2
@@ -45,7 +45,7 @@ export function LandingFaq() {
           </p>
         </div>
 
-        <div className="landing-fade mx-auto mt-12 max-w-3xl divide-y divide-white/10 border-y border-white/10">
+        <div className="landing-fade mx-auto mt-12 max-w-3xl divide-y divide-ink/10 border-y border-ink/10">
           {FAQS.map((item, index) => {
             const open = openIndex === index;
             return (
@@ -54,7 +54,7 @@ export function LandingFaq() {
                   type="button"
                   aria-expanded={open}
                   onClick={() => setOpenIndex(open ? null : index)}
-                  className="flex w-full items-start justify-between gap-6 py-5 text-left transition-colors hover:text-white"
+                  className="flex w-full items-start justify-between gap-6 py-5 text-left transition-colors hover:text-ink"
                 >
                   <span
                     className={cn(
@@ -66,8 +66,8 @@ export function LandingFaq() {
                   </span>
                   <span
                     className={cn(
-                      "mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/15 text-white/70 transition-transform duration-300",
-                      open && "rotate-45 border-white/25 text-white"
+                      "mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-ink/15 text-ink/70 transition-transform duration-300",
+                      open && "rotate-45 border-ink/25 text-ink"
                     )}
                   >
                     <Plus className="h-3.5 w-3.5" strokeWidth={2} />

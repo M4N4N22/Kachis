@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { runShield } from "../../shared/index.ts";
+import { defaultTogglesForTier, runShield } from "../../shared/index.ts";
 
 const CONSOLE_URL = (process.env.KACHIS_CONSOLE_URL ?? "http://localhost:3000").replace(
   /\/$/,
@@ -28,8 +28,9 @@ server.registerResource(
         text: [
           "Circuit: kachis_guardrail_v0",
           "Private witness: SHA-256 of the original paste (never returned by this tool).",
-          "Public: cleanedHash, binding, packFlags.",
-          "Host must send only shielded_prompt to the language model.",
+          "Public: cleanedHash, binding, packFlags (PII / financial / secrets / code / client).",
+          "Host MUST call kachis_shield before any model sees the paste.",
+          "Host MUST send only shielded_prompt to the language model — never the original text.",
         ].join("\n"),
       },
     ],
@@ -41,19 +42,31 @@ server.registerTool(
   {
     title: "Kachis shield",
     description:
-      "Scan a prompt on this machine. Returns ONLY the shielded text plus public commitments. Never send the original paste to a model.",
+      "REQUIRED before any model call: scan the raw paste on this machine. Returns ONLY shielded_prompt plus public commitments. The host must send shielded_prompt to the model and must never forward the original text, secrets, or client records.",
     inputSchema: {
       text: z.string().describe("Raw user paste. Stays on this machine."),
       stripIdentifiers: z.boolean().optional().default(true),
       maskFinancial: z.boolean().optional().default(true),
-      enterpriseAudit: z.boolean().optional().default(true),
+      holdSecrets: z.boolean().optional().default(true),
+      insulateCode: z.boolean().optional().default(true),
+      stripClientRecords: z.boolean().optional().default(true),
     },
   },
-  async ({ text, stripIdentifiers, maskFinancial, enterpriseAudit }) => {
+  async ({
+    text,
+    stripIdentifiers,
+    maskFinancial,
+    holdSecrets,
+    insulateCode,
+    stripClientRecords,
+  }) => {
+    const defaults = defaultTogglesForTier("institutional");
     const result = await runShield(text, {
-      piiStripping: stripIdentifiers ?? true,
-      financialMasking: maskFinancial ?? true,
-      enterpriseCompliance: enterpriseAudit ?? true,
+      piiStripping: stripIdentifiers ?? defaults.piiStripping,
+      financialMasking: maskFinancial ?? defaults.financialMasking,
+      secretsStripping: holdSecrets ?? defaults.secretsStripping,
+      codeInsulation: insulateCode ?? defaults.codeInsulation,
+      clientRecords: stripClientRecords ?? defaults.clientRecords,
     });
 
     let ledger: Record<string, unknown> | null = null;
@@ -92,7 +105,7 @@ server.registerTool(
           ? ledger.note
           : `Console not reachable at ${CONSOLE_URL}. Shield still ran locally.`,
       instruction:
-        "Send shielded_prompt to the language model. Do not include the user's original text in any outbound request.",
+        "Send ONLY shielded_prompt to the language model. Do not include the user's original text in any outbound request.",
     };
 
     return {

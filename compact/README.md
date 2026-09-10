@@ -9,7 +9,22 @@
 | Original paste | Never. Only `originalCommitment()` (SHA-256 of the paste) enters the circuit. |
 | `cleanedHash` | Public. Commitment of the text that may go to an LLM. |
 | `binding` | Public. In Compact this is `persistentHash(original, cleaned)` — a pair without the file. |
-| `packFlags` | Public. Which filters ran (PII / financial / compliance). |
+| `packFlags` | Public. Which filters ran (PII / financial / secrets / code / client). |
+| `requiredPack` | Public ledger. Mandatory pack bitmask set at deploy (`0` = no minimum, `31` = all five packs). |
+
+`assert(requiredPack == 0 || packFlags == requiredPack)` means settlement only succeeds when the attested pack equals the contract’s required mask (or the contract allows any pack). This is **pack attestation**, not proof that the local scan found every secret.
+
+## Pack bits
+
+| Bit | Pack |
+|---|---|
+| 0 | PII |
+| 1 | Financial |
+| 2 | Secrets |
+| 3 | Code |
+| 4 | Client |
+
+Institutional deploy: constructor arg **`31`** (`0b11111`). Soft enforcement in the console uses the same mask via `KACHIS_REQUIRED_PACK` / seat tier — live even before you redeploy this circuit.
 
 ## Local vs circuit hash
 
@@ -36,6 +51,8 @@ compact compile compact/kachis-guardrail.compact compact/managed/kachis-guardrai
 ```
 
 CI compiles the same command (`.github/workflows/compact-compile.yml`). Proving keys under `keys/` and `zkir/` are gitignored (large). After a successful compile, `.compiled` is written so the console can detect artifacts. Serve them from `/zk/kachis-guardrail/…`.
+
+After recompile, **redeploy** with constructor `initialRequiredPack = 31` (institutional) or `0` (sandbox). The existing Preprod address remains the prior circuit until you deploy a new address and update `NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS`.
 
 ## Submit
 

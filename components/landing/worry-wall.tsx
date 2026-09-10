@@ -134,19 +134,19 @@ const WORRY_POSTS: DriftWallItem[] = [
 
 export function WorryWall() {
   return (
-    <section id="signal" className="relative overflow-hidden bg-black py-16 text-white md:py-24">
+    <section id="signal" className="relative overflow-hidden bg-black py-16 text-ink md:py-24">
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="landing-fade inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-white">
+          <p className="landing-fade inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-ink">
             SIGNAL
           </p>
           <h2
-            className="landing-fade mt-6 font-light tracking-[-0.04em] text-white"
+            className="landing-fade mt-6 font-light tracking-[-0.04em] text-ink"
             style={{ fontSize: "clamp(1.85rem, 4.2vw, 3.15rem)", lineHeight: 1.12 }}
           >
             Everyone is silently leaking.
           </h2>
-          <p className="landing-fade mx-auto mt-4 max-w-xl text-[15px] leading-7 text-white/60">
+          <p className="landing-fade mx-auto mt-4 max-w-xl text-[15px] leading-7 text-ink/60">
             Real posts and reporting on AI chat leaks — from Reddit ops threads to shared chats
             showing up in Google. Click any card for the source.
           </p>

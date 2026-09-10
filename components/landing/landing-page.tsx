@@ -25,28 +25,28 @@ export function LandingPage() {
   return (
     <div className=" min-h-screen text-ink">
       <header className="fixed inset-x-0 top-4 z-30 flex justify-center px-4">
-        <div className="flex w-full bg-white/[0.15] dark:bg-black/[0.15] 
+        <div className="flex w-full bg-ink/[0.15] dark:bg-black/[0.15] 
                backdrop-blur-md saturate-150
-               border border-white/20 dark:border-white/10
-               shadow-[0_4px_30px_rgba(0,0,0,0.1)] max-w-6xl items-center justify-between rounded-full  p-4 text-white ">
+               border border-ink/20 dark:border-ink/10
+               shadow-[0_4px_30px_rgba(0,0,0,0.1)] max-w-6xl items-center justify-between rounded-full  p-4 text-ink ">
           <Logo inverted />
-          <nav className="hidden items-center gap-6 text-[13px] text-white/70 md:flex">
-            <a href="#signal" className="hover:text-white">
+          <nav className="hidden items-center gap-6 text-[13px] text-ink/70 md:flex">
+            <a href="#signal" className="hover:text-ink">
               Signal
             </a>
-            <a href="#product" className="hover:text-white">
+            <a href="#product" className="hover:text-ink">
               Product
             </a>
-            <a href="#proof" className="hover:text-white">
+            <a href="#proof" className="hover:text-ink">
               How it works
             </a>
-            <a href="#agents" className="hover:text-white">
+            <a href="#agents" className="hover:text-ink">
               Agents
             </a>
-            <a href="#midnight" className="hover:text-white">
+            <a href="#midnight" className="hover:text-ink">
               Midnight
             </a>
-            <a href="#audiences" className="hover:text-white">
+            <a href="#audiences" className="hover:text-ink">
               Audiences
             </a>
           </nav>
@@ -55,7 +55,7 @@ export function LandingPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-white/70 hover:bg-white/10 hover:text-white"
+                className="text-ink/70 hover:bg-ink/10 hover:text-ink"
               >
                 {copy.demo.landing}
               </Button>
@@ -105,10 +105,10 @@ export function LandingPage() {
         <div className="relative text-center z-10 mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-center px-6 pointer-events-none">
           <div className="landing-fade flex items-center gap-2 text-center mx-auto" >
             Powered by
-            <MidnightWordmark className="h-5 w-auto text-white" />
+            <MidnightWordmark className="h-5 w-auto text-ink" />
           </div>
           <h1
-            className="landing-fade font-light tracking-[-0.06em] text-white mt-4"
+            className="landing-fade font-light tracking-[-0.06em] text-ink mt-4"
             style={{
               animationDelay: "40ms",
               fontSize: "clamp(3rem, 12vw, 7.25rem)",
@@ -120,7 +120,7 @@ export function LandingPage() {
             Zero compromise.
           </h1>
           <p
-            className="landing-fade mt-8 max-w-3xl mx-auto text-[15px] leading-7 text-white/70"
+            className="landing-fade mt-8 max-w-3xl mx-auto text-[15px] leading-7 text-ink/70"
             style={{ animationDelay: "80ms" }}
           >
             If your team's AI history leaked today, how cooked is your data? <br/> Kachis builds a
@@ -138,7 +138,7 @@ export function LandingPage() {
               </Button>
             </Link>
             <Link href="/demo">
-              <Button variant="outline" className="border-0 bg-white/8 text-white ring-white/15">
+              <Button variant="outline" className="border-0 bg-ink/8 text-ink ring-ink/15">
                 {copy.demo.landing}
               </Button>
             </Link>

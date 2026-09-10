@@ -54,7 +54,7 @@ export function AgentPipeline() {
     <section id="agents" className="relative overflow-hidden py-16 md:py-24">
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="landing-fade inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-white">
+          <p className="landing-fade inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-ink">
             AGENTS
           </p>
           <h2
@@ -67,16 +67,16 @@ export function AgentPipeline() {
           <p className="landing-fade mx-auto mt-4 max-w-xl text-[15px] leading-7 text-[#6b6b78]">
             {copy.agent.description}
           </p>
-          <div className="landing-fade mt-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[11px] font-semibold tracking-wide text-white/80">
+          <div className="landing-fade mt-5 inline-flex items-center gap-2 rounded-full border border-ink/10 bg-ink/[0.04] px-3.5 py-1.5 text-[11px] font-semibold tracking-wide text-ink/80">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden />
             {copy.agent.badge}
           </div>
         </div>
 
-        <div className="landing-fade mt-12 overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-5 md:p-8">
+        <div className="landing-fade mt-12 overflow-hidden rounded-[1.75rem] border border-ink/10 bg-ink/[0.03] p-5 md:p-8">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 text-white">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-ink/10 text-ink">
                 <Bot className="h-4 w-4" strokeWidth={1.75} />
               </span>
               <div>
@@ -93,13 +93,13 @@ export function AgentPipeline() {
             {FLOW.map((step, index) => (
               <div
                 key={step.n}
-                className="relative flex flex-col rounded-2xl border border-white/10 bg-black/40 p-4"
+                className="relative flex flex-col rounded-2xl border border-ink/10 bg-black/40 p-4"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-[11px] text-white/40">{step.n}</span>
+                  <span className="font-mono text-[11px] text-ink/40">{step.n}</span>
                   {index < FLOW.length - 1 ? (
                     <ArrowRight
-                      className="hidden h-3.5 w-3.5 text-white/25 md:block"
+                      className="hidden h-3.5 w-3.5 text-ink/25 md:block"
                       strokeWidth={1.75}
                       aria-hidden
                     />
@@ -113,7 +113,7 @@ export function AgentPipeline() {
             ))}
           </div>
 
-          <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-dashed border-white/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-5 flex flex-col gap-2 rounded-2xl border border-dashed border-ink/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[12px] leading-5 text-[#8a8a96]">
               Host agent must call the shield before any public model sees a token. Bypass is not a
               path — the pipeline terminates at the perimeter.
@@ -130,9 +130,9 @@ export function AgentPipeline() {
             return (
               <article
                 key={item.title}
-                className="rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-6 md:p-7"
+                className="rounded-[1.75rem] border border-ink/10 bg-ink/[0.03] p-6 md:p-7"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 text-white">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full border border-ink/10 text-ink">
                   <Icon className="h-4 w-4" strokeWidth={1.75} />
                 </span>
                 <h3 className="mt-5 text-[1.15rem] font-medium tracking-tight text-foreground">

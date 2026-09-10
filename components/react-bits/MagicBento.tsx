@@ -551,7 +551,7 @@ const MagicBento: React.FC<BentoProps> = ({
             --glow-color: ${glowColor};
             --border-color: #2F293A;
             --background-dark: transparent;
-            --white: hsl(0, 0%, 100%);
+            --ink: hsl(0, 0%, 100%);
             --purple-primary: rgba(70, 147, 150, 1);
             --purple-glow: rgba(70, 147, 150, 0.2);
             --purple-border: rgba(70, 147, 150, 0.8);
@@ -689,7 +689,7 @@ const MagicBento: React.FC<BentoProps> = ({
             const cardStyle = {
               backgroundColor: card.color ?? 'transparent',
               borderColor: 'var(--border-color)',
-              color: 'var(--white)',
+              color: 'var(--ink)',
               '--glow-x': '50%',
               '--glow-y': '50%',
               '--glow-intensity': '0',
@@ -715,10 +715,10 @@ const MagicBento: React.FC<BentoProps> = ({
                     </div>
                   </div>
                 ) : null}
-                <div className="card__header relative z-10 flex justify-between gap-3 text-white">
+                <div className="card__header relative z-10 flex justify-between gap-3 text-ink">
                   <span className="card__label text-base">{card.label}</span>
                 </div>
-                <div className="card__content relative z-10 flex flex-col text-white">
+                <div className="card__content relative z-10 flex flex-col text-ink">
                   <h3
                     className={`card__title m-0 mb-1 text-base font-normal ${textAutoHide ? 'text-clamp-1' : ''}`}
                   >

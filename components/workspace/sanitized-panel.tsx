@@ -19,7 +19,7 @@ export function SanitizedPanel() {
   const ready = proofStatus === "shielded" && Boolean(sanitizedPrompt.trim()) && canShield;
 
   return (
-    <section className="relative flex h-full min-h-0 flex-col overflow-hidden border-x border-white/6">
+    <section className="relative flex h-full min-h-0 flex-col overflow-hidden border-x border-ink/6">
       <div className="relative px-5 pt-5 pb-3">
         <h2
           className="font-light tracking-[-0.03em] text-brand-accent"
@@ -40,12 +40,12 @@ export function SanitizedPanel() {
                 <span className="font-mono font-normal text-muted-fg">· #{proof.ledgerId}</span>
               ) : null}
             </div>
-            <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap font-sans text-[14px] leading-7 text-ink">
+            <pre className="min-h-0 flex-1 overflow-auto inkspace-pre-wrap font-sans text-[14px] leading-7 text-ink">
               {sanitizedPrompt}
             </pre>
           </div>
         ) : (
-          <div className="flex h-full min-h-[180px] flex-col items-center justify-center rounded-[1.25rem] border border-dashed border-white/10 bg-black/15 px-6 text-center">
+          <div className="flex h-full min-h-[180px] flex-col items-center justify-center rounded-[1.25rem] border border-dashed border-ink/10 bg-black/15 px-6 text-center">
             <p className="text-[1.1rem] font-light tracking-tight text-ink/80">
               {copy.sanitized.empty}
             </p>

@@ -15,6 +15,11 @@ import {
 import { probeProofServer } from "@/lib/midnight-notary";
 import { CIRCUIT_ID, type GuardrailFinding } from "@/shared/types";
 import { isCommitmentHex } from "@/shared/commit";
+import {
+  enforceRequiredPackEnabled,
+  meetsRequiredPack,
+  requiredPackFromEnv,
+} from "@/shared/policy";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +70,26 @@ export async function POST(request: Request) {
     );
   }
 
+  const packFlags = body.packFlags ?? 0;
+  const walkthrough =
+    body.network === "walkthrough" ||
+    (typeof body.txId === "string" && body.txId.startsWith("walkthrough_"));
+
+  // Soft required-pack gate (mirrors Compact requiredPack after redeploy).
+  // Skip for labeled walkthrough so /demo stays usable with sandbox defaults.
+  if (enforceRequiredPackEnabled() && !walkthrough) {
+    const required = requiredPackFromEnv();
+    if (required > 0 && !meetsRequiredPack(packFlags, required)) {
+      return NextResponse.json(
+        {
+          error:
+            "Required policy pack not attested. Enable every mandatory filter before shield.",
+        },
+        { status: 403 },
+      );
+    }
+  }
+
   const existing = await findAttestationByHash(body.cleanedHash);
   if (existing && existing.binding === body.binding) {
     if (body.status === "settled" && body.txId && !existing.txId) {
@@ -91,13 +116,10 @@ export async function POST(request: Request) {
 
   const notary = await probeProofServer();
   const settled = body.status === "settled" && typeof body.txId === "string" && body.txId.length > 0;
-  const walkthrough =
-    body.network === "walkthrough" ||
-    (typeof body.txId === "string" && body.txId.startsWith("walkthrough_"));
   const recorded = await recordAttestation({
     cleanedHash: body.cleanedHash,
     binding: body.binding,
-    packFlags: body.packFlags ?? 0,
+    packFlags,
     findings: body.findings ?? [],
     circuit: CIRCUIT_ID,
     attestedAt: body.attestedAt ?? new Date().toISOString(),
@@ -117,7 +139,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-  const local = await listAttestations(40);
+  const local = await listAttestations(80);
   const enrichedLocal = await enrichAttestationsFromChain(local);
 
   const settlementHint =
@@ -136,7 +158,7 @@ export async function GET() {
     chain = [];
   }
 
-  const attestations = mergeLocalAndChain(enrichedLocal, chain).slice(0, 20);
+  const attestations = mergeLocalAndChain(enrichedLocal, chain).slice(0, 80);
   return NextResponse.json({
     attestations,
     contractAddress,

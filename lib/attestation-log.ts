@@ -154,7 +154,7 @@ export async function attestationStats() {
   const rows = await getStore();
   const blockedSecrets = rows.reduce(
     (sum, item) =>
-      sum + (item.findings.find((finding) => finding.kind === "compliance")?.count ?? 0),
+      sum + (item.findings.find((finding) => finding.kind === "secrets")?.count ?? 0),
     0,
   );
   const leaksPrevented = rows.reduce(

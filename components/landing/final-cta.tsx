@@ -37,29 +37,29 @@ export function FinalCta() {
           <div className="pointer-events-none absolute inset-0 bg-black/70" />
 
           <div className="relative z-10 flex min-h-[22rem] flex-col items-center justify-center px-6 py-14 text-center md:min-h-[26rem] md:px-12 md:py-16">
-            <p className="inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-white/90">
+            <p className="inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-ink/90">
               GET STARTED
             </p>
             <h2
-              className="mt-6 max-w-3xl font-light tracking-[-0.04em] text-white"
+              className="mt-6 max-w-3xl font-light tracking-[-0.04em] text-ink"
               style={{ fontSize: "clamp(1.85rem, 4.2vw, 3.15rem)", lineHeight: 1.12 }}
             >
               Shield the next prompt.{" "}
-              <span className="text-white/65">Keep the seat verified.</span>
+              <span className="text-ink/65">Keep the seat verified.</span>
             </h2>
-            <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-white/70">
+            <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-ink/70">
               Put Kachis in the loop — local insulation first, evidence that the pack ran, public
               AI only after.
             </p>
             <div className="pointer-events-auto mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link href="/workspace">
-                <Button className="bg-white text-black hover:bg-white/90 hover:opacity-100">
+                <Button className="bg-ink text-black hover:bg-ink/90 hover:opacity-100">
                   {copy.action.idle}
                   <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
                 </Button>
               </Link>
               <Link href="/demo">
-                <Button variant="outline" className="border-0 bg-white/10 text-white ring-white/20 hover:bg-white/15">
+                <Button variant="outline" className="border-0 bg-ink/10 text-ink ring-ink/20 hover:bg-ink/15">
                   {copy.demo.landing}
                 </Button>
               </Link>

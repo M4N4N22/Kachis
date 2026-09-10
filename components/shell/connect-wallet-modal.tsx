@@ -72,7 +72,7 @@ export function ConnectWalletModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="connect-wallet-title"
-            className="relative z-10 grid w-full max-w-[860px] overflow-hidden rounded-[28px] bg-white/5 shadow-[0_40px_120px_rgba(0,0,0,0.55)] backdrop-blur-2xl md:grid-cols-2"
+            className="relative z-10 grid w-full max-w-[860px] overflow-hidden rounded-[28px] bg-ink/5 shadow-[0_40px_120px_rgba(0,0,0,0.55)] backdrop-blur-2xl md:grid-cols-2"
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
@@ -97,33 +97,33 @@ export function ConnectWalletModal({
 
             <div className="relative flex flex-col justify-between gap-10 p-7 sm:p-8 md:p-9">
               <div>
-                <h2 className="text-[1.65rem] font-semibold tracking-tight text-white sm:text-[1.85rem]">
+                <h2 className="text-[1.65rem] font-semibold tracking-tight text-ink sm:text-[1.85rem]">
                   {copy.wallet.modalEducateTitle}
                 </h2>
 
                 <ul className="mt-8 space-y-6">
                   <li className="flex gap-4">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl  bg-white/[0.04] text-white">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl  bg-ink/[0.04] text-ink">
                       <Shield className="h-5 w-5" strokeWidth={1.75} />
                     </span>
                     <div>
-                      <p className="text-[15px] font-semibold text-white">
+                      <p className="text-[15px] font-semibold text-ink">
                         {copy.wallet.modalEducateAssetsTitle}
                       </p>
-                      <p className="mt-1 text-[13px] leading-6 text-white/55">
+                      <p className="mt-1 text-[13px] leading-6 text-ink/55">
                         {copy.wallet.modalEducateAssetsBody}
                       </p>
                     </div>
                   </li>
                   <li className="flex gap-4">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-white">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ink/[0.04] text-ink">
                       <KeyRound className="h-5 w-5" strokeWidth={1.75} />
                     </span>
                     <div>
-                      <p className="text-[15px] font-semibold text-white">
+                      <p className="text-[15px] font-semibold text-ink">
                         {copy.wallet.modalEducateLoginTitle}
                       </p>
-                      <p className="mt-1 text-[13px] leading-6 text-white/55">
+                      <p className="mt-1 text-[13px] leading-6 text-ink/55">
                         {copy.wallet.modalEducateLoginBody}
                       </p>
                     </div>
@@ -136,7 +136,7 @@ export function ConnectWalletModal({
                   href="https://midnight.network"
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="inline-flex h-10 items-center rounded-full border border-white/12 bg-white/[0.06] px-4 text-[13px] font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-colors hover:bg-white/[0.1]"
+                  className="inline-flex h-10 items-center rounded-full border border-ink/12 bg-ink/[0.06] px-4 text-[13px] font-medium text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] transition-colors hover:bg-ink/[0.1]"
                 >
                   {copy.wallet.modalGetWallet}
                 </a>
@@ -144,7 +144,7 @@ export function ConnectWalletModal({
                   href="https://docs.midnight.network"
                   target="_blank"
                   rel="noreferrer noopener"
-                  className="text-[13px] font-medium text-white/55 transition-colors hover:text-white"
+                  className="text-[13px] font-medium text-ink/55 transition-colors hover:text-ink"
                 >
                   {copy.wallet.modalLearnMore}
                 </a>
@@ -152,38 +152,38 @@ export function ConnectWalletModal({
             </div>
 
             <div className="relative p-4 sm:p-5 md:pl-0 md:pr-5 md:py-5">
-              <div className="flex h-full flex-col rounded-[22px] border border-white/10 bg-black/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-5">
+              <div className="flex h-full flex-col rounded-[22px] border border-ink/10 bg-black/45 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] sm:p-5">
                 <div className="flex items-start justify-between gap-3">
                   <h3
                     id="connect-wallet-title"
-                    className="text-[1.05rem] font-semibold tracking-tight text-white"
+                    className="text-[1.05rem] font-semibold tracking-tight text-ink"
                   >
                     {copy.wallet.modalTitle}
                   </h3>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-ink/50 transition-colors hover:bg-ink/10 hover:text-ink"
                     aria-label="Close"
                   >
                     <X className="h-4 w-4" strokeWidth={1.75} />
                   </button>
                 </div>
 
-                <p className="mt-3 text-[12px] leading-5 text-white/45">{copy.wallet.choose}</p>
-                <p className="mt-1 text-[12px] leading-5 text-white/45">
+                <p className="mt-3 text-[12px] leading-5 text-ink/45">{copy.wallet.choose}</p>
+                <p className="mt-1 text-[12px] leading-5 text-ink/45">
                   {detected.length > 0
                     ? `${copy.wallet.modalDetected}: ${detected.join(", ")}`
                     : copy.wallet.modalEmpty}
                 </p>
-                <p className="mt-1 text-[12px] leading-5 text-white/40">
+                <p className="mt-1 text-[12px] leading-5 text-ink/40">
                   {copy.wallet.modalApproveHint}
                 </p>
 
                 {error ? <p className="mt-3 text-[12px] text-danger">{error}</p> : null}
 
                 <div className="mt-5 min-h-0 flex-1 overflow-y-auto">
-                  <p className="mb-2 text-[11px] font-semibold tracking-[0.08em] text-white/35 uppercase">
+                  <p className="mb-2 text-[11px] font-semibold tracking-[0.08em] text-ink/35 uppercase">
                     {copy.wallet.modalRecommended}
                   </p>
                   <div className="space-y-1.5">
@@ -213,7 +213,7 @@ export function ConnectWalletModal({
                           className={cn(
                             "group flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors",
                             canConnect
-                              ? "hover:bg-white/5"
+                              ? "hover:bg-ink/5"
                               : "cursor-not-allowed opacity-55",
                           )}
                         >
@@ -225,15 +225,15 @@ export function ConnectWalletModal({
                           />
                           <span className="min-w-0 flex-1">
                             <span className="flex flex-wrap items-center gap-2">
-                              <span className="block text-[14px] font-medium text-white">
+                              <span className="block text-[14px] font-medium text-ink">
                                 {provider.name}
                               </span>
                               {provider.recommended ? (
-                                <span className="rounded-full bg-[color-mix(in_srgb,var(--brand-a)_22%,transparent)] px-2 py-0.5 text-[10px] font-semibold text-[color-mix(in_srgb,var(--brand-accent)_85%,white)]">
+                                <span className="rounded-full bg-[color-mix(in_srgb,var(--brand-a)_22%,transparent)] px-2 py-0.5 text-[10px] font-semibold text-[color-mix(in_srgb,var(--brand-accent)_85%,ink)]">
                                   {copy.wallet.modalSupported}
                                 </span>
                               ) : (
-                                <span className="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-semibold text-white/45">
+                                <span className="rounded-full bg-ink/8 px-2 py-0.5 text-[10px] font-semibold text-ink/45">
                                   {copy.wallet.modalComingSoon}
                                 </span>
                               )}
@@ -243,7 +243,7 @@ export function ConnectWalletModal({
                                 </span>
                               ) : null}
                             </span>
-                            <span className="mt-0.5 block truncate text-[11px] text-white/40">
+                            <span className="mt-0.5 block truncate text-[11px] text-ink/40">
                               {!supported
                                 ? copy.wallet.modalComingSoonHint
                                 : live
