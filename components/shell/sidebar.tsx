@@ -136,7 +136,7 @@ function ProfileMenu({
           </div>
           <div className="p-1">
             <Link
-              href="/identity"
+              href="/providers"
               onClick={() => {
                 setOpen(false);
                 onNavigate();

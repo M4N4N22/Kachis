@@ -1,10 +1,11 @@
 import {
   Blocks,
+  BotMessageSquare,
+  Building2,
   ChartNoAxesColumn,
   KeyRound,
   ScrollText,
   ShieldCheck,
-  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -14,7 +15,8 @@ export type NavHref =
   | "/analytics"
   | "/audits"
   | "/guardrails"
-  | "/identity";
+  | "/identity"
+  | "/providers";
 
 export interface NavItem {
   href: NavHref;
@@ -42,7 +44,7 @@ export const NAV_SECTIONS: NavSection[] = [
         href: "/workspace",
         label: "Protected AI Chat",
         short: "Chat",
-        icon: Sparkles,
+        icon: BotMessageSquare,
       },
       {
         href: "/integrations",
@@ -84,6 +86,12 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       {
         href: "/identity",
+        label: "Organization",
+        short: "Org",
+        icon: Building2,
+      },
+      {
+        href: "/providers",
         label: "AI Providers (BYOC)",
         short: "Providers",
         icon: KeyRound,
@@ -108,19 +116,19 @@ export const PAGE_COPY: Record<PageHref, { title: string; blurb: string }> = {
     blurb: "Canned payroll paste — no wallet. Local shield, simulated prove, canned reply.",
   },
   "/integrations": {
-    title: "Integrate Kachis",
+    title: "Integration Workspace",
     blurb:
-      "Active connections for Cursor/IDE, background scripts, and browser extensions in the shield loop.",
+      "Deploy and manage the local shield across developer environments, apps, and network perimeters.",
   },
   "/analytics": {
     title: "Shield Analytics",
     blurb:
-      "Leaks blocked, files insulated, and private entries intercepted on this device.",
+      "On-chain Preprod settlements, pack mix, and ledger sequence — walkthrough excluded.",
   },
   "/audits": {
     title: "Midnight Audit Trail",
     blurb:
-      "Chronological proofs, tracking ids, and settlement hashes — the compliance ledger.",
+      "Live Preprod settlements only — public commitments, pack flags, explorer links.",
   },
   "/guardrails": {
     title: "Company Rules",
@@ -128,6 +136,11 @@ export const PAGE_COPY: Record<PageHref, { title: string; blurb: string }> = {
       "Choose which categories are mandatory to filter: identifiers, financials, secrets, source, client.",
   },
   "/identity": {
+    title: "Organization",
+    blurb:
+      "Create or leave an institutional network. Wallet-bound seats and clearance stay with this account.",
+  },
+  "/providers": {
     title: "AI Providers (BYOC)",
     blurb:
       "Session-only API credentials for OpenAI, Anthropic, Gemini, or custom company servers.",

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { IdentityView } from "@/components/identity/identity-view";
+import { OrganizationView } from "@/components/identity/organization-view";
 
 export const metadata: Metadata = {
-  title: "AI Providers (BYOC)",
+  title: "Organization",
 };
 
 export default function IdentityPage() {
-  return <IdentityView />;
+  return <OrganizationView />;
 }

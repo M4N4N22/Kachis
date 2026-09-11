@@ -24,7 +24,7 @@ Companies buy **control + evidence**, not another chat site: secrets never becom
 | Public notary log | `/api/shield` — hashes + optional settlement id. Never the paste |
 | Chat gated on commitment | `/api/chat` refuses unknown `proofHash`; prompt must match `cleanedHash`; optional required pack |
 | Rule-pack scanner (PII / financial / secrets / code / client) | Shipped (`shared/scanner.ts`) |
-| Analytics quarter audit view | Shipped (`/analytics`) |
+| Analytics quarter audit view | Shipped (`/analytics`) — on-chain Preprod only; pack/source/sequence charts; walkthrough excluded |
 | Integrations console | Shipped (`/integrations`) — MCP setup, copyable host config, agent activity from `/api/shield` |
 | Compact `requiredPack` | In Compact source — live after recompile/redeploy; soft TS gate via env/tier now |
 | On-device ML scanner | Later |
