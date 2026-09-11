@@ -72,7 +72,7 @@ export function ConnectWalletModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="connect-wallet-title"
-            className="relative z-10 grid w-full max-w-[860px] overflow-hidden rounded-[28px] bg-ink/5 shadow-[0_40px_120px_rgba(0,0,0,0.55)] backdrop-blur-2xl md:grid-cols-2"
+            className="relative z-10 grid w-full max-w-[860px] overflow-hidden rounded-[28px] bg-ink/5  backdrop-blur-3xl md:grid-cols-2"
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}
@@ -80,20 +80,10 @@ export function ConnectWalletModal({
           >
             <div
               className="pointer-events-none absolute -top-24 -right-16 h-72 w-72 rounded-full opacity-80 blur-3xl"
-              style={{
-                background:
-                  "radial-gradient(circle, color-mix(in srgb, var(--brand-accent) 55%, transparent) 0%, color-mix(in srgb, var(--brand-a) 35%, transparent) 42%, transparent 70%)",
-              }}
+         
               aria-hidden
             />
-            <div
-              className="pointer-events-none absolute top-0 right-0 h-40 w-56 opacity-70 blur-3xl"
-              style={{
-                background:
-                  "linear-gradient(225deg, color-mix(in srgb, var(--brand-accent) 40%, transparent), transparent 70%)",
-              }}
-              aria-hidden
-            />
+      
 
             <div className="relative flex flex-col justify-between gap-10 p-7 sm:p-8 md:p-9">
               <div>

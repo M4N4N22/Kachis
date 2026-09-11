@@ -119,6 +119,7 @@ export async function POST(request: Request) {
       source: "byoc",
       provider: result.provider,
       label: result.label,
+      model: result.model,
       ledgerId: attestation.ledgerId,
       content: result.content,
     });
@@ -188,6 +189,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     source: "beta",
     provider: "gemini",
+    model: result.model,
     ledgerId: attestation.ledgerId,
     quota: consumed,
     content: result.content,

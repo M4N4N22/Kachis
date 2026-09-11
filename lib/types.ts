@@ -81,6 +81,10 @@ export interface ChatMessage {
   source?: "beta" | "byoc" | "demo";
   provider?: string;
   label?: string;
+  /** Model id used for the reply (e.g. gemini-3.8-flash). */
+  model?: string;
+  /** True when local token map restored insulated placeholders for display. */
+  restored?: boolean;
   createdAt: string;
 }
 

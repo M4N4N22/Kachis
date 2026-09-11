@@ -13,7 +13,10 @@ import { useApp } from "@/lib/app-store";
 import { copy } from "@/lib/copy";
 import {
   SAMPLE_SENSITIVE_PROMPT,
+  detectNerHits,
   highlightSensitive,
+  preloadNer,
+  restoreFromTokenMap,
   runShield,
   tokenizeCleanedPrompt,
   type CleanRevealToken,
@@ -110,6 +113,11 @@ export function WorkspaceProvider({
   const [settleError, setSettleError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Warm on-device NER while the workspace is open (soft-fails if unavailable).
+    preloadNer();
+  }, []);
+
+  useEffect(() => {
     setGuardrails(defaultTogglesForTier(tier));
     setProofStatus("idle");
     setProof(null);
@@ -200,13 +208,14 @@ export function WorkspaceProvider({
     toast.dismiss(SETTLE_TOAST_ID);
 
     try {
-      const highlights = highlightSensitive(rawInput, guardrails);
+      const extraHits = await detectNerHits(rawInput, guardrails);
+      const highlights = highlightSensitive(rawInput, guardrails, { extraHits });
       setHighlightSegments(highlights);
 
       // Brief beat so the amber warn state is visible before rewrite.
       await delay(420);
 
-      const result = await runShield(rawInput, guardrails);
+      const result = await runShield(rawInput, guardrails, { extraHits });
       const tokens = tokenizeCleanedPrompt(result.text);
 
       setPendingShield(result);
@@ -399,9 +408,18 @@ export function WorkspaceProvider({
   ]);
 
   const sendShielded = useCallback(async () => {
-    const content = sanitizedPrompt.trim();
-    if (!content || proofStatus !== "shielded" || settling || sending || scanning || !canShield)
+    // Must send the exact bytes that were hashed into cleanedHash — do not trim.
+    const content = pendingShield?.text ?? sanitizedPrompt;
+    if (
+      !content.trim() ||
+      proofStatus !== "shielded" ||
+      settling ||
+      sending ||
+      scanning ||
+      !canShield
+    ) {
       return;
+    }
 
     setSending(true);
     setMessages([]);
@@ -411,13 +429,16 @@ export function WorkspaceProvider({
     try {
       if (demo) {
         await delay(700);
+        const rawReply = copy.demo.reply;
+        const tokenMap = pendingShield?.tokenMap ?? {};
         setMessages([
           {
             id: createId(),
             role: "assistant",
-            content: copy.demo.reply,
+            content: restoreFromTokenMap(rawReply, tokenMap),
             source: "demo",
             walkthrough: true,
+            restored: Object.keys(tokenMap).length > 0,
             createdAt: new Date().toISOString(),
           },
         ]);
@@ -430,7 +451,7 @@ export function WorkspaceProvider({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: content,
-          proofHash: proof?.hash,
+          proofHash: proof?.hash ?? pendingShield?.cleanedHash,
           mode: byocReady && credential ? "byoc" : "beta",
           byoc:
             byocReady && credential
@@ -450,6 +471,7 @@ export function WorkspaceProvider({
         source?: "beta" | "byoc";
         provider?: string;
         label?: string;
+        model?: string;
       };
 
       if (!response.ok || data.error) {
@@ -466,26 +488,34 @@ export function WorkspaceProvider({
         return;
       }
 
+      const modelText = data.content ?? copy.response.noModel;
+      const tokenMap = pendingShield?.tokenMap ?? {};
       setMessages([
         {
           id: createId(),
           role: "assistant",
-          content: data.content ?? copy.response.noModel,
+          content: restoreFromTokenMap(modelText, tokenMap),
           source: data.source,
           provider: data.provider,
           label: data.label,
+          model: data.model,
+          restored: Object.keys(tokenMap).length > 0,
           createdAt: new Date().toISOString(),
         },
       ]);
       toast.success(copy.action.toastSendOk, { id: SEND_TOAST_ID });
     } catch {
-      const message = demo ? copy.demo.reply : copy.response.error;
+      const fallback = demo ? copy.demo.reply : copy.response.error;
+      const tokenMap = pendingShield?.tokenMap ?? {};
       setMessages([
         {
           id: createId(),
           role: "assistant",
-          content: message,
+          content: demo
+            ? restoreFromTokenMap(fallback, tokenMap)
+            : fallback,
           source: demo ? "demo" : undefined,
+          restored: demo && Object.keys(tokenMap).length > 0,
           createdAt: new Date().toISOString(),
         },
       ]);
@@ -502,6 +532,7 @@ export function WorkspaceProvider({
     canShield,
     credential,
     demo,
+    pendingShield,
     proof?.hash,
     proofStatus,
     recordQuery,

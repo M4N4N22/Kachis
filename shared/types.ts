@@ -23,12 +23,17 @@ export type GuardrailFinding = {
 export type ShieldResult = {
   text: string;
   findings: GuardrailFinding[];
+  /** Local-only map of insulation token → original span. Never post to /api/shield. */
+  tokenMap: TokenMap;
   packFlags: number;
   cleanedHash: string;
   binding: string;
   circuit: "kachis_guardrail_v0";
   attestedAt: string;
 };
+
+/** Insulation token → original value. Stays on-device. */
+export type TokenMap = Record<string, string>;
 
 export const CIRCUIT_ID = "kachis_guardrail_v0" as const;
 

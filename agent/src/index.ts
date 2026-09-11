@@ -1,12 +1,30 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { defaultTogglesForTier, runShield } from "../../shared/index.ts";
+import {
+  defaultTogglesForTier,
+  restoreFromTokenMap,
+  runShield,
+  type TokenMap,
+} from "../../shared/index.ts";
 
 const CONSOLE_URL = (process.env.KACHIS_CONSOLE_URL ?? "http://localhost:3000").replace(
   /\/$/,
   "",
 );
+
+/** Local-only maps keyed by cleanedHash — never returned from kachis_shield. */
+const sessionMaps = new Map<string, TokenMap>();
+const SESSION_MAP_LIMIT = 32;
+
+function rememberTokenMap(cleanedHash: string, tokenMap: TokenMap) {
+  sessionMaps.set(cleanedHash, tokenMap);
+  while (sessionMaps.size > SESSION_MAP_LIMIT) {
+    const oldest = sessionMaps.keys().next().value;
+    if (!oldest) break;
+    sessionMaps.delete(oldest);
+  }
+}
 
 const server = new McpServer({
   name: "kachis-agent",
@@ -31,6 +49,7 @@ server.registerResource(
           "Public: cleanedHash, binding, packFlags (PII / financial / secrets / code / client).",
           "Host MUST call kachis_shield before any model sees the paste.",
           "Host MUST send only shielded_prompt to the language model — never the original text.",
+          "After the model replies, call kachis_restore with cleaned_commitment + model text to restore tokens locally.",
         ].join("\n"),
       },
     ],
@@ -42,7 +61,7 @@ server.registerTool(
   {
     title: "Kachis shield",
     description:
-      "REQUIRED before any model call: scan the raw paste on this machine. Returns ONLY shielded_prompt plus public commitments. The host must send shielded_prompt to the model and must never forward the original text, secrets, or client records.",
+      "REQUIRED before any model call: scan the raw paste on this machine. Returns ONLY shielded_prompt plus public commitments. The host must send shielded_prompt to the model and must never forward the original text, secrets, or client records. After the model answers, call kachis_restore.",
     inputSchema: {
       text: z.string().describe("Raw user paste. Stays on this machine."),
       stripIdentifiers: z.boolean().optional().default(true),
@@ -68,6 +87,8 @@ server.registerTool(
       codeInsulation: insulateCode ?? defaults.codeInsulation,
       clientRecords: stripClientRecords ?? defaults.clientRecords,
     });
+
+    rememberTokenMap(result.cleanedHash, result.tokenMap);
 
     let ledger: Record<string, unknown> | null = null;
     try {
@@ -105,11 +126,75 @@ server.registerTool(
           ? ledger.note
           : `Console not reachable at ${CONSOLE_URL}. Shield still ran locally.`,
       instruction:
-        "Send ONLY shielded_prompt to the language model. Do not include the user's original text in any outbound request.",
+        "Send ONLY shielded_prompt to the language model. Do not include the user's original text. After the model replies, call kachis_restore with cleaned_commitment and the model text.",
     };
 
     return {
       content: [{ type: "text" as const, text: JSON.stringify(payload, null, 2) }],
+    };
+  },
+);
+
+server.registerTool(
+  "kachis_restore",
+  {
+    title: "Kachis restore",
+    description:
+      "LOCAL ONLY: restore enumerated insulation tokens in a model reply using the map from the prior kachis_shield on this machine. Never send the restored text to a public model. Secrets/keys stay masked.",
+    inputSchema: {
+      cleanedCommitment: z
+        .string()
+        .describe("cleaned_commitment from the matching kachis_shield call"),
+      modelText: z
+        .string()
+        .describe("Assistant text that may contain [PERSON_1], [ORG_2], etc."),
+      includeSecrets: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe("If true, also restore SECRET/JWT/key tokens (dangerous)."),
+    },
+  },
+  async ({ cleanedCommitment, modelText, includeSecrets }) => {
+    const tokenMap = sessionMaps.get(cleanedCommitment);
+    if (!tokenMap) {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(
+              {
+                error:
+                  "No local token map for that cleaned_commitment. Call kachis_shield again on this machine first.",
+                restored_text: modelText,
+              },
+              null,
+              2,
+            ),
+          },
+        ],
+        isError: true,
+      };
+    }
+
+    const restored = restoreFromTokenMap(modelText, tokenMap, {
+      includeSecrets: includeSecrets === true,
+    });
+
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(
+            {
+              restored_text: restored,
+              note: "Restored on-device only. Do not forward restored_text to a public model.",
+            },
+            null,
+            2,
+          ),
+        },
+      ],
     };
   },
 );
