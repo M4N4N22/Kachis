@@ -7,6 +7,8 @@ export type WalletStatus = "disconnected" | "connecting" | "connected";
 export type ProofStatus =
   | "idle"
   | "scanning"
+  | "rewriting"
+  | "reviewed"
   | "guarding"
   | "proving"
   | "attesting"
@@ -14,6 +16,8 @@ export type ProofStatus =
   | "error";
 
 export type ChatRole = "user" | "assistant" | "system";
+
+export type ModelProviderId = "openai" | "anthropic" | "gemini" | "custom";
 
 export interface WalletBalances {
   unshielded: string;
@@ -74,6 +78,9 @@ export interface ChatMessage {
   sanitized?: boolean;
   proofHash?: string;
   walkthrough?: boolean;
+  source?: "beta" | "byoc" | "demo";
+  provider?: string;
+  label?: string;
   createdAt: string;
 }
 

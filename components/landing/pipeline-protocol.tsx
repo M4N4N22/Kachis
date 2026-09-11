@@ -14,7 +14,7 @@ export function PipelineProtocol() {
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
         <div className="overflow-hidden rounded-[2rem]   px-5 py-12 shadow-[0_30px_80px_rgba(20,20,28,0.08)] sm:px-8 md:rounded-[2.5rem] md:px-12 md:py-16">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="landing-fade inline-flex rounded-full  px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-ink">
+            <p className="landing-fade inline-flex rounded-full  px-3.5 py-1.5 text-[11px] font-semibold  text-ink">
               HOW IT WORKS
             </p>
             <h2
@@ -134,7 +134,7 @@ export function PipelineProtocol() {
                   <div className="absolute inset-0 rounded-[1.5rem] " />
                   <div className="relative flex h-full overflow-hidden rounded-[1.5rem] border border-ink/5 bg-black shadow-[0_22px_50px_rgba(20,20,28,0.1)]">
                     <aside className="hidden w-[7.5rem] shrink-0 border-r border-ink/5 p-3 sm:block">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a8a96]">
+                      <p className="text-[10px] font-semibold  tracking-[0.12em] text-[#8a8a96]">
                         Path
                       </p>
                       <ul className="mt-3 space-y-2 text-[11px] text-[#5c5c6a]">
@@ -157,7 +157,7 @@ export function PipelineProtocol() {
 
                       <div className="mt-3 grid flex-1 grid-cols-2 gap-2">
                         <div className="rounded-xl border border-ink/5 p-3">
-                          <p className="text-[10px]  uppercase  text-[#8a8a96]">
+                          <p className="text-[10px]    text-[#8a8a96]">
                             Held locally
                           </p>
                           <p className="mt-2 font-mono text-[10px] leading-4 text-[#c45b6a]/90">
@@ -170,7 +170,7 @@ export function PipelineProtocol() {
                           <p className="mt-3 text-[10px] font-medium text-[#8a8a96]">Never sent</p>
                         </div>
                         <div className="rounded-xl border border-ink/5  p-3 shadow-sm">
-                          <p className="text-[10px] font-semibold uppercase text-brand-a">
+                          <p className="text-[10px] font-semibold  text-brand-a">
                             Sent to model
                           </p>
                           <p className="mt-2 font-mono text-[10px] leading-4 text-[#5c5c6a]">

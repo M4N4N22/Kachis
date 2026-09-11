@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Building2, Fingerprint, KeyRound } from "lucide-react";
+import { ByocKeyForm } from "@/components/identity/byoc-key-form";
 import { Bento } from "@/components/ui/bento";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/lib/app-store";
@@ -14,10 +15,15 @@ import {
   nightAsset,
 } from "@/lib/midnight-wallet";
 
-type ProviderStatus = {
-  openai: boolean;
-  anthropic: boolean;
-  gemini: boolean;
+type ProvidersPayload = {
+  beta: {
+    provider: "gemini";
+    available: boolean;
+    used: number;
+    limit: number;
+    remaining: number;
+    day: string;
+  };
 };
 
 export function IdentityView() {
@@ -30,11 +36,7 @@ export function IdentityView() {
     leaveOrganization,
   } = useApp();
   const connected = wallet.status === "connected";
-  const [providers, setProviders] = useState<ProviderStatus>({
-    openai: false,
-    anthropic: false,
-    gemini: false,
-  });
+  const [beta, setBeta] = useState<ProvidersPayload["beta"] | null>(null);
   const [orgName, setOrgName] = useState("");
   const [orgBusy, setOrgBusy] = useState(false);
   const [orgError, setOrgError] = useState<string | null>(null);
@@ -43,24 +45,26 @@ export function IdentityView() {
     let cancelled = false;
     void fetch("/api/providers")
       .then((response) => response.json())
-      .then((data: ProviderStatus) => {
-        if (!cancelled) setProviders(data);
+      .then((data: ProvidersPayload) => {
+        if (!cancelled) setBeta(data.beta);
       })
       .catch(() => {
-        if (!cancelled) {
-          setProviders({ openai: false, anthropic: false, gemini: false });
-        }
+        if (!cancelled) setBeta(null);
       });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const providerRows = [
-    { id: "openai" as const, label: copy.providers.openai, env: "OPENAI_API_KEY" },
-    { id: "anthropic" as const, label: copy.providers.anthropic, env: "ANTHROPIC_API_KEY" },
-    { id: "gemini" as const, label: copy.providers.gemini, env: "GEMINI_API_KEY" },
-  ];
+  const betaStatus = !beta
+    ? copy.providers.betaOffline
+    : !beta.available
+      ? copy.providers.betaOffline
+      : beta.remaining <= 0
+        ? copy.providers.betaEmpty
+        : copy.providers.betaReady
+            .replace("{remaining}", String(beta.remaining))
+            .replace("{limit}", String(beta.limit));
 
   async function onCreateOrg() {
     setOrgBusy(true);
@@ -161,26 +165,35 @@ export function IdentityView() {
       <Bento className="p-5">
         <div className="flex items-start gap-3">
           <KeyRound className="mt-0.5 h-4 w-4 text-brand" strokeWidth={1.75} />
-          <div>
+          <div className="min-w-0 flex-1">
             <h2 className="text-sm font-semibold tracking-tight">{copy.providers.title}</h2>
             <p className="mt-2 max-w-2xl text-[13px] leading-6 text-muted-fg">
               {copy.providers.helper}
             </p>
-          </div>
-        </div>
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          {providerRows.map((provider) => {
-            const configured = providers[provider.id];
-            return (
-              <div key={provider.id} className="rounded-2xl bg-bg px-4 py-3">
-                <p className="text-[13px] font-medium">{provider.label}</p>
-                <p className="mt-1 font-mono text-[10px] text-muted-fg">{provider.env}</p>
-                <p className={`mt-3 text-[11px] ${configured ? "text-brand" : "text-muted-fg"}`}>
-                  {configured ? copy.providers.configured : copy.providers.missing}
+
+            <div className="mt-5 grid gap-3 lg:grid-cols-2">
+              <div className="rounded-2xl bg-bg px-4 py-3">
+                <p className="text-[13px] font-medium">{copy.providers.betaTitle}</p>
+                <p className="mt-1 text-[12px] leading-5 text-muted-fg">
+                  {copy.providers.betaBody}
+                </p>
+                <p className="mt-1 font-mono text-[10px] text-muted-fg">Gemini · hosted</p>
+                <p
+                  className={`mt-3 text-[11px] ${
+                    beta?.available && (beta.remaining ?? 0) > 0
+                      ? "text-brand"
+                      : "text-muted-fg"
+                  }`}
+                >
+                  {betaStatus}
                 </p>
               </div>
-            );
-          })}
+
+              <div className="rounded-2xl bg-bg px-4 py-3">
+                <ByocKeyForm showIntro />
+              </div>
+            </div>
+          </div>
         </div>
       </Bento>
 

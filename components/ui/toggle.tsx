@@ -41,7 +41,7 @@ export function Toggle({
         className={cn(
           "relative mt-0.5 h-6 w-10 shrink-0 rounded-full transition-colors",
           checked
-            ? "bg-brand"
+            ? "bg-green-500"
             : "bg-muted ring-1 ring-border",
         )}
       >

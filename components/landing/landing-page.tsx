@@ -72,7 +72,7 @@ export function LandingPage() {
           <AeroShards
             className="h-full w-full"
             backgroundColor="#000000"
-            shardColor="#1f3f6d"
+            shardColor="#d9f99d"
             accentColor="#469396"
             placement="full"
             flow="stream"

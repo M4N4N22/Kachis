@@ -45,6 +45,7 @@ import {
   preferredNetwork,
 } from "@/lib/midnight-wallet";
 import { copy } from "@/lib/copy";
+import { humanizeSettleError } from "@/lib/settle-feedback";
 
 const PRIVATE_STATE_ID = "kachisGuardrail";
 const STORAGE_KEY = "kachis.contractAddress";
@@ -361,6 +362,6 @@ export async function submitGuardrail(input: ShieldSubmitInput): Promise<ShieldS
       await resetGuardrailPrivateStorage().catch(() => undefined);
       return { ok: false, error: copy.action.privateStateCorrupt };
     }
-    return { ok: false, error: formatSettleError(error) };
+    return { ok: false, error: humanizeSettleError(error) };
   }
 }

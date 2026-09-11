@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { WorkspaceView } from "@/components/workspace/workspace-view";
 
 export const metadata: Metadata = {
-  title: "Secure AI Workspace",
+  title: "Protected AI Chat",
 };
 
 export default function WorkspacePage() {

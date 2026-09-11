@@ -1,7 +1,7 @@
 import {
   Blocks,
   ChartNoAxesColumn,
-  Fingerprint,
+  KeyRound,
   ScrollText,
   ShieldCheck,
   Sparkles,
@@ -21,66 +21,72 @@ export interface NavItem {
   label: string;
   short: string;
   icon: LucideIcon;
+  /** Hide unless institutional org admin. */
+  adminOnly?: boolean;
 }
 
 export interface NavSection {
-  id: "operations" | "compliance" | "administration";
+  id: "workspace" | "security" | "settings";
   label: string;
+  /** When true, section renders in the sidebar footer stack. */
+  pinBottom?: boolean;
   items: NavItem[];
 }
 
 export const NAV_SECTIONS: NavSection[] = [
   {
-    id: "operations",
-    label: "Operations",
+    id: "workspace",
+    label: "Workspace",
     items: [
       {
         href: "/workspace",
-        label: "Secure AI Workspace",
-        short: "Workspace",
+        label: "Protected AI Chat",
+        short: "Chat",
         icon: Sparkles,
       },
       {
         href: "/integrations",
-        label: "Integration Directory",
-        short: "Integrations",
+        label: "Integrate Kachis",
+        short: "Apps",
         icon: Blocks,
       },
     ],
   },
   {
-    id: "compliance",
-    label: "Compliance & Auditing",
+    id: "security",
+    label: "Security & Evidence",
     items: [
       {
         href: "/analytics",
-        label: "Risk Metrics",
-        short: "Metrics",
+        label: "Shield Analytics",
+        short: "Analytics",
         icon: ChartNoAxesColumn,
       },
       {
         href: "/audits",
-        label: "Audit Trail",
+        label: "Midnight Audit Trail",
         short: "Audits",
         icon: ScrollText,
       },
     ],
   },
   {
-    id: "administration",
-    label: "Administration",
+    id: "settings",
+    label: "Settings",
+    pinBottom: true,
     items: [
       {
         href: "/guardrails",
-        label: "Governance Policies",
-        short: "Policies",
+        label: "Company Rules",
+        short: "Rules",
         icon: ShieldCheck,
+        adminOnly: true,
       },
       {
         href: "/identity",
-        label: "Infrastructure & Providers",
+        label: "AI Providers (BYOC)",
         short: "Providers",
-        icon: Fingerprint,
+        icon: KeyRound,
       },
     ],
   },
@@ -93,31 +99,37 @@ export type PageHref = NavHref | "/demo";
 
 export const PAGE_COPY: Record<PageHref, { title: string; blurb: string }> = {
   "/workspace": {
-    title: "Secure AI Workspace",
-    blurb: "Shield locally, then send only the insulated prompt to the model.",
+    title: "Protected AI Chat",
+    blurb:
+      "Review shielded inputs and converse safely with your models. Secrets stay on this machine.",
   },
   "/demo": {
-    title: "Sample shield",
+    title: "Demo",
     blurb: "Canned payroll paste — no wallet. Local shield, simulated prove, canned reply.",
   },
   "/integrations": {
-    title: "Integration Directory",
-    blurb: "Inventory of SDK, MCP, and companion entry points into the shield loop.",
+    title: "Integrate Kachis",
+    blurb:
+      "Active connections for Cursor/IDE, background scripts, and browser extensions in the shield loop.",
   },
   "/analytics": {
-    title: "Risk Metrics",
-    blurb: "Policy hits, secrets held, and leaks mitigated this quarter.",
+    title: "Shield Analytics",
+    blurb:
+      "Leaks blocked, files insulated, and private entries intercepted on this device.",
   },
   "/audits": {
-    title: "Audit Trail",
-    blurb: "Chronological settlements with commitments and mandatory policy flags.",
+    title: "Midnight Audit Trail",
+    blurb:
+      "Chronological proofs, tracking ids, and settlement hashes — the compliance ledger.",
   },
   "/guardrails": {
-    title: "Governance Policies",
-    blurb: "Configure mandatory filters that every institutional shield must attest.",
+    title: "Company Rules",
+    blurb:
+      "Choose which categories are mandatory to filter: identifiers, financials, secrets, source, client.",
   },
   "/identity": {
-    title: "Infrastructure & Providers",
-    blurb: "Wallet binding and model-provider credentials that stay on this machine.",
+    title: "AI Providers (BYOC)",
+    blurb:
+      "Session-only API credentials for OpenAI, Anthropic, Gemini, or custom company servers.",
   },
 };

@@ -1354,9 +1354,9 @@ const prepareRenderGraph = async (graph: ReturnType<typeof createRenderGraph>, o
 };
 
 export default function AeroShards({
-  backgroundColor = '#000022',
-  shardColor = '#1f3f6d',
-  accentColor = '#469396',
+  backgroundColor = '#d9f99d',
+  shardColor = '#d9f99d',
+  accentColor = '#d9f99d',
   placement = 'full',
   flow = 'stream',
   material = 'pearl',
