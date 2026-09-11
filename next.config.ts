@@ -61,19 +61,21 @@ const nextConfig: NextConfig = {
       "@midnight-ntwrk/onchain-runtime-v3": onchainBrowser,
       "@midnight-ntwrk/compact-runtime": compactRuntime,
     };
-    config.resolve.conditionNames = [
-      "browser",
-      "import",
-      "module",
-      "require",
-      "default",
-    ];
     config.plugins.push(
       new webpack.NormalModuleReplacementPlugin(/^node:/, (resource: { request: string }) => {
         resource.request = resource.request.replace(/^node:/, "");
       }),
     );
     if (!isServer) {
+      // Prefer browser exports only on the client. Doing this on the server
+      // pulls DOM builds (e.g. decode-named-character-reference → document).
+      config.resolve.conditionNames = [
+        "browser",
+        "import",
+        "module",
+        "require",
+        "default",
+      ];
       config.resolve.fallback = {
         ...config.resolve.fallback,
         crypto: false,
