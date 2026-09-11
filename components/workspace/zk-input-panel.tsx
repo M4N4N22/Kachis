@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardPaste, Code2, FileText } from "lucide-react";
+import { ClipboardPaste, Code2, FileText, MessageSquareText } from "lucide-react";
 import { RadialGlowButton } from "@/components/react-bits/radial-glow-button";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import { copy } from "@/lib/copy";
 import {
   SAMPLE_CODE_CLIENT_PROMPT,
+  SAMPLE_PROSE_PROMPT,
   SAMPLE_SENSITIVE_PROMPT,
 } from "@/lib/midnight";
 import { useWorkspace } from "@/lib/workspace-store";
@@ -82,6 +83,17 @@ export function ZkInputPanel() {
         >
           <Code2 className="h-3.5 w-3.5" strokeWidth={1.75} />
           {copy.input.sampleCode}
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            setRawInput(SAMPLE_PROSE_PROMPT);
+            setPasteHint(null);
+          }}
+        >
+          <MessageSquareText className="h-3.5 w-3.5" strokeWidth={1.75} />
+          {copy.input.sampleProse}
         </Button>
       </div>
       {pasteHint ? (

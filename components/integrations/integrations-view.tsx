@@ -293,6 +293,12 @@ export function IntegrationsView() {
                 <li>{copy.integrations.toolOutput}</li>
                 <li className="text-ink/80">{copy.integrations.toolRule}</li>
               </ul>
+              <p className="mt-4 font-mono text-[12px] text-ink">
+                {copy.integrations.restoreTool}
+              </p>
+              <p className="mt-1.5 text-[12px] leading-5 text-muted-fg">
+                {copy.integrations.restoreHelper}
+              </p>
             </div>
           </Bento>
         ) : null}

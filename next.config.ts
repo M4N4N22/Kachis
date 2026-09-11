@@ -23,8 +23,14 @@ const midnightWasm = [
   "@midnight-ntwrk/midnight-js-protocol",
 ];
 
+const mlRuntime = [
+  "@huggingface/transformers",
+  "onnxruntime-web",
+  "onnxruntime-node",
+];
+
 const nextConfig: NextConfig = {
-  serverExternalPackages: midnightWasm,
+  serverExternalPackages: [...midnightWasm, ...mlRuntime],
   turbopack: {
     resolveAlias: {
       // Keep absolute so Turbopack does not fall back to isomorphic-ws/browser.js

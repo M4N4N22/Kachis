@@ -6,12 +6,13 @@ export type InferenceResult =
       content: string;
       provider: ModelProviderId;
       label?: string;
+      model?: string;
       source: "beta" | "byoc";
     }
   | { ok: false; error: string; status: number };
 
 const SYSTEM =
-  "You only see a Kachis-shielded prompt. Never ask for the original secrets. Work with placeholders.";
+  "You only see a Kachis-shielded prompt. Never ask for the original secrets. Work with placeholders. Reply in clean Markdown: use headings and **bold** sparingly; do not use decorative *** separators or raw asterisk ornaments.";
 
 function scrubKey(message: string) {
   return message
@@ -100,8 +101,9 @@ async function callAnthropic(apiKey: string, prompt: string, model: string) {
 }
 
 async function callGemini(apiKey: string, prompt: string, model: string) {
+  const modelId = model.trim() || "gemini-3.8-flash";
   const url = new URL(
-    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelId)}:generateContent`,
   );
   url.searchParams.set("key", apiKey);
 
@@ -115,9 +117,34 @@ async function callGemini(apiKey: string, prompt: string, model: string) {
   });
 
   if (!response.ok) {
+    let detail = "";
+    try {
+      const errBody = (await response.json()) as {
+        error?: { message?: string; status?: string };
+      };
+      detail = errBody.error?.message?.trim() || "";
+    } catch {
+      /* ignore parse errors */
+    }
+    const scrubbed = scrubKey(detail || response.statusText);
+    console.error("[kachis] gemini request failed", response.status, modelId, scrubbed);
+
+    let hint = "Gemini request failed. Check the key, model id, and try again.";
+    if (/no longer available to new users/i.test(detail)) {
+      hint =
+        `Model "${modelId}" is not available for new Google AI keys. Set GEMINI_MODEL to gemini-3.8-flash or gemini-3.6-flash, then restart the dev server.`;
+    } else if (response.status === 404) {
+      hint = `Unknown or unavailable model "${modelId}". Set GEMINI_MODEL to a valid id (e.g. gemini-3.8-flash) and restart.`;
+    } else if (response.status === 400 || response.status === 403) {
+      hint =
+        "Gemini rejected the key or request. Check GEMINI_API_KEY in .env and restart the dev server.";
+    } else if (response.status === 503) {
+      hint = "Gemini is busy right now. Retry in a moment, or switch GEMINI_MODEL.";
+    }
+
     return {
       ok: false as const,
-      error: "Gemini request failed. Check the key and try again.",
+      error: hint,
       status: 502,
     };
   }
@@ -151,43 +178,45 @@ export async function runModelInference(input: {
 
   try {
     if (input.provider === "anthropic") {
-      const result = await callAnthropic(
-        apiKey,
-        input.prompt,
-        input.model ?? process.env.ANTHROPIC_MODEL ?? "claude-3-5-haiku-latest",
-      );
+      const model =
+        input.model ?? process.env.ANTHROPIC_MODEL ?? "claude-3-5-haiku-latest";
+      const result = await callAnthropic(apiKey, input.prompt, model);
       if (!result.ok) return { ...result };
       return {
         ok: true,
         content: result.content,
         provider: "anthropic",
+        model,
         source: input.source,
       };
     }
 
     if (input.provider === "gemini") {
-      const result = await callGemini(
-        apiKey,
-        input.prompt,
-        input.model ?? process.env.GEMINI_MODEL ?? "gemini-2.0-flash",
-      );
+      const model = (
+        input.model ||
+        process.env.GEMINI_MODEL ||
+        "gemini-3.8-flash"
+      ).trim();
+      const result = await callGemini(apiKey, input.prompt, model);
       if (!result.ok) return { ...result };
       return {
         ok: true,
         content: result.content,
         provider: "gemini",
+        model,
         source: input.source,
       };
     }
 
+    const model =
+      input.model ??
+      (input.provider === "custom"
+        ? "gpt-4o-mini"
+        : process.env.OPENAI_MODEL ?? "gpt-4o-mini");
     const result = await callOpenAICompatible({
       apiKey,
       prompt: input.prompt,
-      model:
-        input.model ??
-        (input.provider === "custom"
-          ? "gpt-4o-mini"
-          : process.env.OPENAI_MODEL ?? "gpt-4o-mini"),
+      model,
       baseUrl: input.provider === "custom" ? input.baseUrl : undefined,
     });
     if (!result.ok) return { ...result };
@@ -196,6 +225,7 @@ export async function runModelInference(input: {
       content: result.content,
       provider: input.provider,
       label: input.label,
+      model,
       source: input.source,
     };
   } catch (error) {

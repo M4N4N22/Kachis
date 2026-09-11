@@ -13,16 +13,18 @@ export const copy = {
     pasteFailed: "Clipboard paste blocked — use Ctrl+V.",
     sample: "Load payroll sample",
     sampleCode: "Load code & client sample",
+    sampleProse: "Load free-text sample",
     security: "Security filters",
   },
   filters: {
     pii: {
       label: "Strip identifiers",
-      tooltip: "Masks emails, phones, SSNs, and similar markers locally.",
+      tooltip:
+        "Masks emails, phones, SSNs, places, and named people locally (rules + on-device detector).",
     },
     financial: {
       label: "Mask financials",
-      tooltip: "Redacts amounts, routing, and account formats.",
+      tooltip: "Redacts amounts, written scale figures, IBAN, card, routing, and account formats.",
     },
     secrets: {
       label: "Hold secrets",
@@ -30,11 +32,12 @@ export const copy = {
     },
     code: {
       label: "Insulate source",
-      tooltip: "Redacts env assignments, code secrets, and internal paths.",
+      tooltip: "Hides env assignments, embedded secrets, and internal paths.",
     },
     client: {
       label: "Strip client records",
-      tooltip: "Masks labeled customer, account, and opportunity lines.",
+      tooltip:
+        "Removes labeled CRM lines and detected organization names locally.",
     },
   },
   pack: {
@@ -118,7 +121,13 @@ export const copy = {
     assistantLabel: "Kachis",
     walkthroughLabel: "Walkthrough",
     betaLabel: "Beta · Gemini",
+    betaModelLabel: "Beta · Gemini · {model}",
     byocLabel: "BYOC",
+    byocModelLabel: "BYOC · {provider} · {model}",
+    copyReply: "Copy reply",
+    copiedReply: "Copied",
+    restoreNote:
+      "The model only saw insulated tokens. Kachis restored real names locally for readability — secrets never left this device.",
     noModel:
       "No model path ready. Use free responses or bring your own compute.",
     error: "Request failed. The shielded prompt was not delivered.",
@@ -166,7 +175,7 @@ export const copy = {
     loadSample: "Load sample",
     settleNote: "Walkthrough settle. No wallet or Midnight transaction ran.",
     reply:
-      "Leak risk: High if this packet left the perimeter unshielded. Identifiers, bank rails, cash figures, and an export key were present in the original paste.\n\nCFO briefing (redacted)\n\n- Packet: Q3 compensation review for the board call\n- Subject: [EMPLOYEE] · [EMAIL] · [PHONE]\n- Tax ID: [SSN]\n- Banking: account [ACCOUNT], routing [ACCOUNT]\n- Comp: bonus [AMOUNT]; salary band [AMOUNT]–[AMOUNT]\n- Secrets: payroll export key removed ([SECRET])\n\nRecommendation: circulate only this insulated summary. Keep the original packet on-device; do not paste raw values into vendor models or shared docs.",
+      "Leak risk: High if this packet left the perimeter unshielded. Identifiers, bank rails, cash figures, and an export key were present in the original paste.\n\nCFO briefing (redacted)\n\n- Packet: Q3 compensation review for the board call\n- Subject: [PERSON_1] · [EMAIL_1] · [PHONE_1]\n- Tax ID: [SSN_1]\n- Banking: account [ACCOUNT_1], routing [ACCOUNT_2]\n- Comp: bonus [AMOUNT_1]; salary band [AMOUNT_2]–[AMOUNT_3]\n- Secrets: payroll export key removed ([SECRET_1])\n\nRecommendation: circulate only this insulated summary. Keep the original packet on-device; do not paste raw values into vendor models or shared docs.",
   },
   seat: {
     unbound: "Not connected",
@@ -367,7 +376,7 @@ export const copy = {
     categorySystem: "System infrastructure",
     mcpTitle: "Kachis Agent (MCP)",
     mcpBody:
-      "Hooks into the IDE agent loop. Shields sensitive paste before it reaches a public model. Host must call kachis_shield, then send only the shielded prompt.",
+      "Hooks into the IDE agent loop. Shields sensitive paste before it reaches a public model. Host must call kachis_shield, send only the shielded prompt, then kachis_restore on the reply.",
     mcpCompat: "Cursor, Claude Desktop, and other MCP hosts",
     mcpAction: "Manage configuration",
     mcpHideConfig: "Hide configuration",
@@ -407,7 +416,10 @@ export const copy = {
     toolName: "kachis_shield",
     toolInput: "Raw paste + optional pack toggles. Defaults: all five packs on.",
     toolOutput:
-      "Shielded prompt plus public commitments. Original text never leaves the machine.",
+      "Shielded prompt plus public commitments. Original text and token map never leave the machine in this payload.",
+    restoreTool: "kachis_restore",
+    restoreHelper:
+      "After the model replies, restore enumerated tokens on-device. Secrets stay masked unless opted in.",
     toolRule: "Send only the shielded prompt to the model — never the original paste.",
     step1Title: "Install the agent",
     step1Body:
@@ -417,7 +429,7 @@ export const copy = {
       "Paste this into Cursor or Claude Desktop MCP settings. On Windows, set cwd to the full path of the agent folder.",
     step3Title: "Shield before the model",
     step3Body:
-      "Host calls kachis_shield on the raw paste, then sends only the shielded prompt to the model. Public commitments post to this console.",
+      "Host calls kachis_shield on the raw paste, then sends only the shielded prompt to the model. After the reply, call kachis_restore locally. Public commitments post to this console.",
     activityTitle: "Agent activity",
     activityHelper:
       "Public commitments recorded when the agent reaches this console. Original paste is never stored.",
@@ -426,7 +438,7 @@ export const copy = {
     // Legacy aliases
     agentTitle: "Kachis Agent (MCP)",
     agentBody:
-      "Local MCP server for Cursor and Claude Desktop. The host must call kachis_shield before any model sees the paste.",
+      "Local MCP server for Cursor and Claude Desktop. The host must call kachis_shield before any model sees the paste, then kachis_restore after the reply.",
     agentStatusLive: "Operational",
     activityHash: "Commitment",
     activityMeta: "Source · status",

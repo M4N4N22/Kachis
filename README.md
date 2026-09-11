@@ -24,10 +24,10 @@ Companies buy **control + evidence**, not another chat site: secrets never becom
 | Public notary log | `/api/shield` — hashes + optional settlement id. Never the paste |
 | Chat gated on commitment | `/api/chat` refuses unknown `proofHash`; prompt must match `cleanedHash`; optional required pack |
 | Rule-pack scanner (PII / financial / secrets / code / client) | Shipped (`shared/scanner.ts`) |
+| On-device ML NER (person / org / loc, Transformers.js) | Shipped (`shared/ner.ts`) — soft-falls back to rules; English CoNLL-style, not full DLP |
 | Analytics quarter audit view | Shipped (`/analytics`) — on-chain Preprod only; pack/source/sequence charts; walkthrough excluded |
 | Integrations console | Shipped (`/integrations`) — MCP setup, copyable host config, agent activity from `/api/shield` |
 | Compact `requiredPack` | In Compact source — live after recompile/redeploy; soft TS gate via env/tier now |
-| On-device ML scanner | Later |
 | Copilot / Slack connectors | Later |
 
 **Kachis Agent** is not a second chatbot. It is an MCP tool the host must call before a raw paste leaves the laptop.
@@ -37,6 +37,10 @@ Companies buy **control + evidence**, not another chat site: secrets never becom
 **Real**
 
 - Local rule-pack scan (PII, financial, secrets, code, client — same code for console and MCP)
+- On-device ML NER for free-text people/orgs/places (`shared/ner.ts`, Transformers.js ONNX; soft regex fallback; first model download cached locally)
+- Enumerated insulation tokens (`[PERSON_1]`, `[ORG_2]`, `[AMOUNT_1]`, …) so the model keeps relational context without originals
+- Local-only **token map** restores those tokens in the assistant reply on-device (console + MCP `kachis_restore`); never posted to `/api/shield` or the model
+- Written scale amounts (e.g. “fifteen million”) via rule pack, not NER alone
 - SHA-256 of cleaned prompt + **binding** `hash(originalHash || cleanedHash)` — original paste is not posted to `/api/shield`
 - Compact circuit source: private original commitment, public cleaned hash + pack flags + `requiredPack` ledger
 - Soft required-pack enforcement in console (institutional seat) and optional `KACHIS_REQUIRED_PACK` on `/api/shield` + `/api/chat`
@@ -61,7 +65,7 @@ Companies buy **control + evidence**, not another chat site: secrets never becom
 - On-chain `requiredPack` assert on the current Preprod address (source updated; redeploy after recompile)
 - SSO / email / GitHub / Slack sign-in (wallet-first only)
 - Invite-link join + multi-admin directory
-- Local ML NER
+- Company NER lists / full DLP parity (current NER is English CoNLL-style person/org only)
 - Enterprise gateway / Copilot / Slack connectors
 - Gero contract balancing (`balanceUnsealedTransaction` still planned)
 

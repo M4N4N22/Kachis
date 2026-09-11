@@ -147,7 +147,8 @@ export async function findAttestationByHash(
   cleanedHash: string,
 ): Promise<PublicAttestation | null> {
   const rows = await getStore();
-  return rows.find((item) => item.cleanedHash === cleanedHash) ?? null;
+  const needle = cleanedHash.toLowerCase();
+  return rows.find((item) => item.cleanedHash.toLowerCase() === needle) ?? null;
 }
 
 export async function attestationStats() {
