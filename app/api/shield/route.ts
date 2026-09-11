@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Required policy pack not attested. Enable every mandatory filter before shield.",
+            "Required policy not attested. Enable every mandatory filter before shield.",
         },
         { status: 403 },
       );
@@ -106,7 +106,7 @@ export async function POST(request: Request) {
         txId: body.txId,
         contractAddress: body.contractAddress ?? existing.contractAddress,
         network: body.network ?? existing.network,
-        note: "Settled. The pack ran; the original stays on this machine.",
+        note: "Settled. Verification ran; the original stays on this machine.",
         onChain: true,
       });
       return NextResponse.json(updated);
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
     network: body.network,
     onChain: settled && !walkthrough ? true : undefined,
     note: settled
-      ? (body.note ?? "Settled. The pack ran; the original stays on this machine.")
+      ? (body.note ?? "Settled. Verification ran; the original stays on this machine.")
       : (body.note ?? notary.note),
   });
 

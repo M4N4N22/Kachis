@@ -71,6 +71,14 @@ export function WorkspaceProvider({
   const [guardrails, setGuardrails] = useState<GuardrailToggles>(() =>
     defaultTogglesForTier(tier),
   );
+
+  useEffect(() => {
+    setGuardrails(defaultTogglesForTier(tier));
+    setProofStatus("idle");
+    setProof(null);
+    setSanitizedPrompt("");
+    setSettleError(null);
+  }, [tier]);
   const [proofStatus, setProofStatus] = useState<ProofStatus>("idle");
   const [proof, setProof] = useState<ProofRecord | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);

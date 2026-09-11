@@ -23,7 +23,7 @@ export function assertRequiredPack(
   return {
     ok: false,
     error:
-      "Required policy pack not attested. Enable every mandatory filter before shield.",
+      "Required policy not attested. Enable every mandatory filter before shield.",
   };
 }
 

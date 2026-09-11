@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Required policy pack not attested on this commitment. Re-shield with the mandatory filters.",
+            "Required policy not attested on this commitment. Re-shield with the mandatory filters.",
         },
         { status: 403 },
       );

@@ -60,8 +60,8 @@ export function LandingPage() {
                 {copy.demo.landing}
               </Button>
             </Link>
-            <Link href="/workspace">
-              <Button size="sm">Open workspace</Button>
+            <Link href="/onboarding">
+              <Button size="sm">{copy.landing.launchApp}</Button>
             </Link>
           </div>
         </div>
@@ -105,7 +105,7 @@ export function LandingPage() {
         <div className="relative text-center z-10 mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-center px-6 pointer-events-none">
           <div className="landing-fade flex items-center gap-2 text-center mx-auto" >
             Powered by
-            <MidnightWordmark className="h-5 w-auto text-ink" />
+            <MidnightWordmark className="h-8 w-auto text-ink mt-1 bg-[#0000FE] p-2 rounded-xl" />
           </div>
           <h1
             className="landing-fade font-light tracking-[-0.06em] text-ink mt-4"
@@ -131,9 +131,9 @@ export function LandingPage() {
             className="landing-fade mt-8 flex flex-wrap gap-3 pointer-events-auto items-center justify-center"
             style={{ animationDelay: "120ms" }}
           >
-            <Link href="/workspace">
+            <Link href="/onboarding">
               <Button>
-                {copy.action.idle}
+                {copy.landing.launchApp}
                 <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
               </Button>
             </Link>

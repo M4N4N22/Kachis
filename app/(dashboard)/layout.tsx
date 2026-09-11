@@ -1,5 +1,5 @@
+import { OnboardingGate } from "@/components/onboarding/onboarding-gate";
 import { AppShell } from "@/components/shell/app-shell";
-import { AppProvider } from "@/lib/app-store";
 
 export default function DashboardLayout({
   children,
@@ -7,8 +7,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AppProvider>
+    <OnboardingGate>
       <AppShell>{children}</AppShell>
-    </AppProvider>
+    </OnboardingGate>
   );
 }

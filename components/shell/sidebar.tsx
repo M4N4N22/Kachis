@@ -4,15 +4,36 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, PanelLeft } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { InstitutionalUpgradeCard } from "@/components/shell/institutional-upgrade";
 import { useApp } from "@/lib/app-store";
 import { cn } from "@/lib/cn";
 import { copy } from "@/lib/copy";
-import { NAV_ITEMS } from "@/lib/nav";
+import { NAV_SECTIONS } from "@/lib/nav";
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { sidebarCollapsed, toggleSidebar, mobileNavOpen, setMobileNavOpen } =
-    useApp();
+  const {
+    sidebarCollapsed,
+    toggleSidebar,
+    mobileNavOpen,
+    setMobileNavOpen,
+    tier,
+    organization,
+    orgLoading,
+    wallet,
+  } = useApp();
+
+  const connected = wallet.status === "connected";
+  const contextLabel = organization
+    ? `${organization.name} · ${copy.nav.orgSuffix}`
+    : copy.nav.sandbox;
+  const contextHint = orgLoading
+    ? "…"
+    : !connected
+      ? copy.nav.connectHint
+      : organization
+        ? copy.nav.manageOrg
+        : copy.nav.createOrg;
 
   return (
     <>
@@ -28,7 +49,7 @@ export function Sidebar() {
       <aside
         className={cn(
           "flex h-full shrink-0 flex-col border-ink/5 border-r text-sidebar-fg transition-[width,transform] duration-300",
-          sidebarCollapsed ? "w-[4.25rem]" : "w-[15.5rem]",
+          sidebarCollapsed ? "w-[4.25rem]" : "w-[17.5rem]",
           "fixed inset-y-0 left-0 z-50 md:static md:z-auto",
           mobileNavOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
@@ -65,37 +86,78 @@ export function Sidebar() {
           </button>
         ) : null}
 
-        <nav className="flex flex-1 flex-col gap-4 px-2 pt-6">
-          {NAV_ITEMS.map((item) => {
-            const active = pathname === item.href;
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                title={sidebarCollapsed ? item.label : undefined}
-                onClick={() => setMobileNavOpen(false)}
-                className={cn(
-                  "flex items-center gap-2 rounded-xl p-3 transition-colors text-sm",
-                  sidebarCollapsed && "justify-center px-0",
-                  active
-                    ? " text-ink bg-black"
-                    : "text-sidebar-muted hover:text-sidebar-fg",
-                )}
-              >
-                <Icon
-                  className={cn("h-4 w-4", active && "text-brand")}
-                  
-                />
-                {!sidebarCollapsed ? (
-                  <span className="leading-tight">{item.label}</span>
-                ) : null}
-              </Link>
-            );
-          })}
+        {!sidebarCollapsed ? (
+          <div className="px-3 pb-2">
+            <p className="mb-1.5 px-1 text-[10px] font-semibold tracking-[0.08em] text-sidebar-muted uppercase">
+              {copy.nav.contextLabel}
+            </p>
+            <Link
+              href="/identity"
+              onClick={() => setMobileNavOpen(false)}
+              className="block rounded-xl border border-ink/8 bg-black/25 px-3 py-2.5 transition-colors hover:bg-sidebar-accent/60"
+            >
+              <span className="block truncate text-[12px] font-medium text-sidebar-fg">
+                {contextLabel}
+              </span>
+              <span className="mt-1 block text-[10px] text-sidebar-muted">
+                {tier === "institutional"
+                  ? copy.tiers.institutional.pill
+                  : copy.tiers.sandbox.pill}{" "}
+                · {contextHint}
+              </span>
+            </Link>
+          </div>
+        ) : null}
+
+        <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-2 pt-3 pb-2">
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.id}>
+              {!sidebarCollapsed ? (
+                <p className="mb-1.5 px-3 text-[10px] font-semibold tracking-[0.08em] text-sidebar-muted uppercase">
+                  {section.id === "operations"
+                    ? copy.nav.operations
+                    : section.id === "compliance"
+                      ? copy.nav.compliance
+                      : copy.nav.administration}
+                </p>
+              ) : null}
+              <div className="flex flex-col gap-0.5">
+                {section.items.map((item) => {
+                  const active = pathname === item.href;
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      title={sidebarCollapsed ? item.label : undefined}
+                      onClick={() => setMobileNavOpen(false)}
+                      className={cn(
+                        "flex items-center gap-2 rounded-xl p-2.5 text-[13px] transition-colors",
+                        sidebarCollapsed && "justify-center px-0",
+                        active
+                          ? "bg-black text-ink"
+                          : "text-sidebar-muted hover:text-sidebar-fg",
+                      )}
+                    >
+                      <Icon
+                        className={cn("h-4 w-4 shrink-0", active && "text-brand")}
+                        strokeWidth={1.75}
+                      />
+                      {!sidebarCollapsed ? (
+                        <span className="leading-tight">{item.label}</span>
+                      ) : null}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         <div className="space-y-3 px-3 pb-4">
+          {!sidebarCollapsed && tier === "freelancer" ? (
+            <InstitutionalUpgradeCard />
+          ) : null}
           <Link
             href="/demo"
             title={sidebarCollapsed ? copy.demo.nav : undefined}

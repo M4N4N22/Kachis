@@ -1,69 +1,123 @@
 import {
+  Blocks,
   ChartNoAxesColumn,
   Fingerprint,
+  ScrollText,
   ShieldCheck,
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
+export type NavHref =
+  | "/workspace"
+  | "/integrations"
+  | "/analytics"
+  | "/audits"
+  | "/guardrails"
+  | "/identity";
+
 export interface NavItem {
-  href: "/workspace" | "/guardrails" | "/identity" | "/analytics";
+  href: NavHref;
   label: string;
   short: string;
   icon: LucideIcon;
 }
 
-export const NAV_ITEMS: NavItem[] = [
+export interface NavSection {
+  id: "operations" | "compliance" | "administration";
+  label: string;
+  items: NavItem[];
+}
+
+export const NAV_SECTIONS: NavSection[] = [
   {
-    href: "/workspace",
-    label: "Workspace",
-    short: "Workspace",
-    icon: Sparkles,
+    id: "operations",
+    label: "Operations",
+    items: [
+      {
+        href: "/workspace",
+        label: "Secure AI Workspace",
+        short: "Workspace",
+        icon: Sparkles,
+      },
+      {
+        href: "/integrations",
+        label: "Integration Directory",
+        short: "Integrations",
+        icon: Blocks,
+      },
+    ],
   },
   {
-    href: "/guardrails",
-    label: "Security Guardrails",
-    short: "Guardrails",
-    icon: ShieldCheck,
+    id: "compliance",
+    label: "Compliance & Auditing",
+    items: [
+      {
+        href: "/analytics",
+        label: "Risk Metrics",
+        short: "Metrics",
+        icon: ChartNoAxesColumn,
+      },
+      {
+        href: "/audits",
+        label: "Audit Trail",
+        short: "Audits",
+        icon: ScrollText,
+      },
+    ],
   },
   {
-    href: "/identity",
-    label: "Identity & Credentials",
-    short: "Credentials",
-    icon: Fingerprint,
-  },
-  {
-    href: "/analytics",
-    label: "Usage Analytics",
-    short: "Analytics",
-    icon: ChartNoAxesColumn,
+    id: "administration",
+    label: "Administration",
+    items: [
+      {
+        href: "/guardrails",
+        label: "Governance Policies",
+        short: "Policies",
+        icon: ShieldCheck,
+      },
+      {
+        href: "/identity",
+        label: "Infrastructure & Providers",
+        short: "Providers",
+        icon: Fingerprint,
+      },
+    ],
   },
 ];
 
-export type PageHref = NavItem["href"] | "/demo";
+/** Flat list for active-route helpers */
+export const NAV_ITEMS: NavItem[] = NAV_SECTIONS.flatMap((section) => section.items);
 
-export const PAGE_COPY: Record<
-  PageHref,
-  { title: string; blurb: string }
-> = {
+export type PageHref = NavHref | "/demo";
+
+export const PAGE_COPY: Record<PageHref, { title: string; blurb: string }> = {
   "/workspace": {
-    title: "Workspace",
-    blurb: "Paste original → review shielded → send once. The model only sees the insulated prompt.",
+    title: "Secure AI Workspace",
+    blurb: "Shield locally, then send only the insulated prompt to the model.",
   },
   "/demo": {
     title: "Sample shield",
     blurb: "Canned payroll paste — no wallet. Local shield, simulated prove, canned reply.",
   },
-  "/guardrails": {
-    title: "Security Guardrails",
-    blurb: "Enterprise-wide rules that never leave the tenant boundary.",
-  },
-  "/identity": {
-    title: "Identity & Credentials",
-    blurb: "Authenticate the seat without revealing the token.",
+  "/integrations": {
+    title: "Integration Directory",
+    blurb: "Inventory of SDK, MCP, and companion entry points into the shield loop.",
   },
   "/analytics": {
-    title: "Usage Analytics",
-    blurb: "Leaks prevented, credentials verified, settlements sealed.",
+    title: "Risk Metrics",
+    blurb: "Policy hits, secrets held, and leaks mitigated this quarter.",
+  },
+  "/audits": {
+    title: "Audit Trail",
+    blurb: "Chronological settlements with commitments and mandatory policy flags.",
+  },
+  "/guardrails": {
+    title: "Governance Policies",
+    blurb: "Configure mandatory filters that every institutional shield must attest.",
+  },
+  "/identity": {
+    title: "Infrastructure & Providers",
+    blurb: "Wallet binding and model-provider credentials that stay on this machine.",
   },
 };
