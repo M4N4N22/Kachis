@@ -305,17 +305,50 @@ export const copy = {
     noPack: "No filters recorded on this settlement.",
   },
   integrations: {
-    title: "Active endpoints",
+    title: "Install & connect",
     helper:
       "Every integration must call the local shield before a model sees the paste.",
-    sdkTitle: "TypeScript SDK",
-    sdkBody: "Embed runShield in apps and agent runtimes. Same filters as the console.",
-    mcpTitle: "MCP server",
-    mcpBody: "Kachis Agent exposes kachis_shield for Cursor and Claude Desktop hosts.",
+    agentTitle: "Kachis Agent",
+    agentBody:
+      "Local MCP server for Cursor and Claude Desktop. The host must call kachis_shield before any model sees the paste.",
+    agentStatusLive: "Live",
+    step1Title: "Install the agent",
+    step1Body: "From the agent folder: npm install, then npm start — or let the host start it via MCP.",
+    step2Title: "Add the host config",
+    step2Body:
+      "Paste this into Cursor or Claude Desktop MCP settings. On Windows, set cwd to the full path of the agent folder.",
+    step3Title: "Shield before the model",
+    step3Body:
+      "Host calls kachis_shield on the raw paste, then sends only the shielded prompt to the model. Public commitments post to this console.",
+    configLabel: "MCP config",
+    copyConfig: "Copy",
+    copiedConfig: "Copied",
+    toolTitle: "Tool contract",
+    toolName: "kachis_shield",
+    toolInput: "Raw paste + optional pack toggles. Defaults: all five packs on.",
+    toolOutput:
+      "Shielded prompt plus public commitments. Original text never leaves the machine.",
+    toolRule: "Send only the shielded prompt to the model — never the original paste.",
+    activityTitle: "Agent activity",
+    activityHelper:
+      "Public commitments recorded when the agent reaches this console. Original paste is never stored.",
+    activityEmpty:
+      "No agent shields recorded yet — start the agent and call kachis_shield.",
+    activityHash: "Commitment",
+    activityMeta: "Source · status",
+    libraryTitle: "Library embed",
+    libraryBody:
+      "Call runShield from shared/ inside apps and agent runtimes. Same filters as the console — not a separate published package.",
     companionTitle: "Browser companions",
     companionBody: "Extension companions for vendor chat surfaces ship after MCP coverage.",
-    statusLive: "Live",
     statusLater: "Later",
+    // Legacy keys kept for any stale imports
+    sdkTitle: "Library embed",
+    sdkBody:
+      "Call runShield from shared/ inside apps and agent runtimes. Same filters as the console.",
+    mcpTitle: "Kachis Agent",
+    mcpBody: "Kachis Agent exposes kachis_shield for Cursor and Claude Desktop hosts.",
+    statusLive: "Live",
   },
   landing: {
     launchApp: "Launch app",

@@ -25,6 +25,7 @@ Companies buy **control + evidence**, not another chat site: secrets never becom
 | Chat gated on commitment | `/api/chat` refuses unknown `proofHash`; prompt must match `cleanedHash`; optional required pack |
 | Rule-pack scanner (PII / financial / secrets / code / client) | Shipped (`shared/scanner.ts`) |
 | Analytics quarter audit view | Shipped (`/analytics`) |
+| Integrations console | Shipped (`/integrations`) — MCP setup, copyable host config, agent activity from `/api/shield` |
 | Compact `requiredPack` | In Compact source — live after recompile/redeploy; soft TS gate via env/tier now |
 | On-device ML scanner | Later |
 | Copilot / Slack connectors | Later |
@@ -146,7 +147,7 @@ npm install
 npm start
 ```
 
-Config: copy `mcp.example.json` into your Cursor MCP settings. Tool: `kachis_shield`. Send **only** `shielded_prompt` to the model.
+Config: copy `mcp.example.json` into your Cursor MCP settings, or use **Integrate Kachis** (`/integrations`) in the console for copyable config and agent activity. Tool: `kachis_shield`. Send **only** `shielded_prompt` to the model.
 
 ## Compact
 
