@@ -16,7 +16,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Header />
         <main
           className={cn(
-            "flex min-h-0 flex-1 flex-col gap-4 px-5 py-4",
+            "flex min-h-0 flex-1 flex-col gap-4 pb-4 px-4",
             locked ? "overflow-auto xl:overflow-hidden" : "overflow-auto",
           )}
         >

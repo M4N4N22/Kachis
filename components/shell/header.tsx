@@ -12,7 +12,7 @@ export function Header() {
   const copy = PAGE_COPY[pathname as PageHref] ?? PAGE_COPY["/workspace"];
 
   return (
-    <header className="flex shrink-0 items-center justify-between gap-3 p-6 border-b border-ink/10">
+    <header className="flex shrink-0 items-center justify-between gap-3 py-4 px-6 ">
       <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
@@ -23,7 +23,7 @@ export function Header() {
           <Menu className="h-3.5 w-3.5" strokeWidth={1.75} />
         </button>
         <div className="min-w-0">
-          <h1 className="truncate text-4xl tracking-tight">{copy.title}</h1>
+          <h1 className="truncate">{copy.title}</h1>
         </div>
       </div>
       <div className="flex items-center gap-2 sm:gap-3">

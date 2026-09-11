@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { IntegrationsView } from "@/components/integrations/integrations-view";
 
 export const metadata: Metadata = {
-  title: "Integration Directory",
+  title: "Integrate Kachis",
 };
 
 export default function IntegrationsPage() {

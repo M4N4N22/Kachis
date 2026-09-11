@@ -1,7 +1,11 @@
 export {
   SAMPLE_CODE_CLIENT_PROMPT,
   SAMPLE_SENSITIVE_PROMPT,
+  highlightSensitive,
   sanitizeLocally,
+  tokenizeCleanedPrompt,
+  type CleanRevealToken,
+  type HighlightSegment,
 } from "./scanner";
 export { bindingHex, isCommitmentHex, sha256Hex } from "./commit";
 export { runShield } from "./shield";

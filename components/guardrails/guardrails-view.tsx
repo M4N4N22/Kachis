@@ -85,7 +85,7 @@ export function GuardrailsView() {
 
         <Bento className={sandbox ? "relative p-5 opacity-55" : "p-5"}>
           {sandbox ? (
-            <span className="absolute top-4 right-4 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-muted-fg uppercase">
+            <span className="absolute top-4 right-4 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-muted-fg ">
               {copy.onboarding.locked}
             </span>
           ) : null}

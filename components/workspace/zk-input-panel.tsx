@@ -14,20 +14,24 @@ import { useWorkspace } from "@/lib/workspace-store";
 
 export function ZkInputPanel() {
   const {
-    walletConnected,
-    canShield,
-    shieldGateHint,
-    settleError,
     rawInput,
     setRawInput,
     guardrails,
     setGuardrail,
-    processLocally,
+    runScanner,
     proof,
+    proofStatus,
     busy,
+    scanning,
     sending,
   } = useWorkspace();
   const [pasteHint, setPasteHint] = useState<string | null>(null);
+  const scannerLocked =
+    busy ||
+    sending ||
+    proofStatus === "rewriting" ||
+    proofStatus === "proving" ||
+    proofStatus === "attesting";
 
   async function pasteFromClipboard() {
     try {
@@ -42,15 +46,14 @@ export function ZkInputPanel() {
   }
 
   return (
-    <section className="relative flex h-full min-h-0 flex-col overflow-hidden">
+    <section className="relative flex h-full min-h-0 flex-col overflow-hidden bg-neutral-900/70 rounded-3xl">
       <div className="relative px-5 pt-5 pb-3">
         <h2
-          className="font-light tracking-[-0.03em] text-ink"
-          style={{ fontSize: "clamp(1.2rem, 1.8vw, 1.5rem)", lineHeight: 1.15 }}
+          className="text-ink text-lg"
         >
           {copy.input.title}
         </h2>
-        <p className="mt-2 text-[13px] leading-6 text-muted-fg">{copy.input.helper}</p>
+        <p className="text-[13px] leading-6 text-muted-fg">{copy.input.helper}</p>
       </div>
 
       <div className="relative flex flex-wrap gap-2 px-5">
@@ -59,7 +62,7 @@ export function ZkInputPanel() {
           {copy.input.paste}
         </Button>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={() => {
             setRawInput(SAMPLE_SENSITIVE_PROMPT);
@@ -70,7 +73,7 @@ export function ZkInputPanel() {
           {copy.input.sample}
         </Button>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={() => {
             setRawInput(SAMPLE_CODE_CLIENT_PROMPT);
@@ -95,10 +98,10 @@ export function ZkInputPanel() {
       </div>
 
       <div className="relative space-y-2 px-5 py-3">
-        <p className="text-[11px] font-semibold tracking-[0.08em] text-muted-fg uppercase">
+        <p className="text-[11px] font-semibold  text-muted-fg pl-1">
           {copy.input.security}
         </p>
-        <div className="space-y-1 rounded-[1.15rem] border border-ink/8 bg-black/20 px-3 py-2">
+        <div className="space-y-1 rounded-[1.15rem] border border-ink/8 bg-black/20 px-3 py-2 ">
           <Toggle
             checked={guardrails.piiStripping}
             onChange={(value) => setGuardrail("piiStripping", value)}
@@ -133,12 +136,6 @@ export function ZkInputPanel() {
       </div>
 
       <div className="relative flex flex-col gap-2 px-5 pb-5 pt-1">
-        {shieldGateHint ? (
-          <p className="text-[11px] leading-relaxed text-muted-fg">{shieldGateHint}</p>
-        ) : null}
-        {settleError ? (
-          <p className="text-[11px] leading-relaxed text-danger">{settleError}</p>
-        ) : null}
         {proof ? (
           <p className="truncate font-mono text-[10px] text-muted-fg">
             {proof.hash}
@@ -148,16 +145,12 @@ export function ZkInputPanel() {
         <RadialGlowButton
           className="w-full"
           rounded="full"
-          disabled={!canShield || !rawInput.trim() || busy || sending}
-          onClick={() => void processLocally()}
+          disabled={!rawInput.trim() || scannerLocked}
+          onClick={() => void runScanner()}
         >
-          {busy
+          {scanning || proofStatus === "rewriting"
             ? copy.action.processing
-            : !walletConnected
-              ? copy.action.walletRequired
-              : !canShield
-                ? copy.action.fundRequired
-                : copy.action.idle}
+            : copy.action.idle}
         </RadialGlowButton>
       </div>
     </section>

@@ -11,8 +11,17 @@ import {
 } from "react";
 import { useApp } from "@/lib/app-store";
 import { copy } from "@/lib/copy";
-import { SAMPLE_SENSITIVE_PROMPT, runShield } from "@/lib/midnight";
+import {
+  SAMPLE_SENSITIVE_PROMPT,
+  highlightSensitive,
+  runShield,
+  tokenizeCleanedPrompt,
+  type CleanRevealToken,
+  type HighlightSegment,
+} from "@/lib/midnight";
 import { hasFeeReserve } from "@/lib/midnight-wallet";
+import { humanizeSettleError } from "@/lib/settle-feedback";
+import { useByoc } from "@/lib/byoc-store";
 import { sha256Hex } from "@/shared/commit";
 import {
   defaultTogglesForTier,
@@ -25,6 +34,16 @@ import type {
   ProofRecord,
   ProofStatus,
 } from "@/lib/types";
+import type { ShieldResult } from "@/shared/types";
+import { toast } from "sonner";
+
+const SETTLE_TOAST_ID = "kachis-settle";
+const SCAN_TOAST_ID = "kachis-scan";
+const SEND_TOAST_ID = "kachis-send";
+
+function notifyError(title: string, description: string, id?: string) {
+  toast.error(title, { id, description, duration: 5200 });
+}
 
 interface WorkspaceContextValue {
   demo: boolean;
@@ -35,14 +54,20 @@ interface WorkspaceContextValue {
   rawInput: string;
   setRawInput: (value: string) => void;
   sanitizedPrompt: string;
+  highlightSegments: HighlightSegment[];
+  revealTokens: CleanRevealToken[];
   guardrails: GuardrailToggles;
   setGuardrail: (key: keyof GuardrailToggles, value: boolean) => void;
   proofStatus: ProofStatus;
   proof: ProofRecord | null;
   messages: ChatMessage[];
-  processLocally: () => Promise<void>;
+  runScanner: () => Promise<void>;
+  completeRewrite: () => void;
+  settleShield: () => Promise<void>;
   sendShielded: () => Promise<void>;
   busy: boolean;
+  scanning: boolean;
+  settling: boolean;
   sending: boolean;
 }
 
@@ -66,25 +91,34 @@ export function WorkspaceProvider({
   demo?: boolean;
 }) {
   const { tier, wallet, recordProof, recordQuery } = useApp();
-  const [rawInput, setRawInput] = useState(demo ? SAMPLE_SENSITIVE_PROMPT : "");
+  const { credential, ready: byocReady } = useByoc();
+  const [rawInput, setRawInputState] = useState(demo ? SAMPLE_SENSITIVE_PROMPT : "");
   const [sanitizedPrompt, setSanitizedPrompt] = useState("");
+  const [highlightSegments, setHighlightSegments] = useState<HighlightSegment[]>([]);
+  const [revealTokens, setRevealTokens] = useState<CleanRevealToken[]>([]);
+  const [pendingShield, setPendingShield] = useState<ShieldResult | null>(null);
   const [guardrails, setGuardrails] = useState<GuardrailToggles>(() =>
     defaultTogglesForTier(tier),
   );
+
+  const [proofStatus, setProofStatus] = useState<ProofStatus>("idle");
+  const [proof, setProof] = useState<ProofRecord | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const [settling, setSettling] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [settleError, setSettleError] = useState<string | null>(null);
 
   useEffect(() => {
     setGuardrails(defaultTogglesForTier(tier));
     setProofStatus("idle");
     setProof(null);
+    setPendingShield(null);
     setSanitizedPrompt("");
+    setHighlightSegments([]);
+    setRevealTokens([]);
     setSettleError(null);
   }, [tier]);
-  const [proofStatus, setProofStatus] = useState<ProofStatus>("idle");
-  const [proof, setProof] = useState<ProofRecord | null>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [settleError, setSettleError] = useState<string | null>(null);
 
   const liveWalletConnected = wallet.status === "connected";
   const funded = hasFeeReserve(wallet.status === "connected" ? wallet.balances : undefined);
@@ -101,48 +135,133 @@ export function WorkspaceProvider({
           ? copy.action.geroSettleHint
           : null;
 
+  const resetScanState = useCallback(() => {
+    setProofStatus("idle");
+    setProof(null);
+    setPendingShield(null);
+    setSanitizedPrompt("");
+    setHighlightSegments([]);
+    setRevealTokens([]);
+    setSettleError(null);
+    setMessages([]);
+  }, []);
+
   useEffect(() => {
     if (demo || canShield) return;
-    setProof(null);
-    setProofStatus("idle");
-    setSanitizedPrompt("");
-    setMessages([]);
+    // Keep a local review if the user already scanned; only clear settled receipts.
+    if (proofStatus === "shielded" || proofStatus === "proving" || proofStatus === "attesting") {
+      setProof(null);
+      setProofStatus(pendingShield ? "reviewed" : "idle");
+      if (!pendingShield) {
+        setSanitizedPrompt("");
+        setHighlightSegments([]);
+        setRevealTokens([]);
+      }
+      setMessages([]);
+    }
     if (!liveWalletConnected) setSettleError(null);
-  }, [canShield, demo, liveWalletConnected]);
+  }, [canShield, demo, liveWalletConnected, pendingShield, proofStatus]);
+
+  const setRawInput = useCallback(
+    (value: string) => {
+      setRawInputState(value);
+      resetScanState();
+    },
+    [resetScanState],
+  );
 
   const setGuardrail = useCallback(
     (key: keyof GuardrailToggles, value: boolean) => {
       setGuardrails((current) => ({ ...current, [key]: value }));
-      setProofStatus("idle");
-      setProof(null);
-      setSanitizedPrompt("");
-      setSettleError(null);
+      resetScanState();
     },
-    [],
+    [resetScanState],
   );
 
-  const processLocally = useCallback(async () => {
-    if (!rawInput.trim() || busy || sending || !canShield) return;
+  const runScanner = useCallback(async () => {
+    if (!rawInput.trim() || scanning || settling || sending) return;
 
     const required = requiredPackForTier(tier);
     if (!togglesMeetRequired(guardrails, required)) {
-      setSettleError(copy.pack.required);
+      const message = copy.pack.required;
+      setSettleError(message);
       setProofStatus("error");
+      notifyError(copy.action.toastPackRequired, message, SCAN_TOAST_ID);
       return;
     }
 
-    setBusy(true);
+    setScanning(true);
     setProof(null);
+    setPendingShield(null);
     setSanitizedPrompt("");
     setMessages([]);
     setSettleError(null);
+    setProofStatus("scanning");
+    toast.dismiss(SETTLE_TOAST_ID);
 
     try {
-      setProofStatus("scanning");
+      const highlights = highlightSensitive(rawInput, guardrails);
+      setHighlightSegments(highlights);
+
+      // Brief beat so the amber warn state is visible before rewrite.
+      await delay(420);
+
       const result = await runShield(rawInput, guardrails);
+      const tokens = tokenizeCleanedPrompt(result.text);
 
-      setProofStatus("proving");
+      setPendingShield(result);
+      setSanitizedPrompt(result.text);
+      setRevealTokens(tokens);
+      setProofStatus("rewriting");
+    } catch (error) {
+      console.error("[kachis] runScanner failed", error);
+      const message = copy.action.error;
+      setSettleError(message);
+      setProofStatus("error");
+      notifyError(message, "Local scan did not finish. Try again.", SCAN_TOAST_ID);
+    } finally {
+      setScanning(false);
+    }
+  }, [guardrails, rawInput, scanning, sending, settling, tier]);
 
+  const completeRewrite = useCallback(() => {
+    let shouldToast = false;
+    setProofStatus((current) => {
+      if (current !== "rewriting") return current;
+      shouldToast = true;
+      return "reviewed";
+    });
+    if (shouldToast) {
+      toast.success(copy.action.toastScanReady, {
+        id: SCAN_TOAST_ID,
+        description: copy.action.toastScanReadyBody,
+      });
+    }
+  }, []);
+
+  const settleShield = useCallback(async () => {
+    if (!pendingShield || !sanitizedPrompt.trim() || settling || sending || scanning) return;
+    if (!canShield) {
+      const message = shieldGateHint ?? copy.action.walletRequiredHint;
+      setSettleError(message);
+      notifyError(copy.action.toastSettleErr, message, SETTLE_TOAST_ID);
+      return;
+    }
+
+    setSettling(true);
+    setSettleError(null);
+    setMessages([]);
+    setProofStatus("proving");
+    toast.loading(copy.action.toastSettlePending, { id: SETTLE_TOAST_ID });
+
+    const failSettle = (message: string) => {
+      const friendly = humanizeSettleError(message);
+      setSettleError(friendly);
+      setProofStatus("error");
+      notifyError(copy.action.toastSettleErr, friendly, SETTLE_TOAST_ID);
+    };
+
+    try {
       let submitted: {
         txId: string;
         contractAddress: string;
@@ -150,11 +269,10 @@ export function WorkspaceProvider({
       };
 
       if (demo) {
-        // Mimic in-wallet prove + settle timing without Midnight or a connector.
         await delay(1100);
         setProofStatus("attesting");
         await delay(450);
-        const digest = await sha256Hex(`${result.cleanedHash}:walkthrough`);
+        const digest = await sha256Hex(`${pendingShield.cleanedHash}:walkthrough`);
         submitted = {
           txId: `walkthrough_${digest.slice(2, 18)}`,
           contractAddress: "walkthrough",
@@ -164,21 +282,19 @@ export function WorkspaceProvider({
         const { submitGuardrail } = await import("@/lib/midnight-submit");
         const { getConnectedWalletApi } = await import("@/lib/midnight-wallet");
         if (!getConnectedWalletApi()) {
-          setSettleError(copy.action.reconnectWallet);
-          setProofStatus("error");
+          failSettle(copy.action.reconnectWallet);
           return;
         }
 
         const live = await submitGuardrail({
           originalHash: await sha256Hex(rawInput),
-          cleanedHash: result.cleanedHash,
-          packFlags: result.packFlags,
+          cleanedHash: pendingShield.cleanedHash,
+          packFlags: pendingShield.packFlags,
           network: wallet.network,
         });
         if (!live.ok) {
           console.error("[kachis] settle rejected", live);
-          setSettleError(live.error?.trim() || copy.action.settleFailed);
-          setProofStatus("error");
+          failSettle(live.error?.trim() || copy.action.settleFailed);
           return;
         }
 
@@ -194,11 +310,11 @@ export function WorkspaceProvider({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          cleanedHash: result.cleanedHash,
-          binding: result.binding,
-          packFlags: result.packFlags,
-          findings: result.findings,
-          attestedAt: result.attestedAt,
+          cleanedHash: pendingShield.cleanedHash,
+          binding: pendingShield.binding,
+          packFlags: pendingShield.packFlags,
+          findings: pendingShield.findings,
+          attestedAt: pendingShield.attestedAt,
           source: "console",
           walletAddress: demo ? "walkthrough" : wallet.address,
           txId: submitted.txId,
@@ -210,19 +326,18 @@ export function WorkspaceProvider({
       });
 
       if (!response.ok) {
-        let detail = copy.action.settleFailed;
+        let detail: string = copy.action.settleFailed;
         try {
           const body = (await response.json()) as { error?: string };
           if (body.error) detail = body.error;
         } catch {
           /* keep fallback */
         }
-        setSettleError(
+        failSettle(
           demo
             ? detail
-            : `On-chain settle returned ${submitted.txId}, but the console log failed: ${detail}`,
+            : `Settlement submitted, but the console log failed: ${humanizeSettleError(detail)}`,
         );
-        setProofStatus("error");
         return;
       }
 
@@ -237,12 +352,12 @@ export function WorkspaceProvider({
       };
 
       const record: ProofRecord = {
-        hash: result.cleanedHash,
-        binding: result.binding,
-        circuit: result.circuit,
-        attestedAt: result.attestedAt,
-        findings: result.findings,
-        packFlags: result.packFlags,
+        hash: pendingShield.cleanedHash,
+        binding: pendingShield.binding,
+        circuit: pendingShield.circuit,
+        attestedAt: pendingShield.attestedAt,
+        findings: pendingShield.findings,
+        packFlags: pendingShield.packFlags,
         ledgerId: attested.ledgerId,
         status: attested.status ?? "settled",
         walletAddress: attested.walletAddress,
@@ -252,51 +367,46 @@ export function WorkspaceProvider({
         network: attested.network ?? submitted.network,
       };
 
-      setSanitizedPrompt(result.text);
       setProof(record);
       setProofStatus("shielded");
       recordProof(
         rawInput.length,
-        result.findings.find((item) => item.kind === "secrets")?.count ?? 0,
+        pendingShield.findings.find((item) => item.kind === "secrets")?.count ?? 0,
       );
+      toast.success(copy.action.toastSettleOk, {
+        id: SETTLE_TOAST_ID,
+        description: copy.action.toastSettleOkBody,
+      });
     } catch (error) {
-      console.error("[kachis] processLocally failed", error);
-      const raw =
-        error instanceof Error
-          ? [error.message, error.cause instanceof Error ? error.cause.message : null]
-              .filter((part): part is string => Boolean(part && String(part).trim()))
-              .join(" · ")
-          : typeof error === "string"
-            ? error.trim()
-            : "";
-      const message = /WebSocket|isomorphic-ws|Export .* doesn't exist/i.test(raw)
-        ? copy.action.settleBundleFailed
-        : raw || copy.action.settleFailed;
-      setSettleError(message);
-      setProofStatus("error");
+      console.error("[kachis] settleShield failed", error);
+      failSettle(humanizeSettleError(error));
     } finally {
-      setBusy(false);
+      setSettling(false);
     }
   }, [
-    busy,
     canShield,
     demo,
-    guardrails,
+    pendingShield,
     rawInput,
     recordProof,
+    sanitizedPrompt,
+    scanning,
     sending,
-    tier,
+    settling,
+    shieldGateHint,
     wallet.address,
     wallet.network,
   ]);
 
   const sendShielded = useCallback(async () => {
     const content = sanitizedPrompt.trim();
-    if (!content || proofStatus !== "shielded" || busy || sending || !canShield) return;
+    if (!content || proofStatus !== "shielded" || settling || sending || scanning || !canShield)
+      return;
 
     setSending(true);
     setMessages([]);
     recordQuery();
+    toast.loading(copy.sanitized.sending, { id: SEND_TOAST_ID });
 
     try {
       if (demo) {
@@ -306,40 +416,102 @@ export function WorkspaceProvider({
             id: createId(),
             role: "assistant",
             content: copy.demo.reply,
+            source: "demo",
+            walkthrough: true,
             createdAt: new Date().toISOString(),
           },
         ]);
+        toast.success(copy.action.toastSendOk, { id: SEND_TOAST_ID });
         return;
       }
 
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: content, proofHash: proof?.hash }),
+        body: JSON.stringify({
+          prompt: content,
+          proofHash: proof?.hash,
+          mode: byocReady && credential ? "byoc" : "beta",
+          byoc:
+            byocReady && credential
+              ? {
+                  provider: credential.provider,
+                  apiKey: credential.apiKey,
+                  label: credential.label,
+                  baseUrl: credential.baseUrl,
+                  model: credential.model,
+                }
+              : undefined,
+        }),
       });
-      const data = (await response.json()) as { content?: string; error?: string };
+      const data = (await response.json()) as {
+        content?: string;
+        error?: string;
+        source?: "beta" | "byoc";
+        provider?: string;
+        label?: string;
+      };
+
+      if (!response.ok || data.error) {
+        const message = data.error ?? copy.response.error;
+        setMessages([
+          {
+            id: createId(),
+            role: "assistant",
+            content: message,
+            createdAt: new Date().toISOString(),
+          },
+        ]);
+        notifyError(copy.action.toastSendErr, message, SEND_TOAST_ID);
+        return;
+      }
 
       setMessages([
         {
           id: createId(),
           role: "assistant",
-          content: data.content ?? data.error ?? copy.response.noModel,
+          content: data.content ?? copy.response.noModel,
+          source: data.source,
+          provider: data.provider,
+          label: data.label,
           createdAt: new Date().toISOString(),
         },
       ]);
+      toast.success(copy.action.toastSendOk, { id: SEND_TOAST_ID });
     } catch {
+      const message = demo ? copy.demo.reply : copy.response.error;
       setMessages([
         {
           id: createId(),
           role: "assistant",
-          content: demo ? copy.demo.reply : copy.response.error,
+          content: message,
+          source: demo ? "demo" : undefined,
           createdAt: new Date().toISOString(),
         },
       ]);
+      if (!demo) {
+        notifyError(copy.action.toastSendErr, copy.response.error, SEND_TOAST_ID);
+      } else {
+        toast.success(copy.action.toastSendOk, { id: SEND_TOAST_ID });
+      }
     } finally {
       setSending(false);
     }
-  }, [busy, canShield, demo, proof?.hash, proofStatus, recordQuery, sanitizedPrompt, sending]);
+  }, [
+    byocReady,
+    canShield,
+    credential,
+    demo,
+    proof?.hash,
+    proofStatus,
+    recordQuery,
+    sanitizedPrompt,
+    scanning,
+    sending,
+    settling,
+  ]);
+
+  const busy = scanning || settling;
 
   const value = useMemo<WorkspaceContextValue>(
     () => ({
@@ -351,31 +523,44 @@ export function WorkspaceProvider({
       rawInput,
       setRawInput,
       sanitizedPrompt,
+      highlightSegments,
+      revealTokens,
       guardrails,
       setGuardrail,
       proofStatus,
       proof,
       messages,
-      processLocally,
+      runScanner,
+      completeRewrite,
+      settleShield,
       sendShielded,
       busy,
+      scanning,
+      settling,
       sending,
     }),
     [
       busy,
       canShield,
+      completeRewrite,
       demo,
       guardrails,
+      highlightSegments,
       messages,
-      processLocally,
       proof,
       proofStatus,
       rawInput,
+      revealTokens,
+      runScanner,
       sanitizedPrompt,
+      scanning,
       sendShielded,
       sending,
       setGuardrail,
+      setRawInput,
       settleError,
+      settleShield,
+      settling,
       shieldGateHint,
       walletConnected,
     ],

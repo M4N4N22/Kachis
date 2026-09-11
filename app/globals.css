@@ -2,16 +2,16 @@
 
 :root {
   /* Matches components/react-bits/radial-glow-button.tsx */
-  --brand-a: #52b5b8;
-  --brand-b: #1f3f6d;
-  --brand: #52b5b8;
-  --brand-fg: #000000;
+  --brand-a: #d9f99d;
+  --brand-b: #d9f99d;
+  --brand: #d9f99d;
+  --brand-fg: #0a0a0a;
   --brand-accent: #f1ffa5;
   --brand-deep: #000022;
   --success: #34d399;
   --danger: #f6465d;
   --radius: 1.25rem;
-  --bg: #000;
+  --bg: #0a0a0a;
   --ink: #f2f2f4;
   --surface: #0a0a0a;
   --muted: #111;

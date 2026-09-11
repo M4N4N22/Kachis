@@ -28,16 +28,6 @@ export function KachinaMark({ className }: { className?: string }) {
           <stop offset="100%" stopColor="var(--brand-accent)" />
         </linearGradient>
       </defs>
-      <rect
-        x="1.5"
-        y="1.5"
-        width="29"
-        height="29"
-        rx="8"
-        stroke={`url(#${gradientId})`}
-        strokeWidth="1.25"
-        opacity="0.55"
-      />
       <path
         d="M10 8v16M10 16l11-8M10 16l11 8"
         stroke={`url(#${gradientId})`}
@@ -66,7 +56,7 @@ export function Logo({
             inverted ? "text-ink" : "text-ink",
           )}
         >
-          Kachis
+          
         </span>
       ) : null}
     </span>

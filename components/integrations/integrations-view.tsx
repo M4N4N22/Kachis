@@ -49,7 +49,7 @@ export function IntegrationsView() {
             <Bento key={entry.title} className="p-5">
               <div className="flex items-center justify-between gap-3">
                 <Icon className="h-4 w-4 text-brand" strokeWidth={1.75} />
-                <span className="text-[10px] font-semibold tracking-wide text-muted-fg uppercase">
+                <span className="text-[10px] font-semibold tracking-wide text-muted-fg ">
                   {entry.status}
                 </span>
               </div>

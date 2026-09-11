@@ -183,7 +183,7 @@ export function ConnectWalletModal({
                 {error ? <p className="mt-3 text-[12px] text-danger">{error}</p> : null}
 
                 <div className="mt-5 min-h-0 flex-1 overflow-y-auto">
-                  <p className="mb-2 text-[11px] font-semibold tracking-[0.08em] text-ink/35 uppercase">
+                  <p className="mb-2 text-[11px] font-semibold  text-ink/35 ">
                     {copy.wallet.modalRecommended}
                   </p>
                   <div className="space-y-1.5">

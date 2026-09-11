@@ -95,7 +95,15 @@ export function GuideRail() {
         </div>
       ) : (
         <div className="border-t border-border px-5 py-4 text-[11px] text-muted-fg">
-          {proofStatus === "idle" ? copy.rail.idle : copy.action.processing}
+          {proofStatus === "idle"
+            ? copy.rail.idle
+            : proofStatus === "reviewed"
+              ? copy.sanitized.settle
+              : proofStatus === "rewriting" || proofStatus === "scanning"
+                ? copy.action.scanning
+                : proofStatus === "shielded"
+                  ? copy.status.shielded
+                  : copy.action.processing}
         </div>
       )}
     </Bento>

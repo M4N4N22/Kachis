@@ -54,7 +54,7 @@ export function AgentPipeline() {
     <section id="agents" className="relative overflow-hidden py-16 md:py-24">
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="landing-fade inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-ink">
+          <p className="landing-fade inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold  text-ink">
             AGENTS
           </p>
           <h2
@@ -84,7 +84,7 @@ export function AgentPipeline() {
                 <p className="text-[11px] text-[#8a8a96]">User or agent — one unskippable loop</p>
               </div>
             </div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#8a8a96]">
+            <p className="text-[11px] font-semibold   text-[#8a8a96]">
               {copy.agent.label}
             </p>
           </div>

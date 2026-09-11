@@ -37,7 +37,7 @@ export function FinalCta() {
           <div className="pointer-events-none absolute inset-0 bg-black/70" />
 
           <div className="relative z-10 flex min-h-[22rem] flex-col items-center justify-center px-6 py-14 text-center md:min-h-[26rem] md:px-12 md:py-16">
-            <p className="inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-ink/90">
+            <p className="inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold  text-ink/90">
               GET STARTED
             </p>
             <h2

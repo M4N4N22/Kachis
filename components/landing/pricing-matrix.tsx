@@ -60,7 +60,7 @@ function TierBody({
     <>
       <div>
         <p
-          className={`text-[11px] font-semibold tracking-[0.08em] uppercase ${
+          className={`text-[11px] font-semibold   ${
             muted ? "text-[#8a8a96]" : "text-emerald-300/90"
           }`}
         >
@@ -130,7 +130,7 @@ export function PricingMatrix() {
     <section id="audiences" className="relative overflow-hidden py-16 md:py-24">
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="landing-fade inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-ink">
+          <p className="landing-fade inline-flex rounded-full px-3.5 py-1.5 text-[11px] font-semibold  text-ink">
             TWO SEATS
           </p>
           <h2

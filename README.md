@@ -43,7 +43,8 @@ Companies buy **control + evidence**, not another chat site: secrets never becom
 - MCP tool `kachis_shield` (posts public commitments to the console when it is running)
 - Midnight wallet connect via `@midnight-ntwrk/dapp-connector-api` (Lace, Gero, 1AM, Ctrl)
 - Console chat only after a recorded commitment
-- Optional OpenAI chat for the **shielded** prompt only (`OPENAI_API_KEY`). Without a key, `/api/chat` returns an error — it does not stub a briefing.
+- **Beta hosted Gemini** (`GEMINI_API_KEY`) — shared daily pool (default **10**/UTC day) for judges; not a user key
+- **BYOC** — OpenAI / Anthropic / Gemini keys stay in browser session memory, sent ephemerally with `/api/chat`, never written to Kachis storage or the public log
 - Compact compile script + GitHub Action (`.github/workflows/compact-compile.yml`)
 - Console `shield()` submit when compile artifacts are present, a settle-capable wallet is connected (**1AM** preferred; Lace + proof server also works), and the seat has tNIGHT/DUST
 - Public notary log: `GET /api/shield` merges **Preprod contract ledger** (on-chain cleanedHash / binding / packFlags) with local findings; persists under `.data/`
@@ -78,9 +79,9 @@ Copy `.env.example` → `.env.local`. For org/onboarding persistence, set `NEXT_
 
 [http://localhost:3000/onboarding](http://localhost:3000/onboarding) — Launch app: connect wallet, choose Solo Sandbox or Provision Institutional Node.
 
-[http://localhost:3000/workspace](http://localhost:3000/workspace) — connect a corporate wallet, paste your own records, Shield, Confirm & Send. New wallets without a profile are sent to onboarding.
+[http://localhost:3000/workspace](http://localhost:3000/workspace) — connect a corporate wallet, paste your own records, Run Kachis Scanner → Approve & Settle → Confirm & Send. New wallets without a profile are sent to onboarding.
 
-Walkthrough (canned payroll paste, **no wallet**): [http://localhost:3000/demo](http://localhost:3000/demo) → Shield → Confirm & Send (simulated prove + canned reply).
+Walkthrough (canned payroll paste, **no wallet**): [http://localhost:3000/demo](http://localhost:3000/demo) → Run Kachis Scanner → Approve & Settle (simulated) → Confirm & Send (canned reply).
 
 ### Compact compile (judges)
 
@@ -98,14 +99,15 @@ That writes `compact/managed/kachis-guardrail` including proving keys. The conso
 1. Install **1AM** (recommended), Lace, or Gero; enable Midnight; faucet **tNIGHT**; wait for **DUST**.
 2. Proofs: **1AM in-wallet proving** (no Docker), **or** Lace with a local/remote proof server (`docker run -p 6300:6300 midnightntwrk/proof-server:8.1.0 midnight-proof-server -v`) / `NEXT_PUBLIC_MIDNIGHT_PROOF_SERVER_URL`. Gero Cloud can prove but cannot balance contract txs yet.
 3. Compile the contract (above).
-4. Restart with `npm run dev` (webpack). Open Workspace (`/workspace`), connect the wallet, confirm fee reserve, paste, Shield. If settlement fails, nothing is recorded and Confirm & Send stays locked. For a wallet-free path, use Walkthrough (`/demo`).
+4. Restart with `npm run dev` (webpack). Open Workspace (`/workspace`), connect the wallet, confirm fee reserve, paste, Run Kachis Scanner, then Approve & Settle. If settlement fails, nothing is recorded and Confirm & Send stays locked. For a wallet-free path, use Walkthrough (`/demo`).
 5. Guide rail shows a **settlement id** on success.
 
 Optional: after the first deploy, set `NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS` so later sessions skip deploy.
 
 ```bash
 cp .env.example .env.local
-# optional OPENAI_API_KEY for a real model on shielded text only
+# GEMINI_API_KEY + KACHIS_BETA_CHAT_LIMIT=10 for hosted beta responses
+# BYOC keys are pasted in Identity / Workspace — never put user keys in .env
 # optional NEXT_PUBLIC_MIDNIGHT_PROOF_SERVER_URL=http://127.0.0.1:6300
 # optional NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS=mn_…
 ```
@@ -154,7 +156,7 @@ Tag the public GitHub repo with **`midnightntwrk`** (Settings → Topics) so the
 
 ## Demo (Wave 1)
 
-Screen path for the video: landing → Walkthrough (`/demo`) → Shield (no wallet) → Confirm & Send → canned reply. Live settle path: Workspace (`/workspace`) → Connect Wallet (**1AM** preferred) → paste → Shield → Confirm & Send → model response. Optional: Identity balances (tNIGHT on Preprod).
+Screen path for the video: landing → Walkthrough (`/demo`) → Run Kachis Scanner (no wallet) → Approve & Settle → Confirm & Send → canned reply. Live settle path: Workspace (`/workspace`) → Connect Wallet (**1AM** preferred) → paste → Run Kachis Scanner → Approve & Settle → Confirm & Send → model response. Optional: Identity balances (tNIGHT on Preprod).
 
 Live Preprod settlement for judges: see **Live Preprod proof** above ([tx on Midnight Explorer](https://preprod.midnightexplorer.com/transactions/dc7080a02d8a22e4be3d7992174aed9fd9e73b28abdef2c4fe37db8f4f9823db)).
 

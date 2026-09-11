@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 import { findAttestationByHash } from "@/lib/attestation-log";
+import {
+  consumeBetaQuota,
+  getBetaQuota,
+  refundBetaQuota,
+} from "@/lib/beta-quota";
+import { runModelInference } from "@/lib/model-inference";
+import type { ModelProviderId } from "@/lib/types";
 import { sha256Hex } from "@/shared/commit";
 import {
   enforceRequiredPackEnabled,
@@ -9,8 +16,27 @@ import {
 
 export const dynamic = "force-dynamic";
 
+type ChatBody = {
+  prompt?: string;
+  proofHash?: string;
+  mode?: "beta" | "byoc";
+  byoc?: {
+    provider?: ModelProviderId;
+    apiKey?: string;
+    label?: string;
+    baseUrl?: string;
+    model?: string;
+  };
+};
+
+const PROVIDERS: ModelProviderId[] = ["openai", "anthropic", "gemini", "custom"];
+
+function isProvider(value: unknown): value is ModelProviderId {
+  return typeof value === "string" && PROVIDERS.includes(value as ModelProviderId);
+}
+
 export async function POST(request: Request) {
-  const body = (await request.json()) as { prompt?: string; proofHash?: string };
+  const body = (await request.json()) as ChatBody;
 
   if (!body.prompt?.trim()) {
     return NextResponse.json({ error: "Shielded prompt required." }, { status: 400 });
@@ -55,44 +81,115 @@ export async function POST(request: Request) {
     }
   }
 
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) {
+  const wantsByoc =
+    body.mode === "byoc" ||
+    Boolean(body.byoc?.apiKey?.trim() && isProvider(body.byoc?.provider));
+
+  if (wantsByoc) {
+    const provider = body.byoc?.provider;
+    const apiKey = body.byoc?.apiKey?.trim() ?? "";
+    if (!isProvider(provider) || !apiKey) {
+      return NextResponse.json(
+        { error: "BYOC requires a provider and API key for this session." },
+        { status: 400 },
+      );
+    }
+    if (provider === "custom" && !body.byoc?.label?.trim()) {
+      return NextResponse.json(
+        { error: "Name your custom provider before sending." },
+        { status: 400 },
+      );
+    }
+
+    const result = await runModelInference({
+      provider,
+      apiKey,
+      prompt: body.prompt,
+      source: "byoc",
+      label: body.byoc?.label,
+      baseUrl: body.byoc?.baseUrl,
+      model: body.byoc?.model,
+    });
+
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
+    return NextResponse.json({
+      source: "byoc",
+      provider: result.provider,
+      label: result.label,
+      ledgerId: attestation.ledgerId,
+      content: result.content,
+    });
+  }
+
+  const before = await getBetaQuota();
+  if (!before.available) {
     return NextResponse.json(
-      { error: "No model configured. Set OPENAI_API_KEY to send the shielded prompt." },
+      {
+        error:
+          "Beta hosted model is offline. Add a BYOC key in Identity for this session.",
+        quota: before,
+      },
+      { status: 503 },
+    );
+  }
+  if (before.remaining <= 0) {
+    return NextResponse.json(
+      {
+        error:
+          "Beta daily quota reached. Add a BYOC key in Identity to continue.",
+        quota: before,
+      },
+      { status: 429 },
+    );
+  }
+
+  const geminiKey = process.env.GEMINI_API_KEY?.trim();
+  if (!geminiKey) {
+    return NextResponse.json(
+      {
+        error:
+          "Beta hosted model is offline. Add a BYOC key in Identity for this session.",
+      },
       { status: 503 },
     );
   }
 
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You only see a Kachis-shielded prompt. Never ask for the original secrets. Work with placeholders.",
-        },
-        { role: "user", content: body.prompt },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    return NextResponse.json({ error: "Model request failed." }, { status: 502 });
+  const consumed = await consumeBetaQuota();
+  if (!consumed) {
+    const quota = await getBetaQuota();
+    return NextResponse.json(
+      {
+        error:
+          "Beta daily quota reached. Add a BYOC key in Identity to continue.",
+        quota,
+      },
+      { status: 429 },
+    );
   }
 
-  const data = (await response.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
+  const result = await runModelInference({
+    provider: "gemini",
+    apiKey: geminiKey,
+    prompt: body.prompt,
+    source: "beta",
+  });
+
+  if (!result.ok) {
+    const quota = await refundBetaQuota();
+    return NextResponse.json(
+      { error: result.error, quota },
+      { status: result.status },
+    );
+  }
 
   return NextResponse.json({
-    source: "openai",
+    source: "beta",
+    provider: "gemini",
     ledgerId: attestation.ledgerId,
-    content: data.choices?.[0]?.message?.content ?? "Empty model response.",
+    quota: consumed,
+    content: result.content,
   });
 }
