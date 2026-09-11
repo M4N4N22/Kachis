@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Bento } from "@/components/ui/bento";
 import { useApp } from "@/lib/app-store";
+import { cn } from "@/lib/cn";
 import { copy } from "@/lib/copy";
 import { preprodExtrinsicUrl } from "@/lib/midnight-chain-attestations";
 import { decodePackFlags, type GuardrailFindingKind } from "@/shared/types";
@@ -18,6 +19,8 @@ export type PublicAttestation = {
   txId?: string;
   txHash?: string;
   onChain?: boolean;
+  network?: string;
+  contractAddress?: string;
   findings: { count: number; kind: string; label?: string }[];
 };
 
@@ -30,6 +33,28 @@ export const PACK_LABEL: Record<GuardrailFindingKind, string> = {
   code: copy.pack.labels.code,
   client: copy.pack.labels.client,
 };
+
+export const PACK_KINDS: GuardrailFindingKind[] = [
+  "pii",
+  "financial",
+  "secrets",
+  "code",
+  "client",
+];
+
+/** Walkthrough / demo settlements — never count as live Preprod evidence. */
+export function isWalkthroughAttestation(item: PublicAttestation) {
+  return (
+    item.network === "walkthrough" ||
+    (typeof item.txId === "string" && item.txId.startsWith("walkthrough_")) ||
+    item.contractAddress === "walkthrough"
+  );
+}
+
+/** Settled Preprod ledger rows only — excludes local, demo, and walkthrough. */
+export function isRealOnChainAttestation(item: PublicAttestation) {
+  return Boolean(item.onChain) && !isWalkthroughAttestation(item);
+}
 
 export function shortenHash(value: string) {
   return value.length > 18 ? `${value.slice(0, 10)}…${value.slice(-6)}` : value;
@@ -48,26 +73,106 @@ export function inQuarter(iso: string, start: Date, end: Date) {
   return t >= start.getTime() && t < end.getTime();
 }
 
-export function useAttestations() {
+type ShieldFeed = {
+  attestations: PublicAttestation[];
+  /** Live Preprod ledger rows only; empty when indexer did not return contract state. */
+  ledgerAttestations: PublicAttestation[];
+  contractAddress: string | null;
+  feedSource: "chain+local" | "local" | "unknown";
+  ledgerLive: boolean;
+  loading: boolean;
+};
+
+export function useShieldFeed(): ShieldFeed {
   const { usage } = useApp();
   const [attestations, setAttestations] = useState<PublicAttestation[]>([]);
+  const [ledgerAttestations, setLedgerAttestations] = useState<PublicAttestation[]>(
+    [],
+  );
+  const [contractAddress, setContractAddress] = useState<string | null>(null);
+  const [feedSource, setFeedSource] = useState<ShieldFeed["feedSource"]>("unknown");
+  const [ledgerLive, setLedgerLive] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     void fetch("/api/shield")
       .then((response) => response.json())
-      .then((data: { attestations?: PublicAttestation[] }) => {
-        if (!cancelled) setAttestations(data.attestations ?? []);
-      })
+      .then(
+        (data: {
+          attestations?: PublicAttestation[];
+          ledgerAttestations?: PublicAttestation[];
+          contractAddress?: string;
+          source?: string;
+          ledgerLive?: boolean;
+        }) => {
+          if (cancelled) return;
+          const live = Boolean(data.ledgerLive);
+          setAttestations(data.attestations ?? []);
+          setLedgerAttestations(live ? (data.ledgerAttestations ?? []) : []);
+          setContractAddress(data.contractAddress ?? null);
+          setLedgerLive(live);
+          setFeedSource(
+            data.source === "chain+local" || data.source === "local"
+              ? data.source
+              : "unknown",
+          );
+        },
+      )
       .catch(() => {
-        if (!cancelled) setAttestations([]);
+        if (cancelled) return;
+        setAttestations([]);
+        setLedgerAttestations([]);
+        setContractAddress(null);
+        setLedgerLive(false);
+        setFeedSource("unknown");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
       });
     return () => {
       cancelled = true;
     };
   }, [usage.proofsGenerated]);
 
-  return attestations;
+  return {
+    attestations,
+    ledgerAttestations,
+    contractAddress,
+    feedSource,
+    ledgerLive,
+    loading,
+  };
+}
+
+export function useAttestations() {
+  return useShieldFeed().attestations;
+}
+
+export function useOnChainAttestations() {
+  const feed = useShieldFeed();
+  const onChain = useMemo(() => {
+    if (!feed.ledgerLive) return [];
+    if (feed.ledgerAttestations.length > 0) {
+      return feed.ledgerAttestations.filter(isRealOnChainAttestation);
+    }
+    return feed.attestations.filter(isRealOnChainAttestation);
+  }, [feed.ledgerLive, feed.ledgerAttestations, feed.attestations]);
+  const bounds = useMemo(() => quarterBounds(), []);
+  const quarterRows = useMemo(() => {
+    const inQ = onChain.filter((item) =>
+      inQuarter(item.attestedAt, bounds.start, bounds.end),
+    );
+    return inQ.length > 0 ? inQ : onChain;
+  }, [onChain, bounds.start, bounds.end]);
+
+  return {
+    ...feed,
+    onChain,
+    quarterRows,
+    quarterLabel: bounds.label,
+  };
 }
 
 export function useQuarterAttestations() {
@@ -134,6 +239,42 @@ export function SettlementRow({ item }: { item: PublicAttestation }) {
         <p className="mt-2 text-[10px] text-muted-fg">{copy.audits.noPack}</p>
       )}
     </li>
+  );
+}
+
+export function LedgerBadge({
+  loading,
+  ledgerLive,
+}: {
+  loading: boolean;
+  ledgerLive: boolean;
+}) {
+  const label = loading
+    ? copy.analytics.feedBadgeLoading
+    : ledgerLive
+      ? copy.analytics.feedBadgeLive
+      : copy.analytics.feedBadgeDown;
+  const tone = loading ? "ready" : ledgerLive ? "live" : "down";
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide",
+        tone === "live" && "bg-success/15 text-success",
+        tone === "ready" && "bg-brand/15 text-brand",
+        tone === "down" && "bg-ink/8 text-muted-fg",
+      )}
+    >
+      <span
+        className={cn(
+          "h-1.5 w-1.5 shrink-0 rounded-full",
+          tone === "live" && "bg-success",
+          tone === "ready" && "bg-brand",
+          tone === "down" && "bg-muted-fg/70",
+        )}
+      />
+      {label}
+    </span>
   );
 }
 

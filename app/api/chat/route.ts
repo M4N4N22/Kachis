@@ -129,7 +129,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Beta hosted model is offline. Add a BYOC key in Identity for this session.",
+          "Beta hosted model is offline. Add a BYOC key in AI Providers for this session.",
         quota: before,
       },
       { status: 503 },
@@ -139,7 +139,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Beta daily quota reached. Add a BYOC key in Identity to continue.",
+          "Beta daily quota reached. Add a BYOC key in AI Providers to continue.",
         quota: before,
       },
       { status: 429 },
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Beta hosted model is offline. Add a BYOC key in Identity for this session.",
+          "Beta hosted model is offline. Add a BYOC key in AI Providers for this session.",
       },
       { status: 503 },
     );
@@ -163,7 +163,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "Beta daily quota reached. Add a BYOC key in Identity to continue.",
+          "Beta daily quota reached. Add a BYOC key in AI Providers to continue.",
         quota,
       },
       { status: 429 },

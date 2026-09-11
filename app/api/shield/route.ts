@@ -158,10 +158,30 @@ export async function GET() {
     chain = [];
   }
 
+  const ledgerLive = chain.length > 0;
+  const chainHashes = new Set(
+    chain.map((row) => row.cleanedHash.toLowerCase()),
+  );
   const attestations = mergeLocalAndChain(enrichedLocal, chain).slice(0, 80);
+
+  /** Live Preprod ledger only — excludes seed/local until indexer returns contract state. */
+  const ledgerAttestations = ledgerLive
+    ? attestations.filter((row) => {
+        const walkthrough =
+          row.network === "walkthrough" ||
+          row.contractAddress === "walkthrough" ||
+          (typeof row.txId === "string" && row.txId.startsWith("walkthrough_"));
+        return (
+          !walkthrough && chainHashes.has(row.cleanedHash.toLowerCase())
+        );
+      })
+    : [];
+
   return NextResponse.json({
     attestations,
+    ledgerAttestations,
     contractAddress,
-    source: chain.length ? "chain+local" : "local",
+    source: ledgerLive ? "chain+local" : "local",
+    ledgerLive,
   });
 }
