@@ -1,7 +1,9 @@
 "use client";
 
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Lock } from "lucide-react";
+import Link from "next/link";
 import { Bento } from "@/components/ui/bento";
+import { Button } from "@/components/ui/button";
 import { useApp } from "@/lib/app-store";
 import { copy } from "@/lib/copy";
 import { displayNetworkLabel } from "@/lib/midnight-wallet";
@@ -17,8 +19,9 @@ const LIVE_FILTERS = [
 ];
 
 export function GuardrailsView() {
-  const { usage, wallet, profile } = useApp();
+  const { usage, wallet, profile, tier } = useApp();
   const connected = wallet.status === "connected";
+  const sandbox = tier === "freelancer";
   const [audits, setAudits] = useState<
     {
       ledgerId: number;
@@ -61,7 +64,31 @@ export function GuardrailsView() {
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_18.5rem]">
       <div className="space-y-4">
-        <Bento className="p-5">
+        {sandbox ? (
+          <Bento className="p-5">
+            <div className="flex items-start gap-3">
+              <Lock className="mt-0.5 h-4 w-4 text-brand" strokeWidth={1.75} />
+              <div>
+                <h2 className="text-sm font-semibold tracking-tight">
+                  {copy.onboarding.upgradeTitle}
+                </h2>
+                <p className="mt-2 max-w-2xl text-[13px] leading-6 text-muted-fg">
+                  {copy.onboarding.upgradeBody}
+                </p>
+                <Link href="/identity" className="mt-4 inline-flex">
+                  <Button size="sm">{copy.onboarding.upgradeCta}</Button>
+                </Link>
+              </div>
+            </div>
+          </Bento>
+        ) : null}
+
+        <Bento className={sandbox ? "relative p-5 opacity-55" : "p-5"}>
+          {sandbox ? (
+            <span className="absolute top-4 right-4 rounded-full bg-black/40 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-muted-fg uppercase">
+              {copy.onboarding.locked}
+            </span>
+          ) : null}
           <h2 className="text-sm font-semibold tracking-tight">
             {copy.guardrails.liveTitle}
           </h2>

@@ -45,16 +45,16 @@ export function FinalCta() {
               style={{ fontSize: "clamp(1.85rem, 4.2vw, 3.15rem)", lineHeight: 1.12 }}
             >
               Shield the next prompt.{" "}
-              <span className="text-ink/65">Keep the seat verified.</span>
+              <span className="text-ink/65">Keep the account verified.</span>
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-[15px] leading-7 text-ink/70">
-              Put Kachis in the loop — local insulation first, evidence that the pack ran, public
+              Put Kachis in the loop — local insulation first, evidence that the shield ran, public
               AI only after.
             </p>
             <div className="pointer-events-auto mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/workspace">
+              <Link href="/onboarding">
                 <Button className="bg-ink text-black hover:bg-ink/90 hover:opacity-100">
-                  {copy.action.idle}
+                  {copy.landing.launchApp}
                   <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.75} />
                 </Button>
               </Link>

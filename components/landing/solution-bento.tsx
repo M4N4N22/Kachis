@@ -56,7 +56,7 @@ const SOLUTION_CARDS: BentoCardProps[] = [
     color: "transparent",
     title: "Verify locally",
     description:
-      "Prove the pack ran. The original never leaves; the commitment is what travels.",
+      "Prove the shield ran. The original never leaves; the commitment is what travels.",
     label: "Verify",
     icon: (
       <BgIcon>

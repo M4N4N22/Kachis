@@ -48,6 +48,8 @@ Companies buy **control + evidence**, not another chat site: secrets never becom
 - Console `shield()` submit when compile artifacts are present, a settle-capable wallet is connected (**1AM** preferred; Lace + proof server also works), and the seat has tNIGHT/DUST
 - Public notary log: `GET /api/shield` merges **Preprod contract ledger** (on-chain cleanedHash / binding / packFlags) with local findings; persists under `.data/`
 - Analytics quarter view: pack flags, findings held, explorer links
+- Wallet-bound organization seats via **Supabase** (`profiles` / `organizations` / `memberships`, `/api/org`): Personal Sandbox until you create an org; Institutional Network requires membership — not a mock toggle
+- Onboarding funnel at `/onboarding` (Launch app → wallet sign-in → Solo Sandbox or Provision Institutional Node)
 - **Live Preprod settlement** recorded below for judges
 
 **Not yet**
@@ -55,6 +57,8 @@ Companies buy **control + evidence**, not another chat site: secrets never becom
 - Matching SHA-256 local binding to in-circuit `persistentHash` (different functions — do not claim they are equal)
 - MCP Compact submit (agent still posts hashes only)
 - On-chain `requiredPack` assert on the current Preprod address (source updated; redeploy after recompile)
+- SSO / email / GitHub / Slack sign-in (wallet-first only)
+- Invite-link join + multi-admin directory
 - Local ML NER
 - Enterprise gateway / Copilot / Slack connectors
 - Gero contract balancing (`balanceUnsealedTransaction` still planned)
@@ -68,9 +72,13 @@ npm install
 npm run dev
 ```
 
+Copy `.env.example` → `.env.local`. For org/onboarding persistence, set `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` and run [`supabase/schema.sql`](supabase/schema.sql) in the Supabase SQL editor.
+
 `npm run dev` uses **Webpack** (`next dev --webpack`). Midnight ledger WASM (`CostModel`) does not initialize under Turbopack — that surfaces as `costmodel_initialCostModel` / “Cannot read properties of undefined”. Use `npm run dev:turbo` only for UI-only work.
 
-[http://localhost:3000/workspace](http://localhost:3000/workspace) — connect a corporate wallet, paste your own records, Shield, Confirm & Send.
+[http://localhost:3000/onboarding](http://localhost:3000/onboarding) — Launch app: connect wallet, choose Solo Sandbox or Provision Institutional Node.
+
+[http://localhost:3000/workspace](http://localhost:3000/workspace) — connect a corporate wallet, paste your own records, Shield, Confirm & Send. New wallets without a profile are sent to onboarding.
 
 Walkthrough (canned payroll paste, **no wallet**): [http://localhost:3000/demo](http://localhost:3000/demo) → Shield → Confirm & Send (simulated prove + canned reply).
 

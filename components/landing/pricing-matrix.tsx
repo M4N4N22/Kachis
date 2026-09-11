@@ -20,8 +20,8 @@ const PRICING_TIERS = [
     name: "Sandbox Workspace",
     target: "Independent builders & freelancers",
     price: "Free",
-    cta: "Launch Personal Sandbox",
-    href: "/workspace",
+    cta: "Launch Solo Sandbox",
+    href: "/onboarding",
     highlighted: false,
     bullets: [
       "Core on-device prompt insulation",
@@ -34,8 +34,8 @@ const PRICING_TIERS = [
     name: "Institutional Network",
     target: "Primary enterprise mandate",
     price: "Custom institutional billing",
-    cta: "Secure Corporate Perimeter",
-    href: "/workspace",
+    cta: "Provision Institutional Node",
+    href: "/onboarding",
     highlighted: true,
     bullets: [
       "Everything in Sandbox, plus:",
@@ -141,7 +141,7 @@ export function PricingMatrix() {
             <span className="text-[#8a8a96]">Institutional for the org.</span>
           </h2>
           <p className="landing-fade mx-auto mt-4 max-w-xl text-[15px] leading-7 text-[#6b6b78]">
-            Same local shield. Different seat. Freelancers stay light; enterprises get org-wide
+            Same local shield. Different workspace. Freelancers stay light; enterprises get org-wide
             rules, clearance, and an audit trail counsel can trust.
           </p>
         </div>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { AnalyticsView } from "@/components/analytics/analytics-view";
 
 export const metadata: Metadata = {
-  title: "Usage Analytics",
+  title: "Risk Metrics",
 };
 
 export default function AnalyticsPage() {

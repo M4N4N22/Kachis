@@ -22,7 +22,7 @@ const FLOW = [
   {
     n: "04",
     title: "Evidence sealed",
-    body: "Prove the pack ran. If policy fails, the call never reaches public AI.",
+    body: "Prove the shield ran. If policy fails, the call never reaches public AI.",
   },
   {
     n: "05",
@@ -35,7 +35,7 @@ const INTERCEPTS = [
   {
     icon: KeyRound,
     title: "Machine-to-machine identity",
-    body: "Each automated agent gets a verified seat — same clearance model as a human operator. Unauthorized agents cannot request an external model call.",
+    body: "Each automated agent gets a verified identity — same clearance model as a human operator. Unauthorized agents cannot request an external model call.",
   },
   {
     icon: Shield,
@@ -62,7 +62,7 @@ export function AgentPipeline() {
             style={{ fontSize: "clamp(1.85rem, 4.2vw, 3.15rem)", lineHeight: 1.12 }}
           >
             {copy.agent.title}.{" "}
-            <span className="text-[#8a8a96]">Same shield as a human seat.</span>
+            <span className="text-[#8a8a96]">Same shield as a human operator.</span>
           </h2>
           <p className="landing-fade mx-auto mt-4 max-w-xl text-[15px] leading-7 text-[#6b6b78]">
             {copy.agent.description}

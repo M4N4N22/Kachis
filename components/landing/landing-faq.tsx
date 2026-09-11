@@ -41,7 +41,7 @@ export function LandingFaq() {
             <span className="text-[#8a8a96]">No theater.</span>
           </h2>
           <p className="landing-fade mx-auto mt-4 max-w-xl text-[15px] leading-7 text-[#6b6b78]">
-            What stays local, what gets proven, and why institutions buy the seat.
+            What stays local, what gets proven, and why institutions buy control + evidence.
           </p>
         </div>
 

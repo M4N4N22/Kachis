@@ -27,7 +27,7 @@ export function PipelineProtocol() {
             <p className="landing-fade mx-auto mt-4 max-w-xl text-[15px] leading-7 text-[#6b6b78]">
               Teams already live in Cursor, Claude, ChatGPT, v0, and the rest. Kachis Agent sits
               in that path — every prompt is shielded locally first, then the clean remainder
-              reaches public AI. Control on-device. Evidence that the pack ran.
+              reaches public AI. Control on-device. Evidence that the shield ran.
             </p>
           </div>
 
@@ -72,7 +72,7 @@ export function PipelineProtocol() {
                 Shield before public AI
               </h3>
               <p className="mt-2 max-w-sm text-[14px] leading-6 text-[#6b6b78]">
-                Filters strip identifiers and balances on this machine. Kachis proves the pack
+                Filters strip identifiers and balances on this machine. Kachis proves the shield
                 ran — without publishing the original paste.
               </p>
 
@@ -109,7 +109,7 @@ export function PipelineProtocol() {
                   <div className="min-w-0">
                     <p className="text-[12px] font-semibold text-foreground">Evidence sealed</p>
                     <p className="truncate text-[10px] text-[#8a8a96]">
-                      Pack verified · original never uploaded
+                      Shield verified · original never uploaded
                     </p>
                   </div>
                 </div>
@@ -125,7 +125,7 @@ export function PipelineProtocol() {
                   <p className="mt-3 max-w-md text-[14px] leading-6 text-[#6b6b78]">
                     That handoff is the product. Institutions keep Claude, ChatGPT, Cursor, and
                     the rest — Kachis is the unskippable guardrail in front. The console paste
-                    flow is for tryouts and freemium seats to feel the shield, not the corporate
+                    flow is for tryouts and freemium workspaces to feel the shield, not the corporate
                     path.
                   </p>
                 </div>
@@ -189,7 +189,7 @@ export function PipelineProtocol() {
                       <div className="mt-3 rounded-xl border border-ink/5 px-3 py-2.5 text-[11px] text-ink/80">
                         <span className="text-brand-b">Evidence</span>
                         <span className="text-ink/40"> · </span>
-                        Pack verified locally · original stays on-device
+                        Shield verified locally · original stays on-device
                       </div>
                     </div>
                   </div>

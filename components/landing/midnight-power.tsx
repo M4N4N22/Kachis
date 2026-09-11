@@ -5,7 +5,7 @@ import { MidnightMark, MidnightWordmark } from "@/components/brand/midnight-mark
 
 const PILLARS = [
   {
-    title: "Prove the pack ran",
+    title: "Prove the shield ran",
     body: "Midnight seals that Kachis shielded the prompt — a receipt for security and counsel, not a dump of the file.",
   },
   {
@@ -13,8 +13,8 @@ const PILLARS = [
     body: "The raw paste never becomes public evidence. What settles is the fact of the shield, not the payroll sheet.",
   },
   {
-    title: "Settle from a verified seat",
-    body: "Corporate wallets on Midnight bind the job to a seat. Institutions get control + evidence without a new AI stack.",
+    title: "Settle from a verified wallet",
+    body: "Corporate wallets on Midnight bind the job to an account. Institutions get control + evidence without a new AI stack.",
   },
 ] as const;
 
