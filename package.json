@@ -9,6 +9,10 @@
     "start": "next start",
     "lint": "eslint",
     "agent": "npm start --prefix agent",
+    "agent:build": "npm run build --prefix agent",
+    "shield:build": "npm run build --prefix shared",
+    "shield:test": "npm test --prefix shared",
+    "extension:build": "npm run build --prefix extension",
     "compact:compile": "node compact/compile.mjs"
   },
   "dependencies": {

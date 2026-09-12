@@ -13,6 +13,7 @@ import {
   resolveContractAddressFromSettlement,
 } from "@/lib/midnight-chain-attestations";
 import { probeProofServer } from "@/lib/midnight-notary";
+import { authenticateSeat } from "@/lib/seat-auth";
 import { CIRCUIT_ID, type GuardrailFinding } from "@/shared/types";
 import { isCommitmentHex } from "@/shared/commit";
 import {
@@ -22,6 +23,13 @@ import {
 } from "@/shared/policy";
 
 export const dynamic = "force-dynamic";
+
+function resolveSource(raw: unknown): AttestationSource {
+  if (raw === "agent" || raw === "extension" || raw === "chain" || raw === "console") {
+    return raw;
+  }
+  return "console";
+}
 
 type ShieldBody = {
   cleanedHash?: string;
@@ -70,6 +78,12 @@ export async function POST(request: Request) {
     );
   }
 
+  const source = resolveSource(body.source);
+  const seat = authenticateSeat(request, source);
+  if (!seat.ok) {
+    return NextResponse.json({ error: seat.error }, { status: seat.status });
+  }
+
   const packFlags = body.packFlags ?? 0;
   const walkthrough =
     body.network === "walkthrough" ||
@@ -90,6 +104,11 @@ export async function POST(request: Request) {
     }
   }
 
+  const seatNote =
+    source === "agent" || source === "extension"
+      ? `Seat ${seat.label} (${seat.seatId}). `
+      : "";
+
   try {
     const existing = await findAttestationByHash(body.cleanedHash);
     if (existing && existing.binding === body.binding) {
@@ -102,6 +121,7 @@ export async function POST(request: Request) {
           circuit: existing.circuit,
           attestedAt: existing.attestedAt,
           source: existing.source,
+          seatId: existing.seatId,
           walletAddress: body.walletAddress ?? existing.walletAddress,
           status: "settled",
           txId: body.txId,
@@ -126,15 +146,17 @@ export async function POST(request: Request) {
       circuit: CIRCUIT_ID,
       attestedAt: body.attestedAt ?? new Date().toISOString(),
       status: settled ? "settled" : notary.status,
-      source: body.source === "agent" ? "agent" : "console",
+      source,
+      seatId:
+        source === "agent" || source === "extension" ? seat.seatId : undefined,
       walletAddress: body.walletAddress,
       txId: settled ? body.txId : undefined,
       contractAddress: walkthrough ? undefined : body.contractAddress,
       network: body.network,
       onChain: settled && !walkthrough ? true : undefined,
       note: settled
-        ? (body.note ?? "Settled. Verification ran; the original stays on this machine.")
-        : (body.note ?? notary.note),
+        ? (body.note ?? `${seatNote}Settled. Verification ran; the original stays on this machine.`)
+        : (body.note ?? `${seatNote}${notary.note}`),
     });
 
     return NextResponse.json(recorded);

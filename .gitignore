@@ -19,6 +19,13 @@
 
 # agent
 /agent/node_modules
+/agent/dist
+
+# shared package + companion
+/shared/node_modules
+/shared/dist
+/extension/node_modules
+/extension/dist
 
 # production
 /build

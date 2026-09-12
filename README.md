@@ -97,10 +97,11 @@ Today the **console**, **shared scanner**, **MCP agent**, and **live Preprod `sh
 |---|---|
 | `app/` | Next.js routes — landing, onboarding, workspace, analytics, integrations, APIs |
 | `components/` | Console UI |
-| `shared/` | Scanner + NER + commitments — used by console **and** agent |
+| `shared/` | `@kachis/shield` — scanner + NER + commitments (console, agent, companion) |
 | `lib/` | Wallet, settle, org seats, copy, Midnight helpers |
 | `compact/` | Compact contract source + compile scripts |
-| `agent/` | Kachis Agent MCP server (`kachis_shield`, `kachis_restore`) |
+| `agent/` | `@kachis/agent` MCP (`kachis_shield`, `kachis_restore`, `kachis_status`) |
+| `extension/` | Browser companion (MV3) for ChatGPT — build to `extension/dist` |
 | `supabase/` | Wallet-bound profiles / orgs / memberships schema |
 | `data/` | Seed Preprod settlement proof (judges) |
 | `public/wallets/` | Wallet icons |
@@ -123,13 +124,16 @@ Critical path that works today:
 | Wallet connect (1AM recommended; Lace / Gero / Ctrl discovered) | Shipped |
 | Chat gated on recorded commitment + prompt hash match | Shipped |
 | Public notary log (`/api/shield`) merged with Preprod ledger | Shipped |
-| Kachis Agent MCP (`kachis_shield` / `kachis_restore`) | Shipped |
+| Kachis Agent MCP (`kachis_shield` / `kachis_restore` / `kachis_status`) | Shipped |
+| `@kachis/shield` package (`shared/`) + machine seat keys | Shipped |
+| Browser companion MVP (ChatGPT, load unpacked) | Shipped |
 | Wallet-bound org seats (Supabase) + onboarding funnel | Shipped |
 | Beta hosted Gemini + BYOC (keys in session only) | Shipped |
-| Analytics quarter view + Integrations (MCP install) | Shipped |
+| Analytics quarter view + Integrations catalog | Shipped |
+| Kachis Agent console (`/integrations/agent`) | Shipped |
 | Walkthrough `/demo` (no wallet) + live `/workspace` settle | Shipped |
 
-Honest limits in Wave 1: MCP does not yet submit Compact txs; local SHA-256 binding ≠ in-circuit `persistentHash`; on-chain `requiredPack` needs Compact recompile + **v1** deploy; Gero cannot balance contract txs yet.
+Honest limits in Wave 1: MCP/extension settle is **commitment-only** (Compact submit remains console wallet); local SHA-256 binding ≠ in-circuit `persistentHash`; on-chain `requiredPack` needs Compact recompile + **v1** deploy; Gero cannot balance contract txs yet; `@kachis/agent` npm publish is pending (use local `dist/cli.js` until then).
 
 ---
 
@@ -138,7 +142,9 @@ Honest limits in Wave 1: MCP does not yet submit Compact txs; local SHA-256 bind
 | Milestone | Intent |
 |---|---|
 | Redeploy `kachis-guardrail` **v1** with on-chain `requiredPack` | Institutional pack assert on Preprod |
-| MCP Compact submit | Agents settle the same receipt as the console |
+| MCP Compact submit | Agents settle the same receipt as the console (beyond commitment-only) |
+| npm publish `@kachis/agent` + `@kachis/shield` | One-command install without local dist path |
+| Chrome Web Store companion | Replace load-unpacked with store install |
 | Align or document hash story | Clear mapping between local binding and circuit `persistentHash` |
 | Company NER lists / richer detectors | Closer to DLP parity without leaving the device |
 | Invite-link org join + multi-admin | Real institutional seating |
@@ -221,10 +227,26 @@ Workspace flow: **Run Kachis Scanner** → **Approve & Settle Shield** → **Con
 ```bash
 cd agent
 npm install
+npm run build
 npm start
 ```
 
-Copy `agent/mcp.example.json` into your MCP host settings, or use **Integrations** in the console. Host must call `kachis_shield` and send **only** `shielded_prompt` to the model. After the reply, call `kachis_restore` on-device.
+Copy `agent/mcp.example.json` into your MCP host settings, or use **Integrations** in the console.
+
+- **Published shape:** `npx -y @kachis/agent` with `KACHIS_CONSOLE_URL` (+ optional `KACHIS_SEAT_KEY`)
+- **Local until npm publish:** `node PATH/TO/agent/dist/cli.js`
+
+Host must call `kachis_shield` and send **only** `shielded_prompt` to the model. After the reply, call `kachis_restore` on-device. Settle from MCP is **commitment-only**; Compact settle stays on the console wallet path. Verify with `kachis_status` or `GET /api/agent/health`.
+
+### Browser companion
+
+```bash
+cd extension
+npm install
+npm run build
+```
+
+Chrome → Extensions → Developer mode → Load unpacked → `extension/dist`. Options: console URL + optional seat key. Intercepts ChatGPT submit; rule-pack shield on-device; public commitments post with `source: extension`.
 
 ---
 

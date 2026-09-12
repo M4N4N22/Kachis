@@ -35,7 +35,9 @@ export function requiredPackForTier(tier: "freelancer" | "institutional"): numbe
 
 /** Env override: KACHIS_REQUIRED_PACK bitmask. Unset or 0 = no API minimum. Institutional deploys use 31. */
 export function requiredPackFromEnv(): number {
-  const raw = process.env.KACHIS_REQUIRED_PACK;
+  const env =
+    typeof process !== "undefined" && process.env ? process.env : undefined;
+  const raw = env?.KACHIS_REQUIRED_PACK;
   if (raw == null || raw.trim() === "") return 0;
   const parsed = Number.parseInt(raw, 10);
   if (!Number.isFinite(parsed) || parsed < 0) return 0;
@@ -43,7 +45,9 @@ export function requiredPackFromEnv(): number {
 }
 
 export function enforceRequiredPackEnabled(): boolean {
-  const flag = process.env.KACHIS_ENFORCE_REQUIRED_PACK;
+  const env =
+    typeof process !== "undefined" && process.env ? process.env : undefined;
+  const flag = env?.KACHIS_ENFORCE_REQUIRED_PACK;
   if (flag == null || flag.trim() === "") return true;
   return flag === "1" || flag.toLowerCase() === "true";
 }

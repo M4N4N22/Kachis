@@ -1,0 +1,18 @@
+{
+  "name": "@kachis/extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kachis browser companion — shield ChatGPT paste before submit.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "next-app": "file:.."
+  }
+}

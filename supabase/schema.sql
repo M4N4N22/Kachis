@@ -52,7 +52,7 @@ create table if not exists public.attestations (
   circuit text not null,
   attested_at timestamptz not null,
   status text not null,
-  source text not null check (source in ('console', 'agent', 'chain')),
+  source text not null check (source in ('console', 'agent', 'extension', 'chain')),
   wallet_address text,
   note text not null default '',
   tx_id text,

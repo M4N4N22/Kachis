@@ -151,7 +151,7 @@ export function mergeLocalAndChain(
       byHash.set(key, {
         ...onChain,
         findings: row.findings?.length ? row.findings : onChain.findings,
-        source: row.source === "agent" ? "agent" : row.source === "console" ? "console" : onChain.source,
+        source: row.source === "agent" ? "agent" : row.source === "extension" ? "extension" : row.source === "console" ? "console" : onChain.source,
         walletAddress: row.walletAddress ?? onChain.walletAddress,
         note: row.note?.includes("Settled") ? row.note : onChain.note,
         // Settlement id from console; Subscan hash from chain.

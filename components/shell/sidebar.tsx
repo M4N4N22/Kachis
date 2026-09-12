@@ -31,7 +31,10 @@ function NavLinkList({
   return (
     <div className="flex flex-col gap-0.5">
       {items.map((item) => {
-        const active = pathname === item.href;
+        const active =
+          pathname === item.href ||
+          (item.href !== "/integrations" &&
+            pathname.startsWith(`${item.href}/`));
         const Icon = item.icon;
         return (
           <Link
@@ -231,7 +234,7 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "flex h-full shrink-0 flex-col border-muted border-r  text-sidebar-fg transition-[width,transform] duration-300",
+          "flex h-full shrink-0 flex-col border-surface border-r  text-sidebar-fg transition-[width,transform] duration-300",
           sidebarCollapsed ? "w-[4.25rem]" : "w-[17.5rem]",
           "fixed inset-y-0 left-0 z-50 md:static md:z-auto",
           mobileNavOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",

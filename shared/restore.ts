@@ -46,7 +46,7 @@ export function restoreFromTokenMap(
 
   let out = text;
   for (const [token, original] of entries) {
-    if (!token || !original) continue;
+    if (!token || typeof original !== "string" || !original) continue;
     if (!out.includes(token)) continue;
     out = out.split(token).join(original);
   }

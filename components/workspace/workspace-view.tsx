@@ -31,7 +31,7 @@ export function WorkspaceView({ demo = false }: { demo?: boolean }) {
     <WorkspaceProvider demo={demo}>
       <div className="flex min-h-0 flex-1 flex-col gap-3">
         {demo ? (
-          <p className="shrink-0 rounded-full px-3 py-2 text-[13px] text-brand">
+          <p className="shrink-0 rounded-full px-3 py-2 text-[13px] text-ink/50">
             {copy.demo.banner}
           </p>
         ) : null}
