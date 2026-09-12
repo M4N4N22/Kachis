@@ -221,7 +221,7 @@ export function ResponsePanel() {
   }
 
   return (
-    <section className="relative flex h-full min-h-0 flex-col overflow-hidden bg-neutral-900/70 rounded-3xl">
+    <section className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-3xl bg-surface">
       <div className="relative px-5 pt-5 pb-3">
         <h2 className="text-lg text-brand">{copy.response.title}</h2>
         <p className="text-[13px] leading-6 text-muted-fg">{copy.response.helper}</p>

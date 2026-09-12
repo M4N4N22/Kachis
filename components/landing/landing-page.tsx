@@ -12,6 +12,7 @@ import { PricingMatrix } from "@/components/landing/pricing-matrix";
 import { MidnightPower } from "@/components/landing/midnight-power";
 import { LandingFaq } from "@/components/landing/landing-faq";
 import { FinalCta } from "@/components/landing/final-cta";
+import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 import { copy } from "@/lib/copy";
 import { MidnightWordmark } from "../brand/midnight-mark";
@@ -25,37 +26,35 @@ export function LandingPage() {
   return (
     <div className=" min-h-screen text-ink">
       <header className="fixed inset-x-0 top-4 z-30 flex justify-center px-4">
-        <div className="flex w-full bg-ink/[0.15] dark:bg-black/[0.15] 
-               backdrop-blur-md saturate-150
-               border border-ink/20 dark:border-ink/10
-               shadow-[0_4px_30px_rgba(0,0,0,0.1)] max-w-6xl items-center justify-between rounded-full  p-4 text-ink ">
+        <div className="flex w-full max-w-6xl items-center justify-between rounded-full border border-white/10 bg-black/20 p-4 text-white shadow-[0_4px_30px_rgba(0,0,0,0.1)] backdrop-blur-md saturate-150">
           <Logo inverted />
-          <nav className="hidden items-center gap-6 text-[13px] text-ink/70 md:flex">
-            <a href="#signal" className="hover:text-ink">
+          <nav className="hidden items-center gap-6 text-[13px] text-white/70 md:flex">
+            <a href="#signal" className="hover:text-white">
               Signal
             </a>
-            <a href="#product" className="hover:text-ink">
+            <a href="#product" className="hover:text-white">
               Product
             </a>
-            <a href="#proof" className="hover:text-ink">
+            <a href="#proof" className="hover:text-white">
               How it works
             </a>
-            <a href="#agents" className="hover:text-ink">
+            <a href="#agents" className="hover:text-white">
               Agents
             </a>
-            <a href="#midnight" className="hover:text-ink">
+            <a href="#midnight" className="hover:text-white">
               Midnight
             </a>
-            <a href="#audiences" className="hover:text-ink">
+            <a href="#audiences" className="hover:text-white">
               Audiences
             </a>
           </nav>
           <div className="flex items-center gap-2">
+            <ModeToggle className="h-9 w-9 border-white/15 text-white hover:border-white/30 hover:bg-white/10" />
             <Link href="/demo">
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-ink/70 hover:bg-ink/10 hover:text-ink"
+                className="text-white/70 hover:bg-white/10 hover:text-white"
               >
                 {copy.demo.landing}
               </Button>
@@ -102,13 +101,13 @@ export function LandingPage() {
           />
         </div>
 
-        <div className="relative text-center z-10 mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-center px-6 pointer-events-none">
-          <div className="landing-fade flex items-center gap-2 text-center mx-auto" >
+        <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-6xl flex-col justify-center px-6 text-center text-white pointer-events-none">
+          <div className="landing-fade mx-auto flex items-center gap-2 text-center">
             Powered by
-            <MidnightWordmark className="h-8 w-auto text-ink mt-1 bg-[#0000FE] p-2 rounded-xl" />
+            <MidnightWordmark className="mt-1 h-8 w-auto rounded-xl bg-[#0000FE] p-2 text-white" />
           </div>
           <h1
-            className="landing-fade font-light tracking-[-0.06em] text-ink mt-4"
+            className="landing-fade mt-4 font-light tracking-[-0.06em] text-white"
             style={{
               animationDelay: "40ms",
               fontSize: "clamp(3rem, 12vw, 7.25rem)",
@@ -120,7 +119,7 @@ export function LandingPage() {
             Zero compromise.
           </h1>
           <p
-            className="landing-fade mt-8 max-w-3xl mx-auto text-[15px] leading-7 text-ink/70"
+            className="landing-fade mt-8 mx-auto max-w-3xl text-[15px] leading-7 text-white/70"
             style={{ animationDelay: "80ms" }}
           >
             If your team's AI history leaked today, how cooked is your data? <br/> Kachis builds a
@@ -128,7 +127,7 @@ export function LandingPage() {
             device, and let Midnight attest to the security matrix.
           </p>
           <div
-            className="landing-fade mt-8 flex flex-wrap gap-3 pointer-events-auto items-center justify-center"
+            className="landing-fade mt-8 flex flex-wrap items-center justify-center gap-3 pointer-events-auto"
             style={{ animationDelay: "120ms" }}
           >
             <Link href="/onboarding">
@@ -138,7 +137,7 @@ export function LandingPage() {
               </Button>
             </Link>
             <Link href="/demo">
-              <Button variant="outline" className="border-0 bg-ink/8 text-ink ring-ink/15">
+              <Button variant="outline" className="border-0 bg-white/10 text-white ring-white/20">
                 {copy.demo.landing}
               </Button>
             </Link>

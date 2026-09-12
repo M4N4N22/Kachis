@@ -231,7 +231,7 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "flex h-full shrink-0 flex-col border-ink/5 border-r bg-neutral-900/50 text-sidebar-fg transition-[width,transform] duration-300",
+          "flex h-full shrink-0 flex-col border-muted border-r  text-sidebar-fg transition-[width,transform] duration-300",
           sidebarCollapsed ? "w-[4.25rem]" : "w-[17.5rem]",
           "fixed inset-y-0 left-0 z-50 md:static md:z-auto",
           mobileNavOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
@@ -346,10 +346,10 @@ export function Sidebar() {
             title={sidebarCollapsed ? copy.demo.nav : undefined}
             onClick={closeMobile}
             className={cn(
-              "flex items-center gap-3 rounded-xl px-2.5 py-2 text-[11px] font-semibold transition-colors",
+              "flex items-center gap-2 rounded-xl px-2.5 py-2 text-[11px] font-semibold transition-colors",
               sidebarCollapsed && "justify-center px-0",
               pathname === "/demo"
-                ? "bg-sidebar-accent text-sidebar-fg"
+                ? " text-sidebar-fg"
                 : "text-sidebar-muted hover:bg-sidebar-accent/70 hover:text-sidebar-fg",
             )}
           >

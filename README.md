@@ -211,7 +211,7 @@ BYOC keys are pasted in the console (session memory). Do not put user keys in `.
 | URL | Path |
 |---|---|
 | [http://localhost:3000/onboarding](http://localhost:3000/onboarding) | Connect wallet → Solo Sandbox or Institutional Node |
-| [http://localhost:3000/workspace](http://localhost:3000/workspace) | Live shield → settle → send |
+| [http://localhost:3000/workspace](http://localhost:3000/workspace) | Live shield → settle → send (chat layout default; Classic toggle available) |
 | [http://localhost:3000/demo](http://localhost:3000/demo) | Walkthrough — canned paste, **no wallet** |
 
 Workspace flow: **Run Kachis Scanner** → **Approve & Settle Shield** → **Confirm & Send**.
@@ -247,7 +247,7 @@ Details: [`compact/README.md`](compact/README.md). License: Apache 2.0 (`LICENSE
 1. Install **1AM** (recommended), Lace, or Gero; enable Midnight; faucet **tNIGHT**; wait for **DUST**.
 2. Proofs: **1AM in-wallet proving** (no Docker), **or** Lace with a local/remote proof server (`docker run -p 6300:6300 midnightntwrk/proof-server:8.1.0 midnight-proof-server -v`) / `NEXT_PUBLIC_MIDNIGHT_PROOF_SERVER_URL`. Gero Cloud can prove but cannot balance contract txs yet.
 3. Compile the contract (above).
-4. Restart with `npm run dev` (webpack). Open Workspace (`/workspace`), connect the wallet, confirm fee reserve, paste, Run Kachis Scanner, then Approve & Settle. If settlement fails, nothing is recorded and Confirm & Send stays locked. For a wallet-free path, use Walkthrough (`/demo`).
+4. Restart with `npm run dev` (webpack). Open Workspace (`/workspace`), connect the wallet, confirm fee reserve, paste in the chat composer (or switch to Classic), Run Kachis Scanner, then Approve & Settle. If settlement fails, nothing is recorded and Confirm & Send stays locked. For a wallet-free path, use Walkthrough (`/demo`).
 5. Guide rail shows a **settlement id** on success.
 
 Optional: pin both Preprod instances so later sessions skip deploy.
