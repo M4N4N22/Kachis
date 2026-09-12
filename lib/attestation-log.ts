@@ -202,17 +202,19 @@ async function getStore(): Promise<PublicAttestation[]> {
   if (cache) return cache;
   if (!loadPromise) {
     loadPromise = (async () => {
-      const fromSb = await loadFromSupabase();
-      if (fromSb) {
-        cache = fromSb;
-        return fromSb;
+      try {
+        const fromSb = await loadFromSupabase();
+        if (fromSb) {
+          cache = fromSb;
+          return fromSb;
+        }
+        const fromDisk = await loadFromDisk();
+        cache = fromDisk;
+        return fromDisk;
+      } finally {
+        loadPromise = null;
       }
-      const fromDisk = await loadFromDisk();
-      cache = fromDisk;
-      return fromDisk;
-    }).finally(() => {
-      loadPromise = null;
-    });
+    })();
   }
   return loadPromise;
 }
