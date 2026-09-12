@@ -1,8 +1,7 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 
-const DATA_DIR = path.join(process.cwd(), ".data");
-const QUOTA_FILE = path.join(DATA_DIR, "beta-chat-quota.json");
+const LOCAL_DATA_DIR = path.join(process.cwd(), ".data");
 
 export type BetaQuotaSnapshot = {
   day: string;
@@ -16,6 +15,9 @@ type QuotaFile = {
   day: string;
   used: number;
 };
+
+/** Process-local fallback when disk writes fail (Vercel /tmp races, cold starts). */
+let memoryQuota: QuotaFile | null = null;
 
 function utcDay(now = new Date()) {
   return now.toISOString().slice(0, 10);
@@ -31,27 +33,49 @@ function geminiConfigured() {
   return Boolean(process.env.GEMINI_API_KEY?.trim());
 }
 
-async function ensureDir() {
-  await fs.mkdir(DATA_DIR, { recursive: true });
+function quotaFilePath() {
+  // Vercel serverless FS is read-only except /tmp.
+  if (process.env.VERCEL) {
+    return path.join("/tmp", "kachis-beta-chat-quota.json");
+  }
+  return path.join(LOCAL_DATA_DIR, "beta-chat-quota.json");
+}
+
+async function ensureLocalDir() {
+  if (process.env.VERCEL) return;
+  await fs.mkdir(LOCAL_DATA_DIR, { recursive: true });
 }
 
 async function readQuotaFile(): Promise<QuotaFile> {
   const day = utcDay();
+  if (memoryQuota?.day === day) {
+    return { day, used: memoryQuota.used };
+  }
   try {
-    const raw = await fs.readFile(QUOTA_FILE, "utf8");
+    const raw = await fs.readFile(quotaFilePath(), "utf8");
     const parsed = JSON.parse(raw) as Partial<QuotaFile>;
     if (parsed.day === day && typeof parsed.used === "number") {
-      return { day, used: Math.max(0, Math.floor(parsed.used)) };
+      const state = { day, used: Math.max(0, Math.floor(parsed.used)) };
+      memoryQuota = state;
+      return state;
     }
   } catch {
     /* fresh day / missing file */
   }
-  return { day, used: 0 };
+  const fresh = { day, used: 0 };
+  memoryQuota = fresh;
+  return fresh;
 }
 
 async function writeQuotaFile(state: QuotaFile) {
-  await ensureDir();
-  await fs.writeFile(QUOTA_FILE, JSON.stringify(state, null, 2), "utf8");
+  memoryQuota = state;
+  try {
+    await ensureLocalDir();
+    await fs.writeFile(quotaFilePath(), JSON.stringify(state, null, 2), "utf8");
+  } catch (error) {
+    // Do not fail Confirm & Send — quota still tracks in-memory for this instance.
+    console.error("[kachis] beta quota persist failed", error);
+  }
 }
 
 function toSnapshot(state: QuotaFile, limit: number, available: boolean): BetaQuotaSnapshot {
