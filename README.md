@@ -192,7 +192,7 @@ npm run dev
 
 | Variable | Purpose |
 |---|---|
-| `GEMINI_API_KEY` | Hosted beta replies (shared daily pool) |
+| `GEMINI_API_KEY` | Hosted beta replies on Confirm & Send (required on Vercel unless using BYOC) |
 | `KACHIS_BETA_CHAT_LIMIT` | Beta replies per UTC day (default 10) |
 | `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` | Org seats **and** durable `/api/shield` console log — run full `supabase/schema.sql` (includes `attestations`) |
 | `NEXT_PUBLIC_MIDNIGHT_NETWORK` | `preprod` |

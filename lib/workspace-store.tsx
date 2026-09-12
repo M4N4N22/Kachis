@@ -498,14 +498,30 @@ export function WorkspaceProvider({
               : undefined,
         }),
       });
-      const data = (await response.json()) as {
+
+      let data: {
         content?: string;
         error?: string;
         source?: "beta" | "byoc";
         provider?: string;
         label?: string;
         model?: string;
-      };
+      } = {};
+      try {
+        data = (await response.json()) as typeof data;
+      } catch {
+        const message = copy.response.error;
+        setMessages([
+          {
+            id: createId(),
+            role: "assistant",
+            content: message,
+            createdAt: new Date().toISOString(),
+          },
+        ]);
+        notifyError(copy.action.toastSendErr, message, SEND_TOAST_ID);
+        return;
+      }
 
       if (!response.ok || data.error) {
         const message = data.error ?? copy.response.error;
