@@ -130,7 +130,7 @@ export function ChatComposer({
           ) : null}
         </AnimatePresence>
 
-        <div className="overflow-hidden rounded-3xl  bg-surface shadow-xl">
+        <div className="overflow-hidden rounded-3xl  bg-surface">
           <div className="flex flex-wrap items-center gap-1.5 px-3 py-2">
             <button
               type="button"

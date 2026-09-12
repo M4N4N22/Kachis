@@ -1,22 +1,39 @@
 {
-  "name": "kachis-agent",
+  "name": "@kachis/agent",
   "version": "0.1.0",
-  "private": true,
+  "description": "Kachis Agent MCP server — shield paste before it reaches a public model.",
   "type": "module",
   "bin": {
-    "kachis-agent": "./src/index.ts"
+    "kachis-agent": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "mcp.example.json"
+  ],
   "scripts": {
-    "start": "tsx src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "build": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/cli.js --external:@huggingface/transformers --external:@modelcontextprotocol/sdk --external:zod && node ../scripts/prepend-shebang.mjs dist/cli.js",
+    "start": "node dist/cli.js",
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run build"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.7.2",
+    "@kachis/shield": "file:../shared",
     "@modelcontextprotocol/sdk": "^1.25.1",
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "esbuild": "^0.25.9",
     "tsx": "^4.20.5",
     "typescript": "^5"
+  },
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
   }
 }

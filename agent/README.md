@@ -1,48 +1,84 @@
-# Kachis Agent v1 (MCP)
+# Kachis Agent (`@kachis/agent`)
 
-Local MCP server. The host agent (Cursor, Claude Desktop) must call `kachis_shield` before a raw paste leaves the laptop.
+Local MCP server for Cursor, Claude Desktop, and other MCP hosts.
 
-Same scanner as the web console (`shared/`). Original plaintext is not in the tool result.
+Host flow: **`kachis_shield` → model sees only `shielded_prompt` → `kachis_restore`**.
 
-## Run
+Same scanner as the console (`@kachis/shield` / `shared/`). Original plaintext is never in the tool result. Token maps stay in process memory on this machine.
 
-From this folder:
+**Settle mode:** commitment-only. Public `cleanedHash` / `binding` / `packFlags` post to the console. Compact on-chain settle remains the console wallet path.
+
+## Install
+
+### From this repo (dev)
 
 ```bash
+cd agent
 npm install
+npm run build
 npm start
 ```
 
-Optional: `KACHIS_CONSOLE_URL` (default `http://localhost:3000`) posts the **public** commitment to the console notary log. The original paste is never posted.
-
-## Cursor / Claude MCP config
+### Host config (published package)
 
 ```json
 {
   "mcpServers": {
     "kachis-agent": {
       "command": "npx",
-      "args": ["tsx", "src/index.ts"],
-      "cwd": "PATH/TO/next-app/agent",
+      "args": ["-y", "@kachis/agent"],
       "env": {
-        "KACHIS_CONSOLE_URL": "http://localhost:3000"
+        "KACHIS_CONSOLE_URL": "http://localhost:3000",
+        "KACHIS_SEAT_KEY": ""
       }
     }
   }
 }
 ```
 
-On Windows, set `cwd` to your full path, e.g. `C:\\dev\\buildathons\\midnight-buildathon\\Kachina\\next-app\\agent`.
+Until `@kachis/agent` is on npm, point the host at the built binary:
 
-## Tool
+```json
+{
+  "mcpServers": {
+    "kachis-agent": {
+      "command": "node",
+      "args": ["PATH/TO/next-app/agent/dist/cli.js"],
+      "env": {
+        "KACHIS_CONSOLE_URL": "http://localhost:3000",
+        "KACHIS_SEAT_KEY": ""
+      }
+    }
+  }
+}
+```
 
-`kachis_shield`
+Or use Integrations in the console to copy config.
 
-- Input: raw `text` + optional pack toggles (identifiers, financials, secrets, code, client records)
-- Defaults: all five packs on (institutional)
-- Output: `shielded_prompt`, `cleaned_commitment`, `binding`, findings, circuit id, optional `ledger_id`
-- Host must send **only** `shielded_prompt` to the model — never the original paste
+## Environment
 
-Resource: `kachis://circuit` describes Compact public vs private fields.
+| Variable | Purpose |
+|---|---|
+| `KACHIS_CONSOLE_URL` | Console origin (default `http://localhost:3000`) |
+| `KACHIS_SEAT_KEY` | Machine seat key when console has `KACHIS_SEAT_KEYS` set |
+| `KACHIS_TIER` | `institutional` (default) or `freelancer` pack defaults when console policy is unreachable |
 
-Compact on-chain submit is not invoked from MCP yet. Commitments match the public shape of `compact/kachis-guardrail.compact`.
+## Tools
+
+| Tool | Job |
+|---|---|
+| `kachis_shield` | Scan raw paste; return shielded prompt + commitments; post public commitment |
+| `kachis_restore` | Restore insulation tokens in a model reply (local only) |
+| `kachis_status` | Console health + policy + seat check |
+
+Resources: `kachis://status`, `kachis://circuit`.
+
+## Verify
+
+With the console running:
+
+```bash
+curl http://localhost:3000/api/agent/health
+```
+
+Then call `kachis_status` from the host.

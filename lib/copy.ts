@@ -411,9 +411,9 @@ export const copy = {
     categorySystem: "System infrastructure",
     mcpTitle: "Kachis Agent (MCP)",
     mcpBody:
-      "Hooks into the IDE agent loop. Shields sensitive paste before it reaches a public model. Host must call kachis_shield, send only the shielded prompt, then kachis_restore on the reply.",
+      "Hooks into the IDE agent loop. Shields sensitive paste before it reaches a public model.",
     mcpCompat: "Cursor, Claude Desktop, and other MCP hosts",
-    mcpAction: "Manage configuration",
+    mcpAction: "Open Agent console",
     mcpHideConfig: "Hide configuration",
     extensionTitle: "Browser companion",
     extensionBody:
@@ -421,7 +421,7 @@ export const copy = {
     extensionCompat: "Chrome, Brave, Edge",
     extensionAction: "Install extension",
     extensionNote:
-      "Wave 1 packaging — install link will appear here when the store package is published.",
+      "Load unpacked from extension/dist after npm run build in extension/. Chrome → Extensions → Developer mode.",
     workspaceTitle: "Protected AI Chat",
     workspaceBody:
       "Split-screen workspace on this machine. Shield paste, review the insulated remainder, settle evidence, then send to your model.",
@@ -430,9 +430,10 @@ export const copy = {
     sdkTitle: "Programmatic SDK",
     sdkBody:
       "Package wrapper for automated workflows. Insulates agents, bots, and scheduled pipelines inside the execution layer.",
-    sdkCompat: "Node.js, Python, Rust · @kachis/shield",
+    sdkCompat: "Node.js · @kachis/shield",
     sdkAction: "View API specs",
-    sdkNote: "Published package ships after Wave 1. Today: runShield in shared/.",
+    sdkNote:
+      "Package lives in shared/ as @kachis/shield. npm publish ships with the agent release.",
     gatewayTitle: "Network gateway",
     gatewayBody:
       "Infrastructure perimeter for outbound model traffic from unmanaged devices and legacy systems across the company network.",
@@ -444,33 +445,36 @@ export const copy = {
       "Background service that coordinates on-device shielding and evidence for every edge host. Installer and always-on sidecar come after the library path.",
     sidecarCompat: "Windows, macOS, Linux",
     sidecarAction: "View diagnostics",
-    configLabel: "MCP config",
+    // Legacy aliases kept for any remaining references
+    configLabel: "MCP config (npx)",
+    configLocalLabel: "MCP config (local build)",
+    configLocalHelper:
+      "Until @kachis/agent is on npm: build the agent, then point args at agent/dist/cli.js.",
     copyConfig: "Copy",
     copiedConfig: "Copied",
     toolTitle: "Tool contract",
-    toolName: "kachis_shield",
-    toolInput: "Raw paste + optional pack toggles. Defaults: all five packs on.",
+    toolName: "kachis_shield · kachis_restore · kachis_status",
+    toolInput: "Raw paste + optional pack toggles. Defaults follow console policy.",
     toolOutput:
-      "Shielded prompt plus public commitments. Original text and token map never leave the machine in this payload.",
+      "Shielded prompt plus public commitments. Original text and token map never leave the machine in this payload. Settle mode: commitment-only.",
     restoreTool: "kachis_restore",
     restoreHelper:
       "After the model replies, restore enumerated tokens on-device. Secrets stay masked unless opted in.",
     toolRule: "Send only the shielded prompt to the model — never the original paste.",
-    step1Title: "Install the agent",
+    step1Title: "Build or install the agent",
     step1Body:
-      "From the agent folder: npm install, then npm start — or let the host start it via MCP.",
+      "From agent/: npm install && npm run build. Or use npx @kachis/agent when published.",
     step2Title: "Add the host config",
     step2Body:
-      "Paste this into Cursor or Claude Desktop MCP settings. On Windows, set cwd to the full path of the agent folder.",
+      "Paste the npx block into Cursor or Claude Desktop MCP settings. For local builds, use the node path to dist/cli.js. Set KACHIS_SEAT_KEY when the console requires machine seats.",
     step3Title: "Shield before the model",
     step3Body:
-      "Host calls kachis_shield on the raw paste, then sends only the shielded prompt to the model. After the reply, call kachis_restore locally. Public commitments post to this console.",
+      "Call kachis_status to verify the console, then kachis_shield on the raw paste. Send only shielded_prompt to the model. After the reply, call kachis_restore locally.",
     activityTitle: "Agent activity",
     activityHelper:
-      "Public commitments recorded when the agent reaches this console. Original paste is never stored.",
+      "Public commitments from MCP and the browser companion. Original paste is never stored.",
     activityEmpty:
-      "No agent shields recorded yet — start the agent and call kachis_shield.",
-    // Legacy aliases
+      "No agent shields recorded yet — start the agent or companion and call kachis_shield.",
     agentTitle: "Kachis Agent (MCP)",
     agentBody:
       "Local MCP server for Cursor and Claude Desktop. The host must call kachis_shield before any model sees the paste, then kachis_restore after the reply.",
@@ -485,6 +489,76 @@ export const copy = {
       "Monitors input on public AI sites. Shields sensitive data before it leaves the browser.",
     statusLater: "Pipeline",
     statusLive: "Operational",
+  },
+  agentMcp: {
+    title: "Kachis Agent",
+    helper:
+      "Install, configure, and monitor the MCP server. Public commitments only — originals never leave the host.",
+    statusTitle: "Connection",
+    statusLive: "Receiving commitments",
+    statusIdle: "Awaiting first shield",
+    statusChecking: "Checking…",
+    statusReachable: "Console reachable",
+    statusUnreachable: "Console unreachable",
+    verify: "Verify connection",
+    settleTitle: "Evidence mode",
+    settleMode: "Commitment-only",
+    settleBody:
+      "MCP posts cleanedHash, binding, and packFlags to this console. Compact settle stays on the wallet path in Workspace.",
+    installTitle: "Install",
+    installHelper: "Add the server to your MCP host, then verify from this console.",
+    step1Title: "Build or install the agent",
+    step1Body:
+      "From agent/: npm install && npm run build. Or use npx @kachis/agent when published.",
+    step2Title: "Add host configuration",
+    step2Body:
+      "Paste into Cursor or Claude Desktop MCP settings. Set KACHIS_SEAT_KEY when machine seats are required.",
+    step3Title: "Shield before the model",
+    step3Body:
+      "Host calls kachis_status, then kachis_shield. Send only shielded_prompt to the model. Restore locally after the reply.",
+    configTitle: "Host configuration",
+    configNpx: "Published package",
+    configLocal: "Local build",
+    configLocalHelper:
+      "Until npm publish: point the host at agent/dist/cli.js after npm run build.",
+    copy: "Copy",
+    copied: "Copied",
+    envTitle: "Environment",
+    envConsole: "KACHIS_CONSOLE_URL",
+    envConsoleHelper: "Console origin the agent posts public commitments to.",
+    envSeat: "KACHIS_SEAT_KEY",
+    envSeatHelper:
+      "Optional machine seat. Required when this console sets KACHIS_SEAT_KEYS.",
+    envTier: "KACHIS_TIER",
+    envTierHelper:
+      "Fallback pack defaults when policy is unreachable: institutional or freelancer.",
+    toolsTitle: "Tool contract",
+    toolsHelper: "Hosts must follow this order. Skipping shield is a policy violation.",
+    toolShield: "kachis_shield",
+    toolShieldBody:
+      "Scan raw paste on-device. Returns shielded_prompt and public commitments only.",
+    toolRestore: "kachis_restore",
+    toolRestoreBody:
+      "Restore insulation tokens in a model reply on this machine. Never forward restored text to a public model.",
+    toolStatus: "kachis_status",
+    toolStatusBody: "Console health, seat binding, and required pack policy.",
+    toolRule: "Send only the shielded prompt to the model — never the original paste.",
+    usageTitle: "Usage",
+    usageHelper: "Public commitments attributed to MCP and the browser companion.",
+    usageTotal: "Shields",
+    usageMcp: "MCP",
+    usageExtension: "Companion",
+    usageFindings: "Spans held",
+    usagePacks: "Pack mix",
+    usageEmpty: "No agent usage yet.",
+    activityTitle: "Activity",
+    activityHelper:
+      "Commitment log for machine seats. Original paste is never stored.",
+    activityEmpty:
+      "No agent shields recorded — connect a host and call kachis_shield.",
+    activityHash: "Commitment",
+    activityMeta: "Source · status",
+    backIntegrations: "All integrations",
   },
   landing: {
     launchApp: "Launch app",

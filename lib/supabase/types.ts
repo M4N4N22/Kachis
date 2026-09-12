@@ -84,7 +84,7 @@ export type Database = {
           circuit: string;
           attested_at: string;
           status: string;
-          source: "console" | "agent" | "chain";
+          source: "console" | "agent" | "extension" | "chain";
           wallet_address: string | null;
           note: string;
           tx_id: string | null;
@@ -104,7 +104,7 @@ export type Database = {
           circuit: string;
           attested_at: string;
           status: string;
-          source: "console" | "agent" | "chain";
+          source: "console" | "agent" | "extension" | "chain";
           wallet_address?: string | null;
           note?: string;
           tx_id?: string | null;
@@ -124,7 +124,7 @@ export type Database = {
           circuit?: string;
           attested_at?: string;
           status?: string;
-          source?: "console" | "agent" | "chain";
+          source?: "console" | "agent" | "extension" | "chain";
           wallet_address?: string | null;
           note?: string;
           tx_id?: string | null;

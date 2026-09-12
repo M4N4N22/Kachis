@@ -1,5 +1,6 @@
 import {
   Blocks,
+  Bot,
   BotMessageSquare,
   Building2,
   ChartNoAxesColumn,
@@ -12,6 +13,7 @@ import {
 export type NavHref =
   | "/workspace"
   | "/integrations"
+  | "/integrations/agent"
   | "/analytics"
   | "/audits"
   | "/guardrails"
@@ -51,6 +53,12 @@ export const NAV_SECTIONS: NavSection[] = [
         label: "Integrate Kachis",
         short: "Apps",
         icon: Blocks,
+      },
+      {
+        href: "/integrations/agent",
+        label: "Kachis Agent",
+        short: "Agent",
+        icon: Bot,
       },
     ],
   },
@@ -119,6 +127,11 @@ export const PAGE_COPY: Record<PageHref, { title: string; blurb: string }> = {
     title: "Integration Workspace",
     blurb:
       "Deploy and manage the local shield across developer environments, apps, and network perimeters.",
+  },
+  "/integrations/agent": {
+    title: "Kachis Agent",
+    blurb:
+      "Install, configure, and monitor the MCP server. Public commitments only — originals never leave the host.",
   },
   "/analytics": {
     title: "Shield Analytics",

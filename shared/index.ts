@@ -17,6 +17,7 @@ export { detectNerHits, preloadNer } from "./ner";
 export { restoreFromTokenMap, listedTokensInText } from "./restore";
 export { bindingHex, isCommitmentHex, sha256Hex } from "./commit";
 export { runShield, type RunShieldOptions } from "./shield";
+export { runShieldLite } from "./shield-lite";
 export {
   assertRequiredPack,
   defaultTogglesForTier,

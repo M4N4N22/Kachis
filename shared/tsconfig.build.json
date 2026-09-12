@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "dist",
+    "rootDir": ".",
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "index.ts",
+    "scanner.ts",
+    "ner.ts",
+    "restore.ts",
+    "commit.ts",
+    "shield.ts",
+    "shield-lite.ts",
+    "policy.ts",
+    "types.ts"
+  ],
+  "exclude": ["dist", "test", "node_modules", "shield-browser.ts"]
+}

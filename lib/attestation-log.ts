@@ -4,7 +4,7 @@ import type { GuardrailFinding } from "@/shared/types";
 import type { NotaryStatus } from "@/lib/midnight-notary";
 import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/server";
 
-export type AttestationSource = "console" | "agent" | "chain";
+export type AttestationSource = "console" | "agent" | "extension" | "chain";
 
 export type PublicAttestation = {
   id: string;
@@ -17,6 +17,8 @@ export type PublicAttestation = {
   attestedAt: string;
   status: NotaryStatus;
   source: AttestationSource;
+  /** Machine seat id when posted by MCP / extension. */
+  seatId?: string;
   walletAddress?: string;
   note: string;
   /** Midnight settlement / transaction identifier (from wallet / callTx). */

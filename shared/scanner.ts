@@ -339,6 +339,8 @@ function familyForHit(input: string, hit: ScanHit): PlaceholderFamily {
       return "CODE_SECRET";
     case "client":
       return "ORG";
+    default:
+      return "CLIENT";
   }
 }
 

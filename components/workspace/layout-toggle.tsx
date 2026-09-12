@@ -20,7 +20,7 @@ export function WorkspaceLayoutToggle({ className }: { className?: string }) {
     <div
       role="group"
       aria-label={copy.workspace.modeLabel}
-      className={cn("inline-flex shrink-0 rounded-full bg-muted p-1", className)}
+      className={cn("inline-flex shrink-0 rounded-full bg-black p-1", className)}
     >
       {(["chat", "classic"] as WorkspaceLayoutMode[]).map((item) => (
         <button

@@ -1,0 +1,39 @@
+{
+  "name": "@kachis/shield",
+  "version": "0.1.0",
+  "description": "On-device Kachis scanner: rule packs, optional NER, commitments, and local token restore.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
+    "test": "tsx --test test/shield.test.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "^3.7.2",
+    "next-app": "file:.."
+  },
+  "devDependencies": {
+    "tsx": "^4.20.5",
+    "typescript": "^5"
+  },
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kachis companion</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #0f1419;
+        --muted: #5c6570;
+        --line: #e6e8eb;
+        --brand: #1a5f4a;
+        --bg: #f7f6f3;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font: 14px/1.5 "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(1200px 600px at 10% -10%, #dfece6 0%, transparent 55%),
+          var(--bg);
+        min-height: 100vh;
+      }
+      main {
+        max-width: 480px;
+        margin: 48px auto;
+        padding: 0 20px 48px;
+      }
+      h1 {
+        font-size: 28px;
+        letter-spacing: -0.03em;
+        margin: 0 0 8px;
+      }
+      p {
+        color: var(--muted);
+        margin: 0 0 24px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        margin: 0 0 6px;
+      }
+      input[type="url"],
+      input[type="password"],
+      input[type="text"] {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #fff;
+        margin-bottom: 16px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      button {
+        appearance: none;
+        border: 0;
+        border-radius: 999px;
+        padding: 10px 16px;
+        background: var(--brand);
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      #status {
+        margin-top: 14px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Kachis</h1>
+      <p>
+        Browser companion for ChatGPT. Paste is scanned on this device. Only public
+        commitments reach your console — never the original text.
+      </p>
+      <form id="form">
+        <label for="consoleUrl">Console URL</label>
+        <input id="consoleUrl" name="consoleUrl" type="url" placeholder="http://localhost:3000" />
+
+        <label for="seatKey">Machine seat key (optional)</label>
+        <input id="seatKey" name="seatKey" type="password" autocomplete="off" />
+
+        <div class="row">
+          <input id="enabled" name="enabled" type="checkbox" checked />
+          <label for="enabled" style="margin: 0">Shield ChatGPT submits</label>
+        </div>
+
+        <button type="submit">Save</button>
+        <button type="button" id="verify" style="margin-left: 8px; background: #243038">
+          Verify console
+        </button>
+      </form>
+      <div id="status"></div>
+    </main>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>
