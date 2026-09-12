@@ -24,4 +24,14 @@ fi
 compact update 0.31.1 || compact update
 compact compile compact/kachis-guardrail.compact compact/managed/kachis-guardrail
 printf 'compiled\n' > compact/managed/kachis-guardrail/.compiled
+
+# Vercel serves settle keys from public/ (CDN). Managed keys stay gitignored locally;
+# the public copy is what production fetch(/zk/kachis-guardrail/…) needs.
+PUBLIC_ZK="$ROOT/public/zk/kachis-guardrail"
+mkdir -p "$PUBLIC_ZK/keys" "$PUBLIC_ZK/zkir"
+cp -f compact/managed/kachis-guardrail/.compiled "$PUBLIC_ZK/.compiled"
+cp -f compact/managed/kachis-guardrail/keys/* "$PUBLIC_ZK/keys/"
+cp -f compact/managed/kachis-guardrail/zkir/* "$PUBLIC_ZK/zkir/"
+
 echo "Wrote compact/managed/kachis-guardrail"
+echo "Synced public/zk/kachis-guardrail (keys + zkir) for production settle"

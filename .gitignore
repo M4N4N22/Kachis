@@ -58,7 +58,8 @@ product.md
 .cursor/
 CLAUDE.md
 
-# Compact proving keys (large). Re-generate with compact/compile.sh
+# Compact proving keys under managed/ (large). Re-generate with compact/compile.sh.
+# Production settle serves a committed copy from public/zk/kachis-guardrail/.
 compact/managed/**/keys/
 compact/managed/**/zkir/
 compact/managed/**/compiler/

@@ -198,10 +198,13 @@ npm run dev
 | `NEXT_PUBLIC_MIDNIGHT_NETWORK` | `preprod` |
 | `NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS_SANDBOX` | Solo Sandbox Preprod instance (`requiredPack=0`) |
 | `NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS_INSTITUTIONAL` | Institutional Preprod instance (`requiredPack=31`) |
+| `NEXT_PUBLIC_KACHIS_FORCE_REDEPLOY` | Keep `0` in production so settle reuses pinned addresses |
 | `NEXT_PUBLIC_MIDNIGHT_PROOF_SERVER_URL` | Lace only — e.g. `http://127.0.0.1:6300` |
 | `KACHIS_REQUIRED_PACK` | Soft API pack gate (`0` sandbox, `31` all packs) |
 
 BYOC keys are pasted in the console (session memory). Do not put user keys in `.env`.
+
+**Vercel:** set the sandbox + institutional contract address env vars (and `FORCE_REDEPLOY=0`). Commit `public/zk/kachis-guardrail/` after `./compact/compile.sh` so settle can fetch prover/verifier keys (they are not in git under `compact/managed/**/keys/`).
 
 ### Open the app
 
@@ -235,7 +238,7 @@ chmod +x compact/compile.sh
 ./compact/compile.sh
 ```
 
-That writes `compact/managed/kachis-guardrail` including proving keys. The console serves them at `/zk/kachis-guardrail/…`. CI: `.github/workflows/compact-compile.yml`.
+That writes `compact/managed/kachis-guardrail` including proving keys, and syncs them to `public/zk/kachis-guardrail/` so production (Vercel) can serve `/zk/kachis-guardrail/keys/…` as static assets. Commit the `public/zk/kachis-guardrail/` copy after compile — managed `keys/` stay gitignored. CI: `.github/workflows/compact-compile.yml`.
 
 Details: [`compact/README.md`](compact/README.md). License: Apache 2.0 (`LICENSE`).
 

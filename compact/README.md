@@ -50,9 +50,9 @@ compact update 0.31.1
 compact compile compact/kachis-guardrail.compact compact/managed/kachis-guardrail
 ```
 
-CI compiles the same command (`.github/workflows/compact-compile.yml`). Proving keys under `keys/` and `zkir/` are gitignored (large). After a successful compile, `.compiled` is written so the console can detect artifacts. Serve them from `/zk/kachis-guardrail/…`.
+CI compiles the same command (`.github/workflows/compact-compile.yml`). Proving keys under managed `keys/` and `zkir/` are gitignored (large). `./compact/compile.sh` also syncs them to `public/zk/kachis-guardrail/` for Vercel static hosting — **commit that public copy** after compile. The console fetches them at `/zk/kachis-guardrail/…`.
 
-After recompile, **redeploy** with constructor `initialRequiredPack = 31` (institutional) or `0` (sandbox). The existing Preprod address remains the prior circuit until you deploy a new address and update `NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS`.
+After recompile, **redeploy** with constructor `initialRequiredPack = 31` (institutional) or `0` (sandbox). Pin addresses via `NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS_SANDBOX` / `_INSTITUTIONAL`.
 
 ## Submit
 
