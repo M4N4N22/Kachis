@@ -15,7 +15,9 @@ import {
   clearConnectedWalletApi,
   displayNetworkLabel,
   finishWalletConnect,
+  humanizeConnectError,
   refreshConnectedBalances,
+  releaseConnectedWalletApi,
   startWalletConnect,
   type WalletConnectSession,
 } from "@/lib/midnight-wallet";
@@ -273,14 +275,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     async (provider: WalletProviderId, session?: WalletConnectSession) => {
       let started = session;
       try {
-        clearConnectedWalletApi();
-        started ??= startWalletConnect(provider);
+        if (started) {
+          // connect() already fired in the click handler — do not race an extension
+          // disconnect underneath the in-flight approval.
+          releaseConnectedWalletApi();
+        } else {
+          clearConnectedWalletApi();
+          started = startWalletConnect(provider);
+        }
       } catch (error) {
         setWallet({
           status: "disconnected",
           provider,
           live: false,
-          error: error instanceof Error ? error.message : "Wallet connection failed",
+          error: humanizeConnectError(error),
         });
         return;
       }
@@ -304,6 +312,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
           walletName: connected.name,
           balances: connected.balances,
         });
+        // Warm ledger WASM + settle keys so the first Approve & Settle is not cold.
+        void import("@/lib/midnight-submit")
+          .then((mod) => mod.warmSettleRuntime())
+          .catch(() => undefined);
+        // If balances were empty on first paint, refresh once the extension settles.
+        if (!connected.balances) {
+          void refreshConnectedBalances()
+            .then((balances) => {
+              if (!balances || generation !== connectGeneration.current) return;
+              setWallet((current) =>
+                current.status === "connected"
+                  ? { ...current, balances, error: undefined }
+                  : current,
+              );
+            })
+            .catch(() => undefined);
+        }
       } catch (error) {
         if (generation !== connectGeneration.current) return;
         setSeatResolved(true);
@@ -311,7 +336,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           status: "disconnected",
           provider,
           live: false,
-          error: error instanceof Error ? error.message : "Wallet connection failed",
+          error: humanizeConnectError(error),
         });
       }
     },

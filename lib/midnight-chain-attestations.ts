@@ -7,10 +7,11 @@ const INDEXER =
   process.env.MIDNIGHT_INDEXER_URL?.replace(/\/$/, "") ||
   "https://indexer.preprod.midnight.network/api/v4/graphql";
 
-/** Live Preprod deploy from the Wave 1 1AM settlement. */
+/** Current live institutional Preprod deploy (requiredPack=31). */
 export const KNOWN_PREPROD_CONTRACT =
+  process.env.NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS_INSTITUTIONAL?.trim() ||
   process.env.NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS?.trim() ||
-  "d145333b792908a93fe7abacf5753ba8e63ecc6291bc76a901ebfed8f5f9f24f";
+  "ec898ae76d13cf947ed6f7c342c54f9f54cea447d0a113a40d7a980d5aa34d75";
 
 function bytesToHex(bytes: Uint8Array) {
   return `0x${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("")}`;

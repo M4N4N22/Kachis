@@ -55,16 +55,31 @@ export function humanizeSettleError(error: unknown): string {
     return copy.action.geroBalanceUnsupported;
   }
 
+  if (/required policy pack not attested/i.test(text)) {
+    return copy.action.requiredPackNotAttested;
+  }
+
   if (
-    /Failed to fetch/i.test(text) ||
-    (/prove/i.test(text) && /fetch/i.test(text)) ||
-    /ECONNREFUSED/i.test(text) ||
-    /proof server/i.test(text)
+    /6300|proof.?server|proverServerUri|ECONNREFUSED/i.test(text) ||
+    (/prove/i.test(text) && /127\.0\.0\.1|localhost/i.test(text))
   ) {
     return copy.action.proofServerUnreachable;
   }
 
-  if (/WebSocket|isomorphic-ws|Export .* doesn't exist/i.test(text)) {
+  if (
+    /getProvingProvider|proving provider|wallet proving|asKeyMaterialProvider/i.test(text)
+  ) {
+    return copy.action.walletProvingUnavailable;
+  }
+
+  if (
+    /zk\/kachis-guardrail|shield\.prover|verifierKey|zkir|artifacts/i.test(text) ||
+    (/Failed to fetch/i.test(text) && /zk|prover|key material/i.test(text))
+  ) {
+    return copy.action.settleArtifactsMissing;
+  }
+
+  if (/WebSocket|isomorphic-ws|Export .* doesn't exist|CostModel|ledger WASM/i.test(text)) {
     return copy.action.settleBundleFailed;
   }
 
@@ -72,7 +87,13 @@ export function humanizeSettleError(error: unknown): string {
     return copy.action.privateStateCorrupt;
   }
 
-  if (/Connect a Midnight wallet|wallet session|not connected/i.test(text)) {
+  if (
+    /Request failed|InternalError|wallet was still waking|did not respond/i.test(text)
+  ) {
+    return copy.action.walletBusy;
+  }
+
+  if (/Connect a Midnight wallet|wallet session|not connected|Disconnected/i.test(text)) {
     return copy.action.reconnectWallet;
   }
 
@@ -82,9 +103,13 @@ export function humanizeSettleError(error: unknown): string {
     text === copy.action.walletRejected ||
     text === copy.action.geroBalanceUnsupported ||
     text === copy.action.proofServerUnreachable ||
+    text === copy.action.walletProvingUnavailable ||
+    text === copy.action.settleArtifactsMissing ||
     text === copy.action.settleBundleFailed ||
     text === copy.action.privateStateCorrupt ||
     text === copy.action.reconnectWallet ||
+    text === copy.action.walletBusy ||
+    text === copy.action.requiredPackNotAttested ||
     text === copy.action.walletRequiredHint ||
     text === copy.action.fundRequiredHint ||
     text === copy.pack.required

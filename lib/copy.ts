@@ -72,9 +72,17 @@ export const copy = {
       "Gero cannot balance contract settlements yet. Connect 1AM with a funded fee reserve to settle.",
     proofServerUnreachable:
       "Proof server unreachable. Use 1AM (in-wallet proving), or start a local proof server on :6300 for Lace.",
+    walletProvingUnavailable:
+      "Wallet proving did not start. Unlock 1AM, approve the prove request, then try Approve & Settle again.",
+    settleArtifactsMissing:
+      "Settle keys did not load. Refresh the page and try again. If this persists, redeploy with Compact artifacts.",
+    requiredPackNotAttested:
+      "Required policy pack not attested. On Institutional, enable all five filters before settle. Sandbox uses a separate pack=0 contract.",
     settleFailed: "Settlement did not complete. Nothing was recorded.",
     walletRejected: "Wallet request declined. Approve in your wallet to settle the shield.",
     reconnectWallet: "Wallet session expired. Disconnect and connect 1AM again, then retry.",
+    walletBusy:
+      "Wallet was still waking up. Approve the pop-up if it appears, or connect again.",
     settleBundleFailed:
       "Settle bundle failed to load. Stop the server and run npm run dev (webpack), then hard-refresh and reconnect 1AM.",
     privateStateCorrupt:

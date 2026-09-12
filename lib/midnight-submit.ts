@@ -48,14 +48,21 @@ import { copy } from "@/lib/copy";
 import { humanizeSettleError } from "@/lib/settle-feedback";
 
 const PRIVATE_STATE_ID = "kachisGuardrail";
-const STORAGE_KEY = "kachis.contractAddress";
+const STORAGE_KEY_SANDBOX = "kachis.contractAddress.sandbox";
+const STORAGE_KEY_INSTITUTIONAL = "kachis.contractAddress.institutional";
+/** Legacy single key — migrated into sandbox slot when read. */
+const STORAGE_KEY_LEGACY = "kachis.contractAddress";
 const ARTIFACTS_PATH = "/zk/kachis-guardrail";
+
+export type GuardrailSeatTier = "freelancer" | "institutional";
 
 export type ShieldSubmitInput = {
   originalHash: string;
   cleanedHash: string;
   packFlags: number;
   network?: string;
+  /** Which Preprod instance to use / deploy. Defaults to sandbox. */
+  tier?: GuardrailSeatTier;
 };
 
 export type ShieldSubmitResult =
@@ -75,16 +82,65 @@ function proofServerUrl(config: { proverServerUri?: string } | undefined) {
   );
 }
 
-function storedContractAddress() {
-  const fromEnv = process.env.NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS?.trim();
-  if (fromEnv) return fromEnv;
-  if (typeof window === "undefined") return undefined;
-  return window.localStorage.getItem(STORAGE_KEY) ?? undefined;
+function forceRedeploy() {
+  const raw = process.env.NEXT_PUBLIC_KACHIS_FORCE_REDEPLOY?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
 }
 
-function persistContractAddress(address: string) {
+function storageKeyFor(tier: GuardrailSeatTier) {
+  return tier === "institutional" ? STORAGE_KEY_INSTITUTIONAL : STORAGE_KEY_SANDBOX;
+}
+
+function envAddressFor(tier: GuardrailSeatTier): string | undefined {
+  if (tier === "institutional") {
+    return (
+      process.env.NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS_INSTITUTIONAL?.trim() ||
+      process.env.NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS?.trim() ||
+      undefined
+    );
+  }
+  // Sandbox must not inherit the institutional pin.
+  return process.env.NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS_SANDBOX?.trim() || undefined;
+}
+
+function storedContractAddress(tier: GuardrailSeatTier) {
+  if (forceRedeploy()) return undefined;
+  const fromEnv = envAddressFor(tier);
+  if (fromEnv) return fromEnv;
+  if (typeof window === "undefined") return undefined;
+  const keyed = window.localStorage.getItem(storageKeyFor(tier));
+  if (keyed) return keyed;
+  if (tier === "freelancer") {
+    const legacy = window.localStorage.getItem(STORAGE_KEY_LEGACY);
+    if (!legacy) return undefined;
+    // Do not reuse an institutional pin as the sandbox instance.
+    const institutional =
+      process.env.NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS_INSTITUTIONAL?.trim() ||
+      process.env.NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS?.trim();
+    if (institutional && legacy === institutional) return undefined;
+    return legacy;
+  }
+  return undefined;
+}
+
+function persistContractAddress(tier: GuardrailSeatTier, address: string) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(STORAGE_KEY, address);
+  window.localStorage.setItem(storageKeyFor(tier), address);
+  if (tier === "freelancer") {
+    window.localStorage.setItem(STORAGE_KEY_LEGACY, address);
+  }
+}
+
+/** Drop remembered Preprod addresses so the next settle can deploy fresh. */
+export function clearStoredContractAddress(tier?: GuardrailSeatTier) {
+  if (typeof window === "undefined") return;
+  if (!tier || tier === "freelancer") {
+    window.localStorage.removeItem(STORAGE_KEY_SANDBOX);
+    window.localStorage.removeItem(STORAGE_KEY_LEGACY);
+  }
+  if (!tier || tier === "institutional") {
+    window.localStorage.removeItem(STORAGE_KEY_INSTITUTIONAL);
+  }
 }
 
 async function artifactsReady() {
@@ -162,20 +218,44 @@ function isBalanceUnimplemented(error: unknown) {
   return /balanceUnsealedTransaction/i.test(message) && /not yet implemented/i.test(message);
 }
 
-function isProofFetchFailure(error: unknown) {
+function delay(ms: number) {
+  return new Promise<void>((resolve) => {
+    globalThis.setTimeout(resolve, ms);
+  });
+}
+
+function isProofServerUrlFailure(error: unknown, proofUrl: string) {
+  const message = formatSettleError(error);
+  const host = (() => {
+    try {
+      return new URL(proofUrl).host;
+    } catch {
+      return "127.0.0.1:6300";
+    }
+  })();
+  return (
+    new RegExp(host.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i").test(message) ||
+    /6300|proof.?server|proverServerUri|ECONNREFUSED/i.test(message) ||
+    (/Failed to fetch|NetworkError|Load failed/i.test(message) &&
+      /prove|proof/i.test(message))
+  );
+}
+
+function isArtifactFetchFailure(error: unknown) {
   const message = formatSettleError(error);
   return (
-    /Failed to fetch/i.test(message) ||
-    (/prove/i.test(message) && /fetch/i.test(message)) ||
-    /ECONNREFUSED/i.test(message) ||
-    /NetworkError/i.test(message) ||
-    /Load failed/i.test(message)
+    /zk\/kachis-guardrail|shield\.prover|verifierKey|\.zkir|key material/i.test(message) ||
+    (/Failed to fetch/i.test(message) && /zk|prover|artifact/i.test(message))
   );
 }
 
 /** Contract settle needs wallet balancing. Gero still stubs this (planned). */
 function walletCanBalanceContracts(providerId: string | undefined) {
   return providerId !== "gero";
+}
+
+function walletSupportsInWalletProving(providerId: string | undefined) {
+  return providerId === "1am" || providerId === "gero" || providerId === "ctrl";
 }
 
 async function balanceWithWallet(api: ConnectedAPI, tx: { serialize: () => Uint8Array }) {
@@ -200,29 +280,91 @@ async function balanceWithWallet(api: ConnectedAPI, tx: { serialize: () => Uint8
   }
 }
 
+async function createWalletProofProvider(
+  api: ConnectedAPI,
+  zkConfigProvider: ZKConfigProvider<"shield">,
+): Promise<ProofProvider> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await delay(350 * attempt);
+    try {
+      const costModel = loadCostModel();
+      return await dappConnectorProofProvider<"shield">(api, zkConfigProvider, costModel);
+    } catch (error) {
+      lastError = error;
+      try {
+        const proving = await dappConnectorProvingProvider<"shield">(api, zkConfigProvider);
+        return wrapProvingProvider(proving, loadCostModel());
+      } catch (inner) {
+        lastError = inner;
+      }
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(copy.action.walletProvingUnavailable);
+}
+
+async function proofServerReachable(url: string) {
+  try {
+    const controller = new AbortController();
+    const timer = globalThis.setTimeout(() => controller.abort(), 1500);
+    const response = await fetch(url, { method: "GET", signal: controller.signal });
+    globalThis.clearTimeout(timer);
+    return response.ok || response.status === 404 || response.status === 405;
+  } catch {
+    return false;
+  }
+}
+
 async function createProofProviderForWallet(
   api: ConnectedAPI,
   zkConfigProvider: ZKConfigProvider<"shield">,
   config: { proverServerUri?: string } | undefined,
 ): Promise<ProofProvider> {
   const remote = proofServerUrl(config);
+  const providerId = getConnectedWalletProviderId();
+  const hasWalletProver = typeof api.getProvingProvider === "function";
 
-  // Prefer wallet proving (Lace / Gero Cloud) when available.
-  if (typeof api.getProvingProvider === "function") {
+  // Prefer in-wallet proving. Never silently fall through to localhost:6300 for
+  // 1AM / Gero — that produces a false "proof server unreachable" on first settle.
+  if (hasWalletProver) {
     try {
-      const costModel = loadCostModel();
-      return await dappConnectorProofProvider<"shield">(api, zkConfigProvider, costModel);
-    } catch {
-      try {
-        const proving = await dappConnectorProvingProvider<"shield">(api, zkConfigProvider);
-        return wrapProvingProvider(proving, loadCostModel());
-      } catch {
-        /* Fall through to HTTP proof server / Gero cloud URI. */
+      return await createWalletProofProvider(api, zkConfigProvider);
+    } catch (error) {
+      if (walletSupportsInWalletProving(providerId)) {
+        throw error instanceof Error
+          ? error
+          : new Error(copy.action.walletProvingUnavailable);
       }
+      // Lace (and unknown) may still use an HTTP proof server when wallet prove fails.
+      if (!(await proofServerReachable(remote))) {
+        throw new Error(copy.action.proofServerUnreachable);
+      }
+      console.warn(
+        "[kachis] wallet proving unavailable; falling back to HTTP proof server",
+        error,
+      );
+      return httpClientProofProvider<"shield">(remote, zkConfigProvider);
     }
   }
 
+  if (!(await proofServerReachable(remote))) {
+    throw new Error(copy.action.proofServerUnreachable);
+  }
   return httpClientProofProvider<"shield">(remote, zkConfigProvider);
+}
+
+/** Warm ledger WASM + CostModel so the first settle is not a cold miss. */
+export async function warmSettleRuntime() {
+  if (typeof window === "undefined") return;
+  try {
+    await import("@midnight-ntwrk/ledger-v8");
+    loadCostModel();
+  } catch (error) {
+    console.warn("[kachis] settle runtime warm failed", error);
+  }
+  void artifactsReady().catch(() => undefined);
 }
 
 function compiledGuardrail() {
@@ -230,6 +372,41 @@ function compiledGuardrail() {
     CompiledContract.withWitnesses(witnesses as never),
     CompiledContract.withCompiledFileAssets("compact/managed/kachis-guardrail"),
   ) as never;
+}
+
+/**
+ * Compact `constructor(initialRequiredPack)` only works after recompile.
+ * Stale empty-ctor managed JS expects `initialState(context)` only — passing
+ * `args: [n]` becomes a second parameter and throws "expected 1, received 2".
+ */
+function managedSupportsRequiredPackCtor(): boolean {
+  const text = Function.prototype.toString.call(Contract.prototype.initialState);
+  return /length !== 2/.test(text) || /expected 2 argument/.test(text);
+}
+
+/** On-chain constructor bitmask for this seat. Sandbox = 0, institutional = 31. */
+function requiredPackForDeploy(tier: GuardrailSeatTier): number {
+  if (tier === "institutional") {
+    const raw =
+      process.env.NEXT_PUBLIC_KACHIS_REQUIRED_PACK_INSTITUTIONAL?.trim() ||
+      process.env.NEXT_PUBLIC_KACHIS_REQUIRED_PACK?.trim() ||
+      "31";
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed & 0xff : 31;
+  }
+  const raw = process.env.NEXT_PUBLIC_KACHIS_REQUIRED_PACK_SANDBOX?.trim() || "0";
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed & 0xff : 0;
+}
+
+function deployConstructorArgs(tier: GuardrailSeatTier): bigint[] | undefined {
+  if (!managedSupportsRequiredPackCtor()) {
+    console.warn(
+      "[kachis] managed artifacts still have an empty constructor. Recompile Compact, then redeploy. Deploying without constructor args.",
+    );
+    return undefined;
+  }
+  return [BigInt(requiredPackForDeploy(tier))];
 }
 
 async function createProviders(api: ConnectedAPI, network: string) {
@@ -248,7 +425,8 @@ async function createProviders(api: ConnectedAPI, network: string) {
     config?.indexerWsUri ?? "wss://indexer.preprod.midnight.network/api/v4/graphql/ws";
 
   if (typeof api.hintUsage === "function") {
-    await api
+    // Fire-and-forget: do not block provider construction on permission UX.
+    void api
       .hintUsage(["getProvingProvider", "balanceUnsealedTransaction", "submitTransaction"])
       .catch(() => undefined);
   }
@@ -310,6 +488,16 @@ export async function submitGuardrail(input: ShieldSubmitInput): Promise<ShieldS
       };
     }
 
+    const tier: GuardrailSeatTier = input.tier === "institutional" ? "institutional" : "freelancer";
+    const requiredOnChain = requiredPackForDeploy(tier);
+    // Compact uses exact equality: packFlags == requiredPack (when required != 0).
+    if (requiredOnChain !== 0 && input.packFlags !== requiredOnChain) {
+      return {
+        ok: false,
+        error: copy.action.requiredPackNotAttested,
+      };
+    }
+
     const network = input.network?.trim() || preferredNetwork();
     const cleaned = hexToBytes(input.cleanedHash);
     const compiledContract = compiledGuardrail();
@@ -319,22 +507,28 @@ export async function submitGuardrail(input: ShieldSubmitInput): Promise<ShieldS
     const { providers, network: resolvedNetwork } = await createProviders(api, network);
     const initialPrivateState = createGuardrailPrivateState(hexToBytes(input.originalHash));
 
-    let address = storedContractAddress();
+    let address = storedContractAddress(tier);
     if (!address) {
-      // After recompile with requiredPack constructor, set NEXT_PUBLIC_KACHIS_REQUIRED_PACK=31.
-      // Omit args for the current empty-constructor managed artifacts.
-      const requiredRaw = process.env.NEXT_PUBLIC_KACHIS_REQUIRED_PACK?.trim();
+      clearStoredContractAddress(tier);
       const deployOpts: Record<string, unknown> = {
         compiledContract,
         privateStateId: PRIVATE_STATE_ID,
         initialPrivateState,
       };
-      if (requiredRaw != null && requiredRaw !== "") {
-        deployOpts.args = [BigInt(requiredRaw)];
+      const ctorArgs = deployConstructorArgs(tier);
+      if (ctorArgs) {
+        deployOpts.args = ctorArgs;
       }
+      console.info(
+        `[kachis] deploying fresh guardrail (${tier})…`,
+        ctorArgs ? `args=${ctorArgs.map(String).join(",")}` : "(no constructor args)",
+      );
       const deployed = await deployContract(providers as never, deployOpts as never);
       address = deployed.deployTxData.public.contractAddress;
-      persistContractAddress(address);
+      persistContractAddress(tier, address);
+      console.info(`[kachis] deployed ${tier} guardrail at`, address);
+    } else {
+      console.info(`[kachis] reusing ${tier} guardrail contract`, address);
     }
 
     const found = await findDeployedContract(providers as never, {
@@ -355,8 +549,12 @@ export async function submitGuardrail(input: ShieldSubmitInput): Promise<ShieldS
     if (isBalanceUnimplemented(error)) {
       return { ok: false, error: copy.action.geroBalanceUnsupported };
     }
-    if (isProofFetchFailure(error)) {
+    const remote = proofServerUrl(undefined);
+    if (isProofServerUrlFailure(error, remote)) {
       return { ok: false, error: copy.action.proofServerUnreachable };
+    }
+    if (isArtifactFetchFailure(error)) {
+      return { ok: false, error: copy.action.settleArtifactsMissing };
     }
     if (isPrivateStateDecryptError(error)) {
       await resetGuardrailPrivateStorage().catch(() => undefined);

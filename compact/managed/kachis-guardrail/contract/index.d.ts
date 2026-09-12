@@ -38,6 +38,7 @@ export type Ledger = {
   };
   readonly nextId: bigint;
   readonly totalShielded: bigint;
+  readonly requiredPack: bigint;
 }
 
 export type ContractReferenceLocations = any;
@@ -50,7 +51,8 @@ export declare class Contract<PS = any, W extends Witnesses<PS> = Witnesses<PS>>
   impureCircuits: ImpureCircuits<PS>;
   provableCircuits: ProvableCircuits<PS>;
   constructor(witnesses: W);
-  initialState(context: __compactRuntime.ConstructorContext<PS>): __compactRuntime.ConstructorResult<PS>;
+  initialState(context: __compactRuntime.ConstructorContext<PS>,
+               initialRequiredPack_0: bigint): __compactRuntime.ConstructorResult<PS>;
 }
 
 export declare function ledger(state: __compactRuntime.StateValue | __compactRuntime.ChargedState): Ledger;
