@@ -1,5 +1,6 @@
 import type { ConnectedAPI, InitialAPI } from "@midnight-ntwrk/dapp-connector-api";
 import "@midnight-ntwrk/dapp-connector-api";
+import { copy } from "@/lib/copy";
 import type { WalletBalances } from "@/lib/types";
 
 export type MidnightNetworkId = "undeployed" | "preview" | "preprod" | "mainnet";
@@ -146,6 +147,117 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string) {
       },
     );
   });
+}
+
+function delay(ms: number) {
+  return new Promise<void>((resolve) => {
+    globalThis.setTimeout(resolve, ms);
+  });
+}
+
+function errorText(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const record = error as { message?: unknown; reason?: unknown; code?: unknown };
+    return [record.code, record.reason, record.message]
+      .filter((part) => typeof part === "string" && part.trim())
+      .join(" ");
+  }
+  return String(error);
+}
+
+function isUserRejected(error: unknown): boolean {
+  if (error && typeof error === "object" && "code" in error) {
+    const code = String((error as { code: unknown }).code);
+    if (code === "Rejected" || code === "PermissionRejected") return true;
+  }
+  return /user rejected|rejected the request|user denied|denied by the user|request rejected|user cancelled|user canceled|rejected by user/i.test(
+    errorText(error),
+  );
+}
+
+/** Cold extension service workers often fail the first connect / RPC. */
+function isTransientWalletError(error: unknown): boolean {
+  if (isUserRejected(error)) return false;
+  if (error && typeof error === "object" && "code" in error) {
+    const code = String((error as { code: unknown }).code);
+    if (code === "InternalError" || code === "Disconnected") return true;
+  }
+  const text = errorText(error);
+  return (
+    /request failed/i.test(text) ||
+    /InternalError/i.test(text) ||
+    /Failed to fetch/i.test(text) ||
+    /NetworkError|Load failed/i.test(text) ||
+    /timeout/i.test(text) ||
+    /did not respond/i.test(text) ||
+    /Disconnected/i.test(text)
+  );
+}
+
+export function humanizeConnectError(error: unknown): string {
+  if (isUserRejected(error)) {
+    return copy.action.walletRejected;
+  }
+  const text = errorText(error);
+  if (isTransientWalletError(error) || /request failed/i.test(text)) {
+    return copy.action.walletBusy;
+  }
+  if (text.trim()) return text.trim();
+  return "Wallet connection failed";
+}
+
+const CONNECT_TIMEOUT_MSG =
+  "Wallet did not respond. Check the wallet pop-up — it is often behind this window.";
+
+async function awaitWalletConnect(session: WalletConnectSession): Promise<ConnectedAPI> {
+  try {
+    return await withTimeout(session.pending, 90_000, CONNECT_TIMEOUT_MSG);
+  } catch (error) {
+    if (isUserRejected(error) || !isTransientWalletError(error)) throw error;
+    // Extension SW cold start: one automatic reconnect usually succeeds.
+    await delay(400);
+    return await withTimeout(
+      session.initial.connect(session.network),
+      90_000,
+      CONNECT_TIMEOUT_MSG,
+    );
+  }
+}
+
+async function readUnshieldedAddressReliable(api: ConnectedAPI): Promise<string> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      if (attempt > 0) await delay(280 * attempt);
+      return await readUnshieldedAddress(api);
+    } catch (error) {
+      lastError = error;
+      if (isUserRejected(error)) throw error;
+    }
+  }
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(
+        "Wallet approved but did not return an address. Unlock the wallet, confirm Preprod, and connect again.",
+      );
+}
+
+async function prepareConnectedWallet(api: ConnectedAPI) {
+  if (typeof api.hintUsage !== "function") return;
+  await api
+    .hintUsage([
+      "getProvingProvider",
+      "balanceUnsealedTransaction",
+      "submitTransaction",
+      "getUnshieldedAddress",
+      "getShieldedAddresses",
+      "getDustBalance",
+      "getUnshieldedBalances",
+      "getShieldedBalances",
+    ])
+    .catch(() => undefined);
 }
 
 const ZERO = BigInt(0);
@@ -612,12 +724,8 @@ async function bestEffortDisconnect(api: ConnectedAPI | undefined) {
 }
 
 export async function finishWalletConnect(session: WalletConnectSession) {
-  const connected = await withTimeout(
-    session.pending,
-    90_000,
-    "Wallet did not respond. Check the Lace pop-up — it is often behind this window.",
-  );
-  const address = await readUnshieldedAddress(connected);
+  const connected = await awaitWalletConnect(session);
+  const address = await readUnshieldedAddressReliable(connected);
   let reported: string | undefined;
   try {
     if (typeof connected.getConnectionStatus === "function") {
@@ -634,16 +742,26 @@ export async function finishWalletConnect(session: WalletConnectSession) {
     /* Address can still name the network. */
   }
   const network = resolveNetworkId(reported, address, session.network);
-  const balances = await readWalletBalances(connected, {
+  // Balances are best-effort — never fail an approved connect on a balance RPC flake.
+  let balances = await readWalletBalances(connected, {
     providerId: session.providerId,
     network,
   }).catch(() => undefined);
+  if (!balances) {
+    await delay(500);
+    balances = await readWalletBalances(connected, {
+      providerId: session.providerId,
+      network,
+    }).catch(() => undefined);
+  }
   const providerId = session.providerId as WalletProviderId;
   activeSession = {
     providerId,
     network,
     api: connected,
   };
+  // Prefetch settle permissions without blocking the connected UI.
+  void prepareConnectedWallet(connected);
   return {
     address,
     network,
@@ -682,6 +800,11 @@ export function getConnectedWalletApi() {
 
 export function getConnectedWalletProviderId(): WalletProviderId | undefined {
   return activeSession?.providerId;
+}
+
+/** Drop the in-memory session without asking the extension to tear down. */
+export function releaseConnectedWalletApi() {
+  activeSession = undefined;
 }
 
 export function clearConnectedWalletApi() {

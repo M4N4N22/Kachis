@@ -118,6 +118,13 @@ export function WorkspaceProvider({
   }, []);
 
   useEffect(() => {
+    if (demo || wallet.status !== "connected") return;
+    void import("@/lib/midnight-submit")
+      .then((mod) => mod.warmSettleRuntime())
+      .catch(() => undefined);
+  }, [demo, wallet.status]);
+
+  useEffect(() => {
     setGuardrails(defaultTogglesForTier(tier));
     setProofStatus("idle");
     setProof(null);
@@ -300,6 +307,7 @@ export function WorkspaceProvider({
           cleanedHash: pendingShield.cleanedHash,
           packFlags: pendingShield.packFlags,
           network: wallet.network,
+          tier,
         });
         if (!live.ok) {
           console.error("[kachis] settle rejected", live);
@@ -403,6 +411,7 @@ export function WorkspaceProvider({
     sending,
     settling,
     shieldGateHint,
+    tier,
     wallet.address,
     wallet.network,
   ]);
