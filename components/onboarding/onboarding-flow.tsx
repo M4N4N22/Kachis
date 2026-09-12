@@ -9,6 +9,7 @@ import { NodeProvisionChecklist } from "@/components/onboarding/node-provision-c
 import { OnboardingSuccess } from "@/components/onboarding/onboarding-success";
 import { ConnectWalletModal } from "@/components/shell/connect-wallet-modal";
 import { Logo } from "@/components/logo";
+import { ModeToggle } from "@/components/mode-toggle";
 import { Button } from "@/components/ui/button";
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 import Stepper, { Step } from "@/components/react-bits/Stepper";
@@ -30,9 +31,12 @@ function OnboardingChrome({ children }: { children: React.ReactNode }) {
         <Link href="/">
           <Logo inverted />
         </Link>
-        <Link href="/demo" className="text-[13px] text-ink/55 hover:text-ink">
-          {copy.demo.landing}
-        </Link>
+        <div className="flex items-center gap-3">
+          <ModeToggle />
+          <Link href="/demo" className="text-[13px] text-ink/55 hover:text-ink">
+            {copy.demo.landing}
+          </Link>
+        </div>
       </header>
       {children}
     </div>

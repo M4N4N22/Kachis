@@ -12,7 +12,6 @@ import {
 import { useApp } from "@/lib/app-store";
 import { copy } from "@/lib/copy";
 import {
-  SAMPLE_SENSITIVE_PROMPT,
   detectNerHits,
   highlightSensitive,
   preloadNer,
@@ -43,6 +42,7 @@ import { toast } from "sonner";
 const SETTLE_TOAST_ID = "kachis-settle";
 const SCAN_TOAST_ID = "kachis-scan";
 const SEND_TOAST_ID = "kachis-send";
+const EMPTY_TOKEN_MAP: Record<string, string> = {};
 
 function notifyError(title: string, description: string, id?: string) {
   toast.error(title, { id, description, duration: 5200 });
@@ -59,6 +59,8 @@ interface WorkspaceContextValue {
   sanitizedPrompt: string;
   highlightSegments: HighlightSegment[];
   revealTokens: CleanRevealToken[];
+  /** Local-only original↔token map after scan (never sent to the model). */
+  shieldTokenMap: Record<string, string>;
   guardrails: GuardrailToggles;
   setGuardrail: (key: keyof GuardrailToggles, value: boolean) => void;
   proofStatus: ProofStatus;
@@ -95,7 +97,7 @@ export function WorkspaceProvider({
 }) {
   const { tier, wallet, recordProof, recordQuery } = useApp();
   const { credential, ready: byocReady } = useByoc();
-  const [rawInput, setRawInputState] = useState(demo ? SAMPLE_SENSITIVE_PROMPT : "");
+  const [rawInput, setRawInputState] = useState("");
   const [sanitizedPrompt, setSanitizedPrompt] = useState("");
   const [highlightSegments, setHighlightSegments] = useState<HighlightSegment[]>([]);
   const [revealTokens, setRevealTokens] = useState<CleanRevealToken[]>([]);
@@ -592,6 +594,7 @@ export function WorkspaceProvider({
   ]);
 
   const busy = scanning || settling;
+  const shieldTokenMap = pendingShield?.tokenMap ?? EMPTY_TOKEN_MAP;
 
   const value = useMemo<WorkspaceContextValue>(
     () => ({
@@ -605,6 +608,7 @@ export function WorkspaceProvider({
       sanitizedPrompt,
       highlightSegments,
       revealTokens,
+      shieldTokenMap,
       guardrails,
       setGuardrail,
       proofStatus,
@@ -642,6 +646,7 @@ export function WorkspaceProvider({
       settleShield,
       settling,
       shieldGateHint,
+      shieldTokenMap,
       walletConnected,
     ],
   );

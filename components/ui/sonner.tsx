@@ -8,13 +8,15 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react";
+import { useTheme } from "next-themes";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
-/** App shell is dark by default — force dark toast chrome. */
 export function Toaster({ ...props }: ToasterProps) {
+  const { resolvedTheme } = useTheme();
+
   return (
     <Sonner
-      theme="dark"
+      theme={resolvedTheme === "light" ? "light" : "dark"}
       className="toaster group"
       position="bottom-right"
       closeButton

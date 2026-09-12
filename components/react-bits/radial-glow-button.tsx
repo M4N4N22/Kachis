@@ -58,7 +58,7 @@ export function RadialGlowButton({
           min-height: 51px;
           padding: 16px 24px;
           border: none;
-          border-radius: 11px;
+          border-radius: 0px;
           font-family: inherit;
           font-size: 16px;
           font-weight: 500;

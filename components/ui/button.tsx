@@ -29,7 +29,7 @@ export function Button({
     <button
       type={type}
       className={cn(
-        "inline-flex items-center justify-center gap-2 font-medium tracking-tight transition-colors",
+        "inline-flex items-center justify-center gap-2 font-medium tracking-tight transition-colors shadow-sm shadow-black",
         "rounded-full disabled:pointer-events-none disabled:opacity-40",
         size === "sm" ? "h-9 px-3.5 text-[13px]" : "h-10 px-4 text-[14px]",
         variants[variant],

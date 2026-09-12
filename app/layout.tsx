@@ -29,6 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={cn("h-full", "antialiased", dmSans.variable, jetbrainsMono.variable, "font-sans", geist.variable)}
     >
       <body className="min-h-full bg-bg font-sans text-ink antialiased">
