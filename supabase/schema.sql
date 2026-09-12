@@ -41,9 +41,39 @@ create index if not exists memberships_wallet_address_idx
 create index if not exists memberships_organization_id_idx
   on public.memberships (organization_id);
 
+-- Public shield console log (commitments + settlement metadata). No original paste.
+create table if not exists public.attestations (
+  id text primary key,
+  ledger_id integer not null,
+  cleaned_hash text not null,
+  binding text not null,
+  pack_flags integer not null default 0,
+  findings jsonb not null default '[]'::jsonb,
+  circuit text not null,
+  attested_at timestamptz not null,
+  status text not null,
+  source text not null check (source in ('console', 'agent', 'chain')),
+  wallet_address text,
+  note text not null default '',
+  tx_id text,
+  tx_hash text,
+  contract_address text,
+  network text,
+  on_chain boolean,
+  created_at timestamptz not null default now(),
+  unique (cleaned_hash, binding)
+);
+
+create index if not exists attestations_ledger_id_idx
+  on public.attestations (ledger_id desc);
+
+create index if not exists attestations_cleaned_hash_idx
+  on public.attestations (cleaned_hash);
+
 alter table public.profiles enable row level security;
 alter table public.organizations enable row level security;
 alter table public.memberships enable row level security;
+alter table public.attestations enable row level security;
 
 -- Server routes use the service role key (bypasses RLS).
 -- No anon policies yet — wallet session auth lands before public client reads.

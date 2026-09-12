@@ -90,52 +90,64 @@ export async function POST(request: Request) {
     }
   }
 
-  const existing = await findAttestationByHash(body.cleanedHash);
-  if (existing && existing.binding === body.binding) {
-    if (body.status === "settled" && body.txId && !existing.txId) {
-      const updated = await recordAttestation({
-        cleanedHash: existing.cleanedHash,
-        binding: existing.binding,
-        packFlags: existing.packFlags,
-        findings: existing.findings,
-        circuit: existing.circuit,
-        attestedAt: existing.attestedAt,
-        source: existing.source,
-        walletAddress: body.walletAddress ?? existing.walletAddress,
-        status: "settled",
-        txId: body.txId,
-        contractAddress: body.contractAddress ?? existing.contractAddress,
-        network: body.network ?? existing.network,
-        note: "Settled. Verification ran; the original stays on this machine.",
-        onChain: true,
-      });
-      return NextResponse.json(updated);
+  try {
+    const existing = await findAttestationByHash(body.cleanedHash);
+    if (existing && existing.binding === body.binding) {
+      if (body.status === "settled" && body.txId && !existing.txId) {
+        const updated = await recordAttestation({
+          cleanedHash: existing.cleanedHash,
+          binding: existing.binding,
+          packFlags: existing.packFlags,
+          findings: existing.findings,
+          circuit: existing.circuit,
+          attestedAt: existing.attestedAt,
+          source: existing.source,
+          walletAddress: body.walletAddress ?? existing.walletAddress,
+          status: "settled",
+          txId: body.txId,
+          contractAddress: body.contractAddress ?? existing.contractAddress,
+          network: body.network ?? existing.network,
+          note: "Settled. Verification ran; the original stays on this machine.",
+          onChain: true,
+        });
+        return NextResponse.json(updated);
+      }
+      return NextResponse.json(existing);
     }
-    return NextResponse.json(existing);
+
+    const notary = await probeProofServer();
+    const settled =
+      body.status === "settled" && typeof body.txId === "string" && body.txId.length > 0;
+    const recorded = await recordAttestation({
+      cleanedHash: body.cleanedHash,
+      binding: body.binding,
+      packFlags,
+      findings: body.findings ?? [],
+      circuit: CIRCUIT_ID,
+      attestedAt: body.attestedAt ?? new Date().toISOString(),
+      status: settled ? "settled" : notary.status,
+      source: body.source === "agent" ? "agent" : "console",
+      walletAddress: body.walletAddress,
+      txId: settled ? body.txId : undefined,
+      contractAddress: walkthrough ? undefined : body.contractAddress,
+      network: body.network,
+      onChain: settled && !walkthrough ? true : undefined,
+      note: settled
+        ? (body.note ?? "Settled. Verification ran; the original stays on this machine.")
+        : (body.note ?? notary.note),
+    });
+
+    return NextResponse.json(recorded);
+  } catch (error) {
+    console.error("[kachis] /api/shield record failed", error);
+    return NextResponse.json(
+      {
+        error:
+          "Console log could not be saved. Settlement on Preprod is unchanged — check Supabase attestations table.",
+      },
+      { status: 500 },
+    );
   }
-
-  const notary = await probeProofServer();
-  const settled = body.status === "settled" && typeof body.txId === "string" && body.txId.length > 0;
-  const recorded = await recordAttestation({
-    cleanedHash: body.cleanedHash,
-    binding: body.binding,
-    packFlags,
-    findings: body.findings ?? [],
-    circuit: CIRCUIT_ID,
-    attestedAt: body.attestedAt ?? new Date().toISOString(),
-    status: settled ? "settled" : notary.status,
-    source: body.source === "agent" ? "agent" : "console",
-    walletAddress: body.walletAddress,
-    txId: settled ? body.txId : undefined,
-    contractAddress: walkthrough ? undefined : body.contractAddress,
-    network: body.network,
-    onChain: settled && !walkthrough ? true : undefined,
-    note: settled
-      ? (body.note ?? "Settled. Verification ran; the original stays on this machine.")
-      : (body.note ?? notary.note),
-  });
-
-  return NextResponse.json(recorded);
 }
 
 export async function GET() {

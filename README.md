@@ -194,7 +194,7 @@ npm run dev
 |---|---|
 | `GEMINI_API_KEY` | Hosted beta replies (shared daily pool) |
 | `KACHIS_BETA_CHAT_LIMIT` | Beta replies per UTC day (default 10) |
-| `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` | Org / onboarding persistence — run `supabase/schema.sql` |
+| `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` | Org seats **and** durable `/api/shield` console log — run full `supabase/schema.sql` (includes `attestations`) |
 | `NEXT_PUBLIC_MIDNIGHT_NETWORK` | `preprod` |
 | `NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS_SANDBOX` | Solo Sandbox Preprod instance (`requiredPack=0`) |
 | `NEXT_PUBLIC_KACHIS_CONTRACT_ADDRESS_INSTITUTIONAL` | Institutional Preprod instance (`requiredPack=31`) |
@@ -204,7 +204,7 @@ npm run dev
 
 BYOC keys are pasted in the console (session memory). Do not put user keys in `.env`.
 
-**Vercel:** set the sandbox + institutional contract address env vars (and `FORCE_REDEPLOY=0`). Commit `public/zk/kachis-guardrail/` after `./compact/compile.sh` so settle can fetch prover/verifier keys (they are not in git under `compact/managed/**/keys/`).
+**Vercel:** set the sandbox + institutional contract address env vars (and `FORCE_REDEPLOY=0`). Commit `public/zk/kachis-guardrail/` after `./compact/compile.sh` so settle can fetch prover/verifier keys (they are not in git under `compact/managed/**/keys/`). Run the latest `supabase/schema.sql` so the `attestations` table exists — without it, wallet settle can succeed while the console log write fails on the read-only filesystem.
 
 ### Open the app
 

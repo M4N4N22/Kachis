@@ -79,6 +79,8 @@ export const copy = {
     requiredPackNotAttested:
       "Required policy pack not attested. On Institutional, enable all five filters before settle. Sandbox uses a separate pack=0 contract.",
     settleFailed: "Settlement did not complete. Nothing was recorded.",
+    settleLogFailed:
+      "Settlement is on Preprod. Console log did not save — Confirm & Send may need a refresh after storage is fixed.",
     walletRejected: "Wallet request declined. Approve in your wallet to settle the shield.",
     reconnectWallet: "Wallet session expired. Disconnect and connect 1AM again, then retry.",
     walletBusy:
