@@ -97,9 +97,16 @@ export function humanizeSettleError(error: unknown): string {
     return copy.action.reconnectWallet;
   }
 
+  if (
+    /Console log could not be saved|attestation persist|attestations table/i.test(text)
+  ) {
+    return copy.action.settleLogFailed;
+  }
+
   // Already product copy — pass through.
   if (
     text === copy.action.settleFailed ||
+    text === copy.action.settleLogFailed ||
     text === copy.action.walletRejected ||
     text === copy.action.geroBalanceUnsupported ||
     text === copy.action.proofServerUnreachable ||

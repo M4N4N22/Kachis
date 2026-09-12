@@ -350,11 +350,35 @@ export function WorkspaceProvider({
         } catch {
           /* keep fallback */
         }
-        failSettle(
-          demo
-            ? detail
-            : `Settlement submitted, but the console log failed: ${humanizeSettleError(detail)}`,
-        );
+        // Wallet / Preprod already accepted the tx — keep the receipt in UI.
+        if (!demo && submitted.txId) {
+          const record: ProofRecord = {
+            hash: pendingShield.cleanedHash,
+            binding: pendingShield.binding,
+            circuit: pendingShield.circuit,
+            attestedAt: pendingShield.attestedAt,
+            findings: pendingShield.findings,
+            packFlags: pendingShield.packFlags,
+            status: "settled",
+            walletAddress: wallet.address,
+            note: copy.action.settleLogFailed,
+            txId: submitted.txId,
+            contractAddress: submitted.contractAddress,
+            network: submitted.network,
+          };
+          setProof(record);
+          setProofStatus("shielded");
+          recordProof(
+            rawInput.length,
+            pendingShield.findings.find((item) => item.kind === "secrets")?.count ?? 0,
+          );
+          toast.success(copy.action.toastSettleOk, {
+            id: SETTLE_TOAST_ID,
+            description: humanizeSettleError(detail),
+          });
+          return;
+        }
+        failSettle(humanizeSettleError(detail));
         return;
       }
 

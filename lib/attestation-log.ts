@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import type { GuardrailFinding } from "@/shared/types";
 import type { NotaryStatus } from "@/lib/midnight-notary";
+import { getSupabaseAdmin, isSupabaseConfigured } from "@/lib/supabase/server";
 
 export type AttestationSource = "console" | "agent" | "chain";
 
@@ -27,8 +28,27 @@ export type PublicAttestation = {
   onChain?: boolean;
 };
 
-const DATA_DIR = path.join(process.cwd(), ".data");
-const DATA_FILE = path.join(DATA_DIR, "attestations.json");
+type AttestationRow = {
+  id: string;
+  ledger_id: number;
+  cleaned_hash: string;
+  binding: string;
+  pack_flags: number;
+  findings: GuardrailFinding[] | null;
+  circuit: string;
+  attested_at: string;
+  status: string;
+  source: string;
+  wallet_address: string | null;
+  note: string | null;
+  tx_id: string | null;
+  tx_hash: string | null;
+  contract_address: string | null;
+  network: string | null;
+  on_chain: boolean | null;
+};
+
+const LOCAL_DATA_DIR = path.join(process.cwd(), ".data");
 const SEED_FILE = path.join(process.cwd(), "data", "preprod-settlement.json");
 
 const INDEXER =
@@ -38,8 +58,17 @@ const INDEXER =
 let cache: PublicAttestation[] | null = null;
 let loadPromise: Promise<PublicAttestation[]> | null = null;
 
-async function ensureDir() {
-  await fs.mkdir(DATA_DIR, { recursive: true });
+function diskFilePath() {
+  // Vercel serverless FS is read-only except /tmp (ephemeral per instance).
+  if (process.env.VERCEL) {
+    return path.join("/tmp", "kachis-attestations.json");
+  }
+  return path.join(LOCAL_DATA_DIR, "attestations.json");
+}
+
+async function ensureLocalDir() {
+  if (process.env.VERCEL) return;
+  await fs.mkdir(LOCAL_DATA_DIR, { recursive: true });
 }
 
 async function readJsonFile<T>(filePath: string): Promise<T | null> {
@@ -64,6 +93,50 @@ function normalize(entry: PublicAttestation): PublicAttestation {
   };
 }
 
+function rowToAttestation(row: AttestationRow): PublicAttestation {
+  return normalize({
+    id: row.id,
+    ledgerId: row.ledger_id,
+    cleanedHash: row.cleaned_hash,
+    binding: row.binding,
+    packFlags: row.pack_flags ?? 0,
+    findings: row.findings ?? [],
+    circuit: row.circuit,
+    attestedAt: row.attested_at,
+    status: (row.status as NotaryStatus) || "settled",
+    source: (row.source as AttestationSource) || "console",
+    walletAddress: row.wallet_address ?? undefined,
+    note: row.note ?? "",
+    txId: row.tx_id ?? undefined,
+    txHash: row.tx_hash ?? undefined,
+    contractAddress: row.contract_address ?? undefined,
+    network: row.network ?? undefined,
+    onChain: row.on_chain ?? undefined,
+  });
+}
+
+function attestationToRow(entry: PublicAttestation): AttestationRow {
+  return {
+    id: entry.id,
+    ledger_id: entry.ledgerId,
+    cleaned_hash: entry.cleanedHash,
+    binding: entry.binding,
+    pack_flags: entry.packFlags,
+    findings: entry.findings ?? [],
+    circuit: entry.circuit,
+    attested_at: entry.attestedAt,
+    status: entry.status,
+    source: entry.source,
+    wallet_address: entry.walletAddress ?? null,
+    note: entry.note ?? "",
+    tx_id: entry.txId ?? null,
+    tx_hash: entry.txHash ?? null,
+    contract_address: entry.contractAddress ?? null,
+    network: entry.network ?? null,
+    on_chain: entry.onChain ?? null,
+  };
+}
+
 async function loadSeed(): Promise<PublicAttestation[]> {
   const seed = await readJsonFile<PublicAttestation[] | PublicAttestation>(SEED_FILE);
   if (!seed) return [];
@@ -72,35 +145,97 @@ async function loadSeed(): Promise<PublicAttestation[]> {
 }
 
 async function loadFromDisk(): Promise<PublicAttestation[]> {
-  const stored = await readJsonFile<PublicAttestation[]>(DATA_FILE);
+  const stored = await readJsonFile<PublicAttestation[]>(diskFilePath());
   if (stored?.length) return stored.map(normalize);
   const seeded = await loadSeed();
   if (seeded.length) {
-    await ensureDir();
-    await fs.writeFile(DATA_FILE, JSON.stringify(seeded, null, 2), "utf8");
+    await persistDisk(seeded).catch(() => undefined);
   }
   return seeded;
 }
 
-async function persist(rows: PublicAttestation[]) {
-  await ensureDir();
-  await fs.writeFile(DATA_FILE, JSON.stringify(rows, null, 2), "utf8");
+async function loadFromSupabase(): Promise<PublicAttestation[] | null> {
+  if (!isSupabaseConfigured()) return null;
+  try {
+    const sb = getSupabaseAdmin();
+    const { data, error } = await sb
+      .from("attestations")
+      .select("*")
+      .order("ledger_id", { ascending: false })
+      .limit(500);
+    if (error) {
+      console.error("[kachis] attestations supabase read", error.message);
+      return null;
+    }
+    return ((data ?? []) as AttestationRow[]).map(rowToAttestation);
+  } catch (error) {
+    console.error("[kachis] attestations supabase read failed", error);
+    return null;
+  }
+}
+
+async function persistDisk(rows: PublicAttestation[]) {
+  await ensureLocalDir();
+  await fs.writeFile(diskFilePath(), JSON.stringify(rows, null, 2), "utf8");
   cache = rows;
+}
+
+async function upsertSupabase(entry: PublicAttestation): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const sb = getSupabaseAdmin();
+    const { error } = await sb.from("attestations").upsert(attestationToRow(entry), {
+      onConflict: "cleaned_hash,binding",
+    });
+    if (error) {
+      console.error("[kachis] attestations supabase upsert", error.message);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("[kachis] attestations supabase upsert failed", error);
+    return false;
+  }
 }
 
 async function getStore(): Promise<PublicAttestation[]> {
   if (cache) return cache;
   if (!loadPromise) {
-    loadPromise = loadFromDisk()
-      .then((rows) => {
-        cache = rows;
-        return rows;
-      })
-      .finally(() => {
-        loadPromise = null;
-      });
+    loadPromise = (async () => {
+      const fromSb = await loadFromSupabase();
+      if (fromSb) {
+        cache = fromSb;
+        return fromSb;
+      }
+      const fromDisk = await loadFromDisk();
+      cache = fromDisk;
+      return fromDisk;
+    }).finally(() => {
+      loadPromise = null;
+    });
   }
   return loadPromise;
+}
+
+async function persistEntry(
+  entry: PublicAttestation,
+  rows: PublicAttestation[],
+): Promise<void> {
+  const wroteSb = await upsertSupabase(entry);
+  if (wroteSb) {
+    cache = rows;
+    return;
+  }
+  try {
+    await persistDisk(rows);
+  } catch (error) {
+    // Keep the in-memory view for this instance so Confirm & Send can still find it.
+    cache = rows;
+    console.error(
+      "[kachis] attestation persist failed (console log not durable on this host)",
+      error,
+    );
+  }
 }
 
 export async function recordAttestation(
@@ -120,7 +255,7 @@ export async function recordAttestation(
         onChain: entry.onChain ?? duplicate.onChain,
       };
       const next = rows.map((item) => (item.id === duplicate.id ? merged : item));
-      await persist(next);
+      await persistEntry(merged, next);
       return merged;
     }
     return duplicate;
@@ -134,7 +269,7 @@ export async function recordAttestation(
     ...entry,
   };
   const next = [saved, ...rows];
-  await persist(next);
+  await persistEntry(saved, next);
   return saved;
 }
 
@@ -274,8 +409,19 @@ export async function enrichAttestationsFromChain(
       attestedAt: timestamp,
     };
     changed = true;
+    await upsertSupabase(next[idx]);
   }
 
-  if (changed) await persist(next);
+  if (changed) {
+    try {
+      if (!(await loadFromSupabase())) {
+        await persistDisk(next);
+      } else {
+        cache = next;
+      }
+    } catch {
+      cache = next;
+    }
+  }
   return next;
 }
