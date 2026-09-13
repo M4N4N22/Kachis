@@ -26,6 +26,7 @@
 /shared/dist
 /extension/node_modules
 /extension/dist
+/extension/kachis-companion.zip
 
 # production
 /build

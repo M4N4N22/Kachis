@@ -275,3 +275,13 @@ export async function detectNerHits(
 export function preloadNer(): void {
   void getNerPipeline();
 }
+
+/**
+ * Whether the on-device NER pipeline actually loaded.
+ * Soft-fail inside detectNerHits returns [] without throwing — callers that
+ * need honesty (e.g. browser companion) should check this after a scan.
+ */
+export async function nerPipelineReady(): Promise<boolean> {
+  const ner = await getNerPipeline();
+  return Boolean(ner);
+}

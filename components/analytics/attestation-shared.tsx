@@ -81,6 +81,7 @@ type ShieldFeed = {
   feedSource: "chain+local" | "local" | "unknown";
   ledgerLive: boolean;
   loading: boolean;
+  refresh: () => Promise<void>;
 };
 
 export function useShieldFeed(): ShieldFeed {
@@ -93,6 +94,38 @@ export function useShieldFeed(): ShieldFeed {
   const [feedSource, setFeedSource] = useState<ShieldFeed["feedSource"]>("unknown");
   const [ledgerLive, setLedgerLive] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  async function loadFeed() {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/shield");
+      const data = (await response.json()) as {
+        attestations?: PublicAttestation[];
+        ledgerAttestations?: PublicAttestation[];
+        contractAddress?: string;
+        source?: string;
+        ledgerLive?: boolean;
+      };
+      const live = Boolean(data.ledgerLive);
+      setAttestations(data.attestations ?? []);
+      setLedgerAttestations(live ? (data.ledgerAttestations ?? []) : []);
+      setContractAddress(data.contractAddress ?? null);
+      setLedgerLive(live);
+      setFeedSource(
+        data.source === "chain+local" || data.source === "local"
+          ? data.source
+          : "unknown",
+      );
+    } catch {
+      setAttestations([]);
+      setLedgerAttestations([]);
+      setContractAddress(null);
+      setLedgerLive(false);
+      setFeedSource("unknown");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -143,6 +176,7 @@ export function useShieldFeed(): ShieldFeed {
     feedSource,
     ledgerLive,
     loading,
+    refresh: loadFeed,
   };
 }
 

@@ -6,43 +6,69 @@
     <title>Kachis companion</title>
     <style>
       :root {
-        color-scheme: light;
-        --ink: #0f1419;
-        --muted: #5c6570;
-        --line: #e6e8eb;
-        --brand: #1a5f4a;
-        --bg: #f7f6f3;
+        color-scheme: dark;
+        --bg: #0a0a0a;
+        --surface: #131313;
+        --ink: #f2f2f4;
+        --muted: #8b8b96;
+        --line: color-mix(in srgb, #f2f2f4 12%, transparent);
+        --brand-a: #1e00ff;
+        --brand-b: #d765e6;
       }
       * {
         box-sizing: border-box;
       }
       body {
         margin: 0;
-        font: 14px/1.5 "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+        font: 14px/1.5 "DM Sans", ui-sans-serif, system-ui, sans-serif;
         color: var(--ink);
         background:
-          radial-gradient(1200px 600px at 10% -10%, #dfece6 0%, transparent 55%),
+          radial-gradient(900px 480px at 12% -8%, color-mix(in srgb, var(--brand-a) 28%, transparent), transparent 55%),
           var(--bg);
         min-height: 100vh;
       }
       main {
-        max-width: 480px;
+        max-width: 520px;
         margin: 48px auto;
         padding: 0 20px 48px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+      .brand img {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
       }
       h1 {
         font-size: 28px;
         letter-spacing: -0.03em;
-        margin: 0 0 8px;
+        margin: 0;
       }
-      p {
+      .lede {
         color: var(--muted);
-        margin: 0 0 24px;
+        margin: 0 0 28px;
+        font-size: 13px;
       }
-      label {
-        display: block;
-        font-size: 12px;
+      section {
+        border: 1px solid var(--line);
+        background: var(--surface);
+        margin-bottom: 16px;
+        padding: 16px;
+      }
+      section h2 {
+        margin: 0 0 12px;
+        font-size: 13px;
         font-weight: 600;
+      }
+      label.field {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
         margin: 0 0 6px;
       }
       input[type="url"],
@@ -52,24 +78,87 @@
         padding: 10px 12px;
         border: 1px solid var(--line);
         border-radius: 10px;
-        background: #fff;
-        margin-bottom: 16px;
+        background: var(--bg);
+        color: var(--ink);
+        margin-bottom: 14px;
+        font: inherit;
       }
       .row {
         display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 20px;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 10px 0;
+        border-top: 1px solid var(--line);
+      }
+      .row:first-of-type {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .row .copy label {
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .row .helper {
+        margin-top: 2px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .switch {
+        position: relative;
+        width: 40px;
+        height: 22px;
+        flex-shrink: 0;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .switch span {
+        position: absolute;
+        inset: 0;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--ink) 16%, transparent);
+        cursor: pointer;
+      }
+      .switch span::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--ink);
+        transition: 0.15s ease;
+      }
+      .switch input:checked + span {
+        background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
+      }
+      .switch input:checked + span::after {
+        transform: translateX(18px);
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
       }
       button {
         appearance: none;
-        border: 0;
+        border: 1px solid var(--line);
         border-radius: 999px;
         padding: 10px 16px;
-        background: var(--brand);
-        color: #fff;
-        font-weight: 600;
+        background: var(--bg);
+        color: var(--ink);
+        font: 600 12px/1 inherit;
         cursor: pointer;
+      }
+      button.primary {
+        border: 0;
+        background: linear-gradient(135deg, var(--brand-a), var(--brand-b));
+        color: #fff;
       }
       #status {
         margin-top: 14px;
@@ -80,29 +169,50 @@
   </head>
   <body>
     <main>
-      <h1>Kachis</h1>
-      <p>
+      <div class="brand">
+        <img src="icons/icon48.png" alt="" width="40" height="40" />
+        <h1>Kachis</h1>
+      </div>
+      <p class="lede">
         Browser companion for ChatGPT. Paste is scanned on this device. Only public
         commitments reach your console — never the original text.
       </p>
-      <form id="form">
-        <label for="consoleUrl">Console URL</label>
-        <input id="consoleUrl" name="consoleUrl" type="url" placeholder="http://localhost:3000" />
 
-        <label for="seatKey">Machine seat key (optional)</label>
-        <input id="seatKey" name="seatKey" type="password" autocomplete="off" />
-
+      <section>
+        <h2>Protection</h2>
         <div class="row">
-          <input id="enabled" name="enabled" type="checkbox" checked />
-          <label for="enabled" style="margin: 0">Shield ChatGPT submits</label>
+          <div class="copy">
+            <label for="enabled">Shield ChatGPT submits</label>
+            <div class="helper">Pause send, insulate the composer, then continue</div>
+          </div>
+          <label class="switch">
+            <input id="enabled" type="checkbox" checked />
+            <span></span>
+          </label>
         </div>
+      </section>
 
-        <button type="submit">Save</button>
-        <button type="button" id="verify" style="margin-left: 8px; background: #243038">
-          Verify console
-        </button>
-      </form>
-      <div id="status"></div>
+      <section>
+        <h2>Packs</h2>
+        <div id="packs"></div>
+      </section>
+
+      <section>
+        <h2>Console</h2>
+        <form id="form">
+          <label class="field" for="consoleUrl">Console URL</label>
+          <input id="consoleUrl" name="consoleUrl" type="url" placeholder="http://localhost:3000" />
+
+          <label class="field" for="seatKey">Machine seat key (optional)</label>
+          <input id="seatKey" name="seatKey" type="password" autocomplete="off" />
+
+          <div class="actions">
+            <button class="primary" type="submit">Save</button>
+            <button type="button" id="verify">Verify console</button>
+          </div>
+        </form>
+        <div id="status"></div>
+      </section>
     </main>
     <script type="module" src="options.js"></script>
   </body>

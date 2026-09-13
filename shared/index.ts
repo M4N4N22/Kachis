@@ -13,7 +13,7 @@ export {
   type ScanHit,
   type ScanHitSource,
 } from "./scanner";
-export { detectNerHits, preloadNer } from "./ner";
+export { detectNerHits, nerPipelineReady, preloadNer } from "./ner";
 export { restoreFromTokenMap, listedTokensInText } from "./restore";
 export { bindingHex, isCommitmentHex, sha256Hex } from "./commit";
 export { runShield, type RunShieldOptions } from "./shield";

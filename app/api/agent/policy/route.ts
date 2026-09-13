@@ -30,9 +30,9 @@ export async function GET(request: Request) {
     ok: true,
     product: "kachis",
     version: "0.1.0",
-    settleMode: "commitment-only",
+    settleMode: "commitment + wallet settle",
     settleNote:
-      "MCP and extension post public commitments only. Compact settle remains on the console wallet path.",
+      "MCP posts public commitments only. Compact settle uses the console wallet plus the agent localhost witness bridge (originalHash never uploaded).",
     requiredPack,
     requiredPackInstitutional: REQUIRED_PACK_INSTITUTIONAL,
     requiredPackSandbox: REQUIRED_PACK_SANDBOX,
