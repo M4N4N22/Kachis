@@ -3,11 +3,15 @@
  * Kachis Agent — professional MCP server.
  *
  * Tools:
- *   kachis_shield  — scan raw paste on-device; return shielded prompt + commitments
- *   kachis_restore — restore insulation tokens in a model reply (local only)
- *   kachis_status  — health + console policy / seat check
+ *   kachis_run / kachis_shield — scan raw paste on-device; return shielded_prompt
+ *   kachis_restore            — restore insulation tokens in a host-model reply
+ *   kachis_status             — health + console policy / seat check
  *
- * Settle mode: commitment-only (public hash to console). Compact settle stays on the console wallet path.
+ * The host model (Cursor / Claude Desktop) answers from shielded_prompt.
+ * Console Gemini beta is for the web Workspace only — MCP never calls /api/chat.
+ *
+ * Public commitments post to the console. Private originalHash stays on this machine
+ * and is exposed only via the localhost witness bridge for wallet Compact settle.
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -18,9 +22,19 @@ import {
   packFlagsFromToggles,
   restoreFromTokenMap,
   runShield,
+  sha256Hex,
   type GuardrailToggles,
   type TokenMap,
 } from "../../shared/index.ts";
+import {
+  countWitnessFiles,
+  persistWitness,
+} from "./witness-disk.ts";
+import {
+  startWitnessServer,
+  type WitnessRecord,
+  type WitnessStore,
+} from "./witness-server.ts";
 
 const VERSION = "0.1.0";
 const CONSOLE_URL = (process.env.KACHIS_CONSOLE_URL ?? "http://localhost:3000").replace(
@@ -30,18 +44,29 @@ const CONSOLE_URL = (process.env.KACHIS_CONSOLE_URL ?? "http://localhost:3000").
 const SEAT_KEY = process.env.KACHIS_SEAT_KEY?.trim() ?? "";
 const TIER =
   process.env.KACHIS_TIER === "freelancer" ? "freelancer" : "institutional";
+const WITNESS_PORT = Number(process.env.KACHIS_WITNESS_PORT || 3847);
 
-/** Local-only maps keyed by cleanedHash — never returned from kachis_shield. */
-const sessionMaps = new Map<string, TokenMap>();
-const SESSION_MAP_LIMIT = 64;
+/** Local-only settle witnesses + restore maps — never returned from kachis_shield. */
+const sessionStore: WitnessStore = new Map();
+const tokenMaps = new Map<string, TokenMap>();
+const SESSION_LIMIT = 64;
 
-function rememberTokenMap(cleanedHash: string, tokenMap: TokenMap) {
-  sessionMaps.set(cleanedHash, tokenMap);
-  while (sessionMaps.size > SESSION_MAP_LIMIT) {
-    const oldest = sessionMaps.keys().next().value;
+function rememberSession(record: WitnessRecord & { tokenMap: TokenMap }) {
+  const { tokenMap, ...witness } = record;
+  sessionStore.set(witness.cleanedHash, witness);
+  tokenMaps.set(witness.cleanedHash, tokenMap);
+  // Disk so whichever process owns :3847 can serve settle (duplicate MCP spawns).
+  persistWitness(witness);
+  while (sessionStore.size > SESSION_LIMIT) {
+    const oldest = sessionStore.keys().next().value;
     if (!oldest) break;
-    sessionMaps.delete(oldest);
+    sessionStore.delete(oldest);
+    tokenMaps.delete(oldest);
   }
+}
+
+function pendingWitnessCount() {
+  return Math.max(sessionStore.size, countWitnessFiles());
 }
 
 function seatHeaders(): Record<string, string> {
@@ -90,7 +115,7 @@ async function postCommitment(payload: {
       body: JSON.stringify({
         ...payload,
         source: "agent",
-        note: "MCP commitment-only. Compact settle is console wallet path.",
+        note: "MCP commitment. Compact settle via console wallet + local witness bridge.",
       }),
     });
     if (!response.ok) {
@@ -114,6 +139,120 @@ function jsonResult(payload: unknown, isError = false) {
     ...(isError ? { isError: true } : {}),
   };
 }
+
+const toggleSchema = {
+  stripIdentifiers: z.boolean().optional().default(true),
+  maskFinancial: z.boolean().optional().default(true),
+  holdSecrets: z.boolean().optional().default(true),
+  insulateCode: z.boolean().optional().default(true),
+  stripClientRecords: z.boolean().optional().default(true),
+};
+
+type ShieldOk = {
+  ok: true;
+  shielded_prompt: string;
+  cleaned_commitment: string;
+  binding: string;
+  pack_flags: number;
+  findings: unknown;
+  circuit: string;
+  attested_at: string;
+  ledger_id: unknown;
+  notary_status: string;
+  notary_note: string;
+  seat: PolicyResponse["seat"] | null;
+};
+
+type ShieldErr = { ok: false; error: string; requiredPack?: number; toggles?: GuardrailToggles };
+
+async function shieldLocal(input: {
+  text: string;
+  stripIdentifiers?: boolean;
+  maskFinancial?: boolean;
+  holdSecrets?: boolean;
+  insulateCode?: boolean;
+  stripClientRecords?: boolean;
+}): Promise<ShieldOk | ShieldErr> {
+  const policy = await fetchPolicy();
+  const defaults = policy?.defaultToggles ?? defaultTogglesForTier(TIER);
+  const toggles: GuardrailToggles = {
+    piiStripping: input.stripIdentifiers ?? defaults.piiStripping,
+    financialMasking: input.maskFinancial ?? defaults.financialMasking,
+    secretsStripping: input.holdSecrets ?? defaults.secretsStripping,
+    codeInsulation: input.insulateCode ?? defaults.codeInsulation,
+    clientRecords: input.stripClientRecords ?? defaults.clientRecords,
+  };
+
+  const requiredPack = policy?.requiredPack ?? 0;
+  if (requiredPack > 0 && !meetsRequiredPack(packFlagsFromToggles(toggles), requiredPack)) {
+    return {
+      ok: false,
+      error:
+        "Pack toggles do not meet console required policy. Enable every mandatory filter.",
+      requiredPack,
+      toggles,
+    };
+  }
+
+  const originalHash = await sha256Hex(input.text);
+  const result = await runShield(input.text, toggles);
+  rememberSession({
+    originalHash,
+    cleanedHash: result.cleanedHash,
+    binding: result.binding,
+    packFlags: result.packFlags,
+    findings: result.findings,
+    attestedAt: result.attestedAt,
+    tokenMap: result.tokenMap,
+  });
+
+  const ledger = await postCommitment({
+    cleanedHash: result.cleanedHash,
+    binding: result.binding,
+    packFlags: result.packFlags,
+    findings: result.findings,
+    attestedAt: result.attestedAt,
+  });
+
+  const ledgerError =
+    ledger && typeof ledger.error === "string" ? ledger.error : null;
+
+  return {
+    ok: true,
+    shielded_prompt: result.text,
+    cleaned_commitment: result.cleanedHash,
+    binding: result.binding,
+    pack_flags: result.packFlags,
+    findings: result.findings,
+    circuit: result.circuit,
+    attested_at: result.attestedAt,
+    ledger_id: ledger?.ledgerId ?? null,
+    notary_status: ledgerError
+      ? "console-error"
+      : String(ledger?.status ?? "local-only"),
+    notary_note: ledgerError
+      ? ledgerError
+      : typeof ledger?.note === "string"
+        ? ledger.note
+        : `Console not reachable at ${CONSOLE_URL}. Shield still ran locally.`,
+    seat: policy?.seat ?? null,
+  };
+}
+
+const HOST_LOOP =
+  "HOST LOOP (use the host model — Cursor/Claude — never the Kachis console beta): (1) Draft your answer using ONLY shielded_prompt. (2) Call kachis_restore with cleaned_commitment + that draft. (3) Show restored_text to the user. Do not quote the original paste. Do not call /api/chat.";
+
+function shieldToolResult(shielded: ShieldOk) {
+  return jsonResult({
+    ...shielded,
+    settle_mode: "commitment + wallet settle via local witness",
+    witness_bridge: `http://127.0.0.1:${WITNESS_PORT}`,
+    model_path: "host",
+    host_instruction: HOST_LOOP,
+  });
+}
+
+startWitnessServer(sessionStore, { port: WITNESS_PORT });
 
 const server = new McpServer({
   name: "kachis-agent",
@@ -139,10 +278,12 @@ server.registerResource(
               product: "kachis-agent",
               version: VERSION,
               consoleUrl: CONSOLE_URL,
-              settleMode: policy?.settleMode ?? "commitment-only",
+              witnessBridge: `http://127.0.0.1:${WITNESS_PORT}`,
+              settleMode: "commitment + wallet settle via local witness",
+              modelPath: "host (Cursor/Claude) — not console beta",
               seatKeyConfigured: Boolean(SEAT_KEY),
               policy,
-              sessionMaps: sessionMaps.size,
+              pendingWitnesses: pendingWitnessCount(),
             },
             null,
             2,
@@ -169,10 +310,9 @@ server.registerResource(
           "Circuit: kachis_guardrail_v0",
           "Private witness: SHA-256 of the original paste (never returned by this tool).",
           "Public: cleanedHash, binding, packFlags (PII / financial / secrets / code / client).",
-          "Host MUST call kachis_shield before any model sees the paste.",
-          "Host MUST send only shielded_prompt to the language model — never the original text.",
-          "After the model replies, call kachis_restore with cleaned_commitment + model text.",
-          "Settle: commitment-only from MCP. Compact on-chain settle is the console wallet path.",
+          "MCP does NOT call the Kachis console model. Console Gemini beta is for the web Workspace only.",
+          "Host loop: kachis_shield → host model answers from shielded_prompt only → kachis_restore → show restored_text.",
+          `Wallet settle: console Pending settle fetches originalHash from http://127.0.0.1:${WITNESS_PORT}/witness/<cleanedHash> (localhost only), then proves in the wallet.`,
         ].join("\n"),
       },
     ],
@@ -184,7 +324,7 @@ server.registerTool(
   {
     title: "Kachis status",
     description:
-      "Verify console connectivity, seat key, and required pack policy before shielding.",
+      "Verify console connectivity, seat key, witness bridge, and required pack policy before shielding.",
     inputSchema: {},
   },
   async () => {
@@ -201,7 +341,10 @@ server.registerTool(
     return jsonResult({
       agent: { name: "kachis-agent", version: VERSION },
       consoleUrl: CONSOLE_URL,
-      settleMode: "commitment-only",
+      witnessBridge: `http://127.0.0.1:${WITNESS_PORT}`,
+      pendingWitnesses: pendingWitnessCount(),
+      settleMode: "commitment + wallet settle via local witness",
+      modelPath: "host",
       seatKeyConfigured: Boolean(SEAT_KEY),
       health,
       policy,
@@ -210,88 +353,40 @@ server.registerTool(
 );
 
 server.registerTool(
+  "kachis_run",
+  {
+    title: "Kachis run",
+    description:
+      "PREFERRED for user pastes: shield on-device, then the HOST model (Cursor/Claude) must answer from shielded_prompt only and call kachis_restore. Does not use Kachis-funded Gemini.",
+    inputSchema: {
+      text: z
+        .string()
+        .describe("Raw user paste. Stays on this machine; never forwarded to a vendor model by this tool."),
+      ...toggleSchema,
+    },
+  },
+  async (args) => {
+    const shielded = await shieldLocal(args);
+    if (!shielded.ok) return jsonResult(shielded, true);
+    return shieldToolResult(shielded);
+  },
+);
+
+server.registerTool(
   "kachis_shield",
   {
     title: "Kachis shield",
     description:
-      "REQUIRED before any model call: scan the raw paste on this machine. Returns ONLY shielded_prompt plus public commitments. The host must send shielded_prompt to the model and must never forward the original text. After the model answers, call kachis_restore. Posts a public commitment to the console (commitment-only; no Compact settle from MCP).",
+      "REQUIRED before answering a sensitive paste: scan on-device and return shielded_prompt. Then the HOST model answers from shielded_prompt only and calls kachis_restore. Does not use Kachis-funded Gemini (web Workspace only).",
     inputSchema: {
       text: z.string().describe("Raw user paste. Stays on this machine."),
-      stripIdentifiers: z.boolean().optional().default(true),
-      maskFinancial: z.boolean().optional().default(true),
-      holdSecrets: z.boolean().optional().default(true),
-      insulateCode: z.boolean().optional().default(true),
-      stripClientRecords: z.boolean().optional().default(true),
+      ...toggleSchema,
     },
   },
-  async ({
-    text,
-    stripIdentifiers,
-    maskFinancial,
-    holdSecrets,
-    insulateCode,
-    stripClientRecords,
-  }) => {
-    const policy = await fetchPolicy();
-    const defaults =
-      policy?.defaultToggles ?? defaultTogglesForTier(TIER);
-    const toggles: GuardrailToggles = {
-      piiStripping: stripIdentifiers ?? defaults.piiStripping,
-      financialMasking: maskFinancial ?? defaults.financialMasking,
-      secretsStripping: holdSecrets ?? defaults.secretsStripping,
-      codeInsulation: insulateCode ?? defaults.codeInsulation,
-      clientRecords: stripClientRecords ?? defaults.clientRecords,
-    };
-
-    const requiredPack = policy?.requiredPack ?? 0;
-    if (requiredPack > 0 && !meetsRequiredPack(packFlagsFromToggles(toggles), requiredPack)) {
-      return jsonResult(
-        {
-          error:
-            "Pack toggles do not meet console required policy. Enable every mandatory filter.",
-          requiredPack,
-          toggles,
-        },
-        true,
-      );
-    }
-
-    const result = await runShield(text, toggles);
-    rememberTokenMap(result.cleanedHash, result.tokenMap);
-
-    const ledger = await postCommitment({
-      cleanedHash: result.cleanedHash,
-      binding: result.binding,
-      packFlags: result.packFlags,
-      findings: result.findings,
-      attestedAt: result.attestedAt,
-    });
-
-    const ledgerError =
-      ledger && typeof ledger.error === "string" ? ledger.error : null;
-
-    return jsonResult({
-      shielded_prompt: result.text,
-      cleaned_commitment: result.cleanedHash,
-      binding: result.binding,
-      pack_flags: result.packFlags,
-      findings: result.findings,
-      circuit: result.circuit,
-      attested_at: result.attestedAt,
-      settle_mode: "commitment-only",
-      ledger_id: ledger?.ledgerId ?? null,
-      notary_status: ledgerError
-        ? "console-error"
-        : (ledger?.status ?? "local-only"),
-      notary_note: ledgerError
-        ? ledgerError
-        : typeof ledger?.note === "string"
-          ? ledger.note
-          : `Console not reachable at ${CONSOLE_URL}. Shield still ran locally.`,
-      seat: policy?.seat ?? null,
-      instruction:
-        "Send ONLY shielded_prompt to the language model. Do not include the user's original text. After the model replies, call kachis_restore with cleaned_commitment and the model text.",
-    });
+  async (args) => {
+    const shielded = await shieldLocal(args);
+    if (!shielded.ok) return jsonResult(shielded, true);
+    return shieldToolResult(shielded);
   },
 );
 
@@ -300,14 +395,14 @@ server.registerTool(
   {
     title: "Kachis restore",
     description:
-      "LOCAL ONLY: restore enumerated insulation tokens in a model reply using the map from the prior kachis_shield on this machine. Never send the restored text to a public model. Secrets/keys stay masked.",
+      "LOCAL ONLY: restore enumerated insulation tokens in a host-model reply using the map from the prior kachis_shield on this machine. Never send the restored text to a public model. Secrets/keys stay masked.",
     inputSchema: {
       cleanedCommitment: z
         .string()
         .describe("cleaned_commitment from the matching kachis_shield call"),
       modelText: z
         .string()
-        .describe("Assistant text that may contain [PERSON_1], [ORG_2], etc."),
+        .describe("Host-model draft that may contain [PERSON_1], [ORG_2], etc."),
       includeSecrets: z
         .boolean()
         .optional()
@@ -316,7 +411,7 @@ server.registerTool(
     },
   },
   async ({ cleanedCommitment, modelText, includeSecrets }) => {
-    const tokenMap = sessionMaps.get(cleanedCommitment);
+    const tokenMap = tokenMaps.get(cleanedCommitment);
     if (!tokenMap) {
       return jsonResult(
         {
@@ -334,7 +429,7 @@ server.registerTool(
 
     return jsonResult({
       restored_text: restored,
-      note: "Restored on-device only. Do not forward restored_text to a public model.",
+      note: "Restored on-device only. Show restored_text to the user. Do not forward it to a public model.",
     });
   },
 );

@@ -72,7 +72,7 @@ export function ConnectWalletModal({
             role="dialog"
             aria-modal="true"
             aria-labelledby="connect-wallet-title"
-            className="relative z-10 grid w-full max-w-[860px] overflow-hidden rounded-[28px] bg-ink/5  backdrop-blur-3xl md:grid-cols-2"
+            className="relative z-10 grid w-full max-w-[860px] overflow-hidden rounded-[28px] bg-ink/5  backdrop-blur-3xl  md:grid-cols-2"
             initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.97, y: 8 }}

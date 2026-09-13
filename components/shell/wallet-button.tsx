@@ -175,9 +175,9 @@ export function WalletButton() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 4, scale: 0.98 }}
               transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute top-full right-0 z-50 mt-4 w-[20.5rem] overflow-hidden rounded-[1.35rem]  bg-ink/5 p-4 shadow-lg backdrop-blur-md"
+              className="absolute top-full right-0 z-50 mt-4 w-[20.5rem] overflow-hidden rounded-[1.35rem]  bg-surface p-4 shadow-lg "
             >
-              <div className="rounded-2xl border border-ink/5 bg-black p-3.5">
+              <div className="rounded-2xl border border-ink/5 bg-black/50 p-3.5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-[12px] font-semibold text-ink">{displayName(wallet)}</p>
@@ -199,7 +199,7 @@ export function WalletButton() {
                 </p>
               </div>
 
-              <div className="mt-3 rounded-2xl bg-black px-3.5 py-3">
+              <div className="mt-3 rounded-2xl bg-black/50 px-3.5 py-3">
                 {wallet.balances ? (
                   <BalanceRows balances={wallet.balances} network={wallet.network} />
                 ) : (

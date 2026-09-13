@@ -16,6 +16,7 @@ import { Bento } from "@/components/ui/bento";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/cn";
 import { copy } from "@/lib/copy";
+import { extensionSourceUrl, extensionStoreUrl } from "@/lib/extension-store";
 
 type BadgeTone = "live" | "ready" | "pipeline" | "muted";
 
@@ -86,10 +87,12 @@ function IntegrationCard({
 
 export function IntegrationsView() {
   const attestations = useAttestations();
-  const [extensionNote, setExtensionNote] = useState(false);
   const [sdkNote, setSdkNote] = useState(false);
   const [gatewayNote, setGatewayNote] = useState(false);
   const [showDiagDetail, setShowDiagDetail] = useState(false);
+
+  const storeUrl = extensionStoreUrl();
+  const sourceUrl = extensionSourceUrl();
 
   const agentConnected = useMemo(
     () =>
@@ -146,23 +149,23 @@ export function IntegrationsView() {
             title={copy.integrations.extensionTitle}
             body={copy.integrations.extensionBody}
             compat={copy.integrations.extensionCompat}
-            badge={copy.integrations.badgeReady}
+            badge={
+              storeUrl
+                ? copy.integrations.badgeLaunch
+                : copy.integrations.badgeReady
+            }
             badgeTone="ready"
             action={
-              <div className="space-y-2">
-                <Button
-                  size="sm"
-                  className="w-full sm:w-auto"
-                  onClick={() => setExtensionNote((value) => !value)}
-                >
-                  {copy.integrations.extensionAction}
-                </Button>
-                {extensionNote ? (
-                  <p className="text-[11px] leading-5 text-muted-fg">
-                    {copy.integrations.extensionNote}
-                  </p>
-                ) : null}
-              </div>
+              <a
+                href={storeUrl || sourceUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-full bg-brand-gradient px-3.5 text-[13px] font-medium tracking-tight text-brand-fg transition-colors hover:opacity-90 sm:w-auto"
+              >
+                {storeUrl
+                  ? copy.integrations.extensionAction
+                  : copy.integrations.extensionSource}
+              </a>
             }
           />
 

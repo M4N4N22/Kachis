@@ -353,7 +353,7 @@ export function Sidebar() {
               sidebarCollapsed && "justify-center px-0",
               pathname === "/demo"
                 ? " text-sidebar-fg"
-                : "text-sidebar-muted hover:bg-sidebar-accent/70 hover:text-sidebar-fg",
+                : "text-sidebar-muted hover:text-sidebar-fg",
             )}
           >
             <BookOpen

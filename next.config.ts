@@ -27,6 +27,7 @@ const mlRuntime = [
   "@huggingface/transformers",
   "onnxruntime-web",
   "onnxruntime-node",
+  "sharp",
 ];
 
 const nextConfig: NextConfig = {
@@ -54,6 +55,11 @@ const nextConfig: NextConfig = {
       },
     };
     config.resolve = config.resolve ?? {};
+    // Prefer the app root node_modules — nested shared/node_modules breaks native ML binaries.
+    config.resolve.modules = [
+      path.join(root, "node_modules"),
+      "node_modules",
+    ];
     config.resolve.alias = {
       ...config.resolve.alias,
       "isomorphic-ws": isomorphicWs,
@@ -66,6 +72,30 @@ const nextConfig: NextConfig = {
         resource.request = resource.request.replace(/^node:/, "");
       }),
     );
+    // Native N-API binaries must never be parsed by webpack.
+    config.externals = config.externals ?? [];
+    if (Array.isArray(config.externals)) {
+      config.externals.push(
+        "onnxruntime-node",
+        "sharp",
+        (
+          { request }: { request?: string },
+          callback: (err?: Error | null, result?: string) => void,
+        ) => {
+          // Do not match React's `server.node` modules — only native ML packages.
+          if (
+            request === "sharp" ||
+            request === "onnxruntime-node" ||
+            (typeof request === "string" &&
+              request.includes("onnxruntime-node") &&
+              request.endsWith(".node"))
+          ) {
+            return callback(null, `commonjs ${request}`);
+          }
+          callback();
+        },
+      );
+    }
     if (!isServer) {
       // Prefer browser exports only on the client. Doing this on the server
       // pulls DOM builds (e.g. decode-named-character-reference → document).
@@ -76,6 +106,11 @@ const nextConfig: NextConfig = {
         "require",
         "default",
       ];
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        sharp$: false,
+        "onnxruntime-node$": false,
+      };
       config.resolve.fallback = {
         ...config.resolve.fallback,
         crypto: false,
@@ -85,6 +120,7 @@ const nextConfig: NextConfig = {
         tls: false,
         dns: false,
         child_process: false,
+        module: false,
       };
     }
     return config;

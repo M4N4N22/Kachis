@@ -1,49 +1,60 @@
-import {
-  defaultTogglesForTier,
-  runShieldLite,
-  type GuardrailToggles,
-  type TokenMap,
-} from "../../shared/shield-browser.ts";
-
-type Settings = {
-  consoleUrl: string;
-  seatKey: string;
-  enabled: boolean;
-};
+import { restoreFromTokenMap } from "../../shared/restore.ts";
+import type { GuardrailToggles, TokenMap } from "../../shared/types.ts";
+import { loadSettings } from "./settings.ts";
 
 type ShieldRequest = {
   type: "kachis_shield";
   text: string;
 };
 
-type ShieldResponse = {
+type RestoreRequest = {
+  type: "kachis_restore";
+  cleanedCommitment: string;
+  modelText: string;
+};
+
+type ShieldResponse =
+  | {
+      ok: true;
+      shielded_prompt: string;
+      cleaned_commitment: string;
+      binding: string;
+      pack_flags: number;
+      findings: unknown;
+      findings_count: number;
+      notary_status: string;
+      ner_fallback?: boolean;
+      token_map: TokenMap;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
+type OffscreenOk = {
   ok: true;
-  shielded_prompt: string;
-  cleaned_commitment: string;
+  text: string;
+  findings: { count: number }[];
+  tokenMap: TokenMap;
+  packFlags: number;
+  cleanedHash: string;
   binding: string;
-  pack_flags: number;
-  findings: unknown;
-  notary_status: string;
-} | {
-  ok: false;
-  error: string;
+  circuit: string;
+  attestedAt: string;
+  nerFallback?: boolean;
 };
 
 const sessionMaps = new Map<string, TokenMap>();
+const SESSION_LIMIT = 32;
+let offscreenReady: Promise<void> | null = null;
 
-const DEFAULTS: Settings = {
-  consoleUrl: "http://localhost:3000",
-  seatKey: "",
-  enabled: true,
-};
-
-async function loadSettings(): Promise<Settings> {
-  const stored = await chrome.storage.sync.get(DEFAULTS);
-  return {
-    consoleUrl: String(stored.consoleUrl || DEFAULTS.consoleUrl).replace(/\/$/, ""),
-    seatKey: String(stored.seatKey || ""),
-    enabled: stored.enabled !== false,
-  };
+function rememberMap(cleanedHash: string, tokenMap: TokenMap) {
+  sessionMaps.set(cleanedHash, tokenMap);
+  while (sessionMaps.size > SESSION_LIMIT) {
+    const oldest = sessionMaps.keys().next().value;
+    if (!oldest) break;
+    sessionMaps.delete(oldest);
+  }
 }
 
 function seatHeaders(seatKey: string): HeadersInit {
@@ -58,19 +69,107 @@ function seatHeaders(seatKey: string): HeadersInit {
   return headers;
 }
 
-chrome.runtime.onMessage.addListener((message: ShieldRequest, _sender, sendResponse) => {
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function ensureOffscreen() {
+  if (offscreenReady) return offscreenReady;
+  offscreenReady = (async () => {
+    const contexts = await chrome.runtime.getContexts({
+      contextTypes: ["OFFSCREEN_DOCUMENT"],
+    });
+    if (contexts.length === 0) {
+      await chrome.offscreen.createDocument({
+        url: "offscreen.html",
+        reasons: ["WORKERS"],
+        justification: "Run on-device NER while shielding ChatGPT paste",
+      });
+    }
+    for (let i = 0; i < 40; i++) {
+      try {
+        const ping = (await chrome.runtime.sendMessage({
+          type: "kachis_offscreen_ping",
+        })) as { ok?: boolean } | undefined;
+        if (ping?.ok) return;
+      } catch {
+        /* booting */
+      }
+      await delay(100);
+    }
+    throw new Error("On-device scanner failed to start.");
+  })().catch((error) => {
+    offscreenReady = null;
+    throw error;
+  });
+  return offscreenReady;
+}
+
+async function runOffscreenShield(text: string, toggles: GuardrailToggles) {
+  await ensureOffscreen();
+  return (await chrome.runtime.sendMessage({
+    type: "kachis_offscreen_shield",
+    text,
+    toggles,
+  })) as OffscreenOk | { ok: false; error: string };
+}
+
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type === "kachis_offscreen_ping") return;
+  if (message?.type === "kachis_offscreen_shield") return;
+
+  if (message?.type === "kachis_restore") {
+    const req = message as RestoreRequest;
+    const map = sessionMaps.get(req.cleanedCommitment);
+    if (!map) {
+      sendResponse({
+        ok: false,
+        error: "No local token map for that commitment.",
+        restored_text: req.modelText,
+      });
+      return true;
+    }
+    sendResponse({
+      ok: true,
+      restored_text: restoreFromTokenMap(req.modelText, map, {
+        includeSecrets: false,
+      }),
+    });
+    return true;
+  }
+
   if (message?.type !== "kachis_shield") return;
+  const req = message as ShieldRequest;
+
   void (async () => {
     try {
       const settings = await loadSettings();
       if (!settings.enabled) {
-        sendResponse({ ok: false, error: "Kachis companion is disabled in options." } satisfies ShieldResponse);
+        sendResponse({
+          ok: false,
+          error: "Kachis companion is paused. Enable it from the toolbar popup.",
+        } satisfies ShieldResponse);
         return;
       }
 
-      const toggles: GuardrailToggles = defaultTogglesForTier("institutional");
-      const result = await runShieldLite(message.text, toggles);
-      sessionMaps.set(result.cleanedHash, result.tokenMap);
+      const offscreen = await runOffscreenShield(req.text, settings.toggles);
+      if (!offscreen || !offscreen.ok) {
+        sendResponse({
+          ok: false,
+          error:
+            !offscreen || !("error" in offscreen)
+              ? "On-device shield failed."
+              : offscreen.error,
+        } satisfies ShieldResponse);
+        return;
+      }
+
+      rememberMap(offscreen.cleanedHash, offscreen.tokenMap);
+
+      const findingsCount = offscreen.findings.reduce(
+        (sum, item) => sum + (item.count || 0),
+        0,
+      );
 
       let notaryStatus = "local-only";
       try {
@@ -78,13 +177,15 @@ chrome.runtime.onMessage.addListener((message: ShieldRequest, _sender, sendRespo
           method: "POST",
           headers: seatHeaders(settings.seatKey),
           body: JSON.stringify({
-            cleanedHash: result.cleanedHash,
-            binding: result.binding,
-            packFlags: result.packFlags,
-            findings: result.findings,
-            attestedAt: result.attestedAt,
+            cleanedHash: offscreen.cleanedHash,
+            binding: offscreen.binding,
+            packFlags: offscreen.packFlags,
+            findings: offscreen.findings,
+            attestedAt: offscreen.attestedAt,
             source: "extension",
-            note: "Browser companion commitment-only. Original paste stayed in the browser.",
+            note: offscreen.nerFallback
+              ? "Browser companion commitment (rules fallback). Original stayed in the browser."
+              : "Browser companion commitment (rules + on-device NER). Original stayed in the browser.",
           }),
         });
         if (response.ok) {
@@ -99,12 +200,15 @@ chrome.runtime.onMessage.addListener((message: ShieldRequest, _sender, sendRespo
 
       sendResponse({
         ok: true,
-        shielded_prompt: result.text,
-        cleaned_commitment: result.cleanedHash,
-        binding: result.binding,
-        pack_flags: result.packFlags,
-        findings: result.findings,
+        shielded_prompt: offscreen.text,
+        cleaned_commitment: offscreen.cleanedHash,
+        binding: offscreen.binding,
+        pack_flags: offscreen.packFlags,
+        findings: offscreen.findings,
+        findings_count: findingsCount,
         notary_status: notaryStatus,
+        ner_fallback: Boolean(offscreen.nerFallback),
+        token_map: offscreen.tokenMap,
       } satisfies ShieldResponse);
     } catch (error) {
       sendResponse({

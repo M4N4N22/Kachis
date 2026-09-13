@@ -419,9 +419,8 @@ export const copy = {
     extensionBody:
       "Monitors input on public AI sites. Pauses submit to shield sensitive data in the page before it leaves the browser.",
     extensionCompat: "Chrome, Brave, Edge",
-    extensionAction: "Install extension",
-    extensionNote:
-      "Load unpacked from extension/dist after npm run build in extension/. Chrome → Extensions → Developer mode.",
+    extensionAction: "Install from store",
+    extensionSource: "Source on GitHub",
     workspaceTitle: "Protected AI Chat",
     workspaceBody:
       "Split-screen workspace on this machine. Shield paste, review the insulated remainder, settle evidence, then send to your model.",
@@ -453,23 +452,24 @@ export const copy = {
     copyConfig: "Copy",
     copiedConfig: "Copied",
     toolTitle: "Tool contract",
-    toolName: "kachis_shield · kachis_restore · kachis_status",
+    toolName: "kachis_run · kachis_shield · kachis_restore · kachis_status",
     toolInput: "Raw paste + optional pack toggles. Defaults follow console policy.",
     toolOutput:
-      "Shielded prompt plus public commitments. Original text and token map never leave the machine in this payload. Settle mode: commitment-only.",
+      "Shielded prompt plus public commitments. Host model answers from shielded_prompt; kachis_restore returns restored_text. Original never leaves the machine in tool payloads.",
     restoreTool: "kachis_restore",
     restoreHelper:
-      "After the model replies, restore enumerated tokens on-device. Secrets stay masked unless opted in.",
-    toolRule: "Send only the shielded prompt to the model — never the original paste.",
+      "After the host model replies from shielded_prompt, restore enumerated tokens on-device. Secrets stay masked unless opted in.",
+    toolRule:
+      "Shield → host model on shielded_prompt → restore → show restored_text only.",
     step1Title: "Build or install the agent",
     step1Body:
       "From agent/: npm install && npm run build. Or use npx @kachis/agent when published.",
     step2Title: "Add the host config",
     step2Body:
       "Paste the npx block into Cursor or Claude Desktop MCP settings. For local builds, use the node path to dist/cli.js. Set KACHIS_SEAT_KEY when the console requires machine seats.",
-    step3Title: "Shield before the model",
+    step3Title: "Host model answers",
     step3Body:
-      "Call kachis_status to verify the console, then kachis_shield on the raw paste. Send only shielded_prompt to the model. After the reply, call kachis_restore locally.",
+      "Call kachis_shield on the paste. Answer with the host model from shielded_prompt only, then kachis_restore. Console Gemini is for Workspace, not MCP.",
     activityTitle: "Agent activity",
     activityHelper:
       "Public commitments from MCP and the browser companion. Original paste is never stored.",
@@ -477,7 +477,7 @@ export const copy = {
       "No agent shields recorded yet — start the agent or companion and call kachis_shield.",
     agentTitle: "Kachis Agent (MCP)",
     agentBody:
-      "Local MCP server for Cursor and Claude Desktop. The host must call kachis_shield before any model sees the paste, then kachis_restore after the reply.",
+      "Local MCP server for Cursor and Claude Desktop. Shield on-device; host model answers; restore locally. Console Gemini stays on the web Workspace.",
     agentStatusLive: "Operational",
     activityHash: "Commitment",
     activityMeta: "Source · status",
@@ -502,9 +502,28 @@ export const copy = {
     statusUnreachable: "Console unreachable",
     verify: "Verify connection",
     settleTitle: "Evidence mode",
-    settleMode: "Commitment-only",
+    settleMode: "Commitment + wallet settle",
     settleBody:
-      "MCP posts cleanedHash, binding, and packFlags to this console. Compact settle stays on the wallet path in Workspace.",
+      "MCP posts public commitments here. Compact settle uses your wallet plus a localhost witness from the running agent — the original hash never leaves this machine.",
+    pendingTitle: "Pending settle",
+    pendingHelper:
+      "Commitments waiting for Compact settle. Keep Kachis Agent running, connect a funded wallet, then settle each job.",
+    pendingEmpty: "No pending settlements — all agent commitments are settled, or none recorded yet.",
+    pendingCount: "Queued",
+    pendingOpenWorkspace: "Workspace console",
+    pendingCopyHash: "Copy hash",
+    pendingCopied: "Copied",
+    pendingStatus: "Awaiting wallet settle",
+    pendingSettle: "Settle with wallet",
+    pendingSettling: "Settling…",
+    pendingBridgeOk: "Witness bridge ready",
+    pendingBridgeDown: "Agent witness bridge offline — start MCP on this machine",
+    pendingWalletNeeded: "Connect a funded wallet to settle",
+    pendingSettleOk: "Settled on Preprod",
+    pendingSettleErr: "Settle failed",
+    pendingRefresh: "Refresh",
+    pendingRefreshing: "Refreshing…",
+    loading: "Loading activity…",
     installTitle: "Install",
     installHelper: "Add the server to your MCP host, then verify from this console.",
     step1Title: "Build or install the agent",
@@ -513,9 +532,9 @@ export const copy = {
     step2Title: "Add host configuration",
     step2Body:
       "Paste into Cursor or Claude Desktop MCP settings. Set KACHIS_SEAT_KEY when machine seats are required.",
-    step3Title: "Shield before the model",
+    step3Title: "Host model answers",
     step3Body:
-      "Host calls kachis_status, then kachis_shield. Send only shielded_prompt to the model. Restore locally after the reply.",
+      "Call kachis_shield on the paste. Answer with the host model from shielded_prompt only, then kachis_restore. Console Gemini is for Workspace, not MCP.",
     configTitle: "Host configuration",
     configNpx: "Published package",
     configLocal: "Local build",
@@ -533,16 +552,17 @@ export const copy = {
     envTierHelper:
       "Fallback pack defaults when policy is unreachable: institutional or freelancer.",
     toolsTitle: "Tool contract",
-    toolsHelper: "Hosts must follow this order. Skipping shield is a policy violation.",
-    toolShield: "kachis_shield",
+    toolsHelper: "Host model answers. Console Gemini beta is Workspace-only.",
+    toolShield: "kachis_shield · kachis_run",
     toolShieldBody:
-      "Scan raw paste on-device. Returns shielded_prompt and public commitments only.",
+      "Shield on-device. Returns shielded_prompt. Host model answers from that text only — never Kachis-funded Gemini.",
     toolRestore: "kachis_restore",
     toolRestoreBody:
-      "Restore insulation tokens in a model reply on this machine. Never forward restored text to a public model.",
+      "Restore insulation tokens in the host-model draft on this machine.",
     toolStatus: "kachis_status",
     toolStatusBody: "Console health, seat binding, and required pack policy.",
-    toolRule: "Send only the shielded prompt to the model — never the original paste.",
+    toolRule:
+      "Shield → host model on shielded_prompt → restore → show restored_text only.",
     usageTitle: "Usage",
     usageHelper: "Public commitments attributed to MCP and the browser companion.",
     usageTotal: "Shields",
@@ -551,6 +571,13 @@ export const copy = {
     usageFindings: "Spans held",
     usagePacks: "Pack mix",
     usageEmpty: "No agent usage yet.",
+    usageSources: "By source",
+    usageSettle: "Settle mix",
+    usageSettled: "Settled",
+    usagePending: "Pending",
+    usageChartEmpty: "Nothing to chart yet.",
+    usageFindingsHint: "Spans insulated across all agent shields",
+    usageAvgHeld: "Avg held / shield",
     activityTitle: "Activity",
     activityHelper:
       "Commitment log for machine seats. Original paste is never stored.",
@@ -559,6 +586,41 @@ export const copy = {
     activityHash: "Commitment",
     activityMeta: "Source · status",
     backIntegrations: "All integrations",
+    tabActivity: "Activity",
+    tabPending: "Pending settle",
+    tabUsage: "Usage",
+    tabConfigure: "Configure",
+    tabTools: "Tools",
+  },
+  companionPrivacy: {
+    title: "Browser companion privacy",
+    meta:
+      "How the Kachis browser companion handles paste on ChatGPT. Scanning stays on this device.",
+    intro:
+      "This policy covers the Kachis browser companion (Chrome / Brave / Edge). It is written for store review and for users who install the extension.",
+    updated: "Last updated: September 2026.",
+    sections: [
+      {
+        title: "What we scan",
+        body: "When you submit on ChatGPT, the companion may pause send and scan the composer text on this device. Rule packs look for identifiers, financial formats, secrets, and client records. The original paste does not leave the browser for scanning.",
+      },
+      {
+        title: "What leaves the browser",
+        body: "After you confirm, only the insulated remainder is written back into the ChatGPT composer for send. Optionally, public commitments (cleaned hash, binding, pack flags, finding counts) post to the Kachis console URL you configure. The original text and token map are never sent to Kachis servers.",
+      },
+      {
+        title: "Storage",
+        body: "Options (console URL, optional machine seat key, enable flag) are stored in browser extension storage on this device. We do not use that storage for chat content.",
+      },
+      {
+        title: "Permissions",
+        body: "ChatGPT page access is required to read the composer and apply the shielded text after confirmation. Console origin access is only used to post public commitments. No other browsing history is read.",
+      },
+      {
+        title: "Contact",
+        body: "Questions about this companion: use your Kachis console organization admin, or the project maintainers listed in the repository README.",
+      },
+    ],
   },
   landing: {
     launchApp: "Launch app",
