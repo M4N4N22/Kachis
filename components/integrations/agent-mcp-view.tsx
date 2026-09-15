@@ -342,7 +342,7 @@ export function AgentMcpView() {
         probe.ok
           ? `${copy.agentMcp.pendingBridgeOk}${
               typeof probe.pending === "number" ? ` · ${probe.pending} local` : ""
-            }`
+            }${probe.source === "disk" ? " · disk" : ""}`
           : copy.agentMcp.pendingBridgeDown,
       );
       return probe.ok;

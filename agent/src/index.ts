@@ -31,6 +31,7 @@ import {
   persistWitness,
 } from "./witness-disk.ts";
 import {
+  isWitnessBridgeListening,
   startWitnessServer,
   type WitnessRecord,
   type WitnessStore,
@@ -342,8 +343,11 @@ server.registerTool(
       agent: { name: "kachis-agent", version: VERSION },
       consoleUrl: CONSOLE_URL,
       witnessBridge: `http://127.0.0.1:${WITNESS_PORT}`,
+      witnessBridgeListening: isWitnessBridgeListening(),
       pendingWitnesses: pendingWitnessCount(),
       settleMode: "commitment + wallet settle via local witness",
+      settleNote:
+        "Console Pending settle uses the HTTP bridge when bound, otherwise the local witness disk cache on this machine.",
       modelPath: "host",
       seatKeyConfigured: Boolean(SEAT_KEY),
       health,

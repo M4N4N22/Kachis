@@ -33,16 +33,30 @@ function resolveWitness(
   return store.get(cleanedHash) ?? readWitness(cleanedHash);
 }
 
+let listeningPort: number | null = null;
+/** Retained so the HTTP handle stays referenced and status can report bind state. */
+let activeServer: http.Server | null = null;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function isWitnessBridgeListening(): boolean {
+  return listeningPort !== null;
+}
+
 /**
  * Localhost-only witness bridge so the console can Compact-settle MCP jobs.
  * Private originalHash never leaves this machine / never posts to /api/shield.
  * Memory + local disk so duplicate agent processes still share settle witnesses.
+ * If :3847 is busy (extra MCP spawn), retry until this process owns the port.
  */
 export function startWitnessServer(
   store: WitnessStore,
   opts?: { port?: number },
 ): http.Server {
   const port = opts?.port ?? Number(process.env.KACHIS_WITNESS_PORT || DEFAULT_PORT);
+
+  if (activeServer) {
+    return activeServer;
+  }
 
   const server = http.createServer((req, res) => {
     const url = new URL(req.url ?? "/", `http://127.0.0.1:${port}`);
@@ -94,7 +108,32 @@ export function startWitnessServer(
     json(res, 404, { error: "Not found." });
   });
 
-  server.listen(port, "127.0.0.1", () => {
+  activeServer = server;
+
+  const scheduleRetry = () => {
+    if (retryTimer || listeningPort !== null) return;
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      tryListen();
+    }, 3000);
+  };
+
+  const tryListen = () => {
+    if (listeningPort !== null) return;
+    try {
+      server.listen(port, "127.0.0.1");
+    } catch (error) {
+      console.error("[kachis-agent] witness bridge listen threw", error);
+      scheduleRetry();
+    }
+  };
+
+  server.on("listening", () => {
+    listeningPort = port;
+    if (retryTimer) {
+      clearTimeout(retryTimer);
+      retryTimer = null;
+    }
     console.error(
       `[kachis-agent] witness bridge on http://127.0.0.1:${port} (localhost only)`,
     );
@@ -105,14 +144,18 @@ export function startWitnessServer(
       error && typeof error === "object" && "code" in error
         ? String((error as { code?: string }).code)
         : "";
+    listeningPort = null;
     if (code === "EADDRINUSE") {
       console.error(
-        `[kachis-agent] witness port ${port} already in use — settle witnesses still write to disk; the process holding :${port} will serve them`,
+        `[kachis-agent] witness port ${port} already in use — settle witnesses write to disk; console can settle from disk; retrying bind in 3s`,
       );
+      scheduleRetry();
       return;
     }
     console.error("[kachis-agent] witness bridge failed to bind", error);
+    scheduleRetry();
   });
 
+  tryListen();
   return server;
 }
