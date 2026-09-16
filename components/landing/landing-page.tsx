@@ -30,7 +30,7 @@ export function LandingPage() {
           <Logo inverted />
           <nav className="hidden items-center gap-6 text-[13px] text-white/70 md:flex">
             <a href="#signal" className="hover:text-white">
-              Signal
+              Problem
             </a>
             <a href="#product" className="hover:text-white">
               Product

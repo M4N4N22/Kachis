@@ -16,20 +16,42 @@ export function witnessBridgeUrl(): string {
   );
 }
 
+/**
+ * Probe settle readiness via the console proxy (bridge, then local disk).
+ * Browser never needs a direct :3847 fetch — Cursor MCP often writes witnesses
+ * to disk without keeping the HTTP bridge bound.
+ */
 export async function probeWitnessBridge(): Promise<{
   ok: boolean;
   pending?: number;
+  source?: string;
   error?: string;
 }> {
   try {
-    const response = await fetch(`${witnessBridgeUrl()}/health`, {
+    const response = await fetch("/api/agent/witness/health", {
       cache: "no-store",
     });
-    if (!response.ok) {
-      return { ok: false, error: `Witness bridge returned ${response.status}` };
+    const body = (await response.json()) as {
+      ok?: boolean;
+      pending?: number;
+      source?: string;
+      error?: string;
+    };
+    if (!response.ok || !body.ok) {
+      return {
+        ok: false,
+        pending: body.pending,
+        source: body.source,
+        error:
+          body.error ??
+          "Agent witness bridge unreachable. Keep Kachis Agent MCP running on this machine.",
+      };
     }
-    const body = (await response.json()) as { ok?: boolean; pending?: number };
-    return { ok: Boolean(body.ok), pending: body.pending };
+    return {
+      ok: true,
+      pending: body.pending,
+      source: body.source,
+    };
   } catch {
     return {
       ok: false,
@@ -44,7 +66,7 @@ export async function fetchAgentWitness(
 ): Promise<{ ok: true; witness: AgentWitness } | { ok: false; error: string }> {
   try {
     const response = await fetch(
-      `${witnessBridgeUrl()}/witness/${encodeURIComponent(cleanedHash)}`,
+      `/api/agent/witness/${encodeURIComponent(cleanedHash)}`,
       { cache: "no-store" },
     );
     if (!response.ok) {

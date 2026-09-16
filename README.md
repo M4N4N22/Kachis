@@ -133,7 +133,7 @@ Critical path that works today:
 | Kachis Agent console (`/integrations/agent`) | Shipped |
 | Walkthrough `/demo` (no wallet) + live `/workspace` settle | Shipped |
 
-Honest limits in Wave 1: MCP posts public commitments; Compact settle is available from **Pending settle** on `/integrations/agent` when the local agent witness bridge is running (originalHash never uploaded). Local SHA-256 binding ≠ in-circuit `persistentHash`; on-chain `requiredPack` needs Compact recompile + **v1** deploy; Gero cannot balance contract txs yet; `@kachis/agent` npm publish is pending (use local `dist/cli.js` until then).
+Honest limits in Wave 1: MCP posts public commitments; Compact settle is available from **Pending settle** on `/integrations/agent` when local settle witnesses exist (HTTP bridge on `:3847` or the agent disk cache — originalHash never uploaded). Local SHA-256 binding ≠ in-circuit `persistentHash`; on-chain `requiredPack` needs Compact recompile + **v1** deploy; Gero cannot balance contract txs yet; `@kachis/agent` npm publish is pending (use local `dist/cli.js` until then).
 
 ---
 
@@ -239,7 +239,7 @@ Copy `agent/mcp.example.json` into your MCP host settings, or use **Integrations
 - **Published shape:** `npx -y @kachis/agent` with `KACHIS_CONSOLE_URL` (+ optional `KACHIS_SEAT_KEY`)
 - **Local until npm publish:** `node PATH/TO/agent/dist/cli.js`
 
-Prefer **`kachis_shield` / `kachis_run`**: shield on-device, then the **host model** (Cursor/Claude) answers from `shielded_prompt` only and calls `kachis_restore`. MCP does **not** call console Gemini — that beta quota is for the web Workspace. Public commitment posts to the console; Compact settle is **Settle with wallet** on `/integrations/agent` → Pending settle (needs running MCP agent on localhost for the witness bridge + funded 1AM). Verify with `kachis_status` or `GET /api/agent/health`.
+Prefer **`kachis_shield` / `kachis_run`**: shield on-device, then the **host model** (Cursor/Claude) answers from `shielded_prompt` only and calls `kachis_restore`. MCP does **not** call console Gemini — that beta quota is for the web Workspace. Public commitment posts to the console; Compact settle is **Settle with wallet** on `/integrations/agent` → Pending settle (needs a prior `kachis_shield` on this machine so the local witness is on disk or `:3847`, plus funded 1AM). Console proxies via `GET /api/agent/witness/health` and `GET /api/agent/witness/<cleanedHash>`. Verify with `kachis_status` or `GET /api/agent/health`.
 
 ### Browser companion
 
